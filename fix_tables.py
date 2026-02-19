@@ -2,22 +2,30 @@ import os
 import re
 
 def fix_markdown_tables(content):
-    """在Markdown表格前添加空行"""
+    """在Markdown表格前添加空行，但保持表格行连续"""
     lines = content.split('\n')
     fixed_lines = []
+    in_table = False
     
     for i, line in enumerate(lines):
-        # 检查当前行是否是表格行（以|开头或包含|）
+        # 检查当前行是否是表格行
         is_table_line = line.strip().startswith('|') and '|' in line
         
-        # 检查上一行是否为空
-        prev_line_empty = i == 0 or fixed_lines[-1].strip() == ''
-        
-        # 如果是表格行且上一行不为空，添加空行
-        if is_table_line and not prev_line_empty and i > 0:
-            fixed_lines.append('')
-        
-        fixed_lines.append(line)
+        if is_table_line:
+            if not in_table:
+                # 表格开始：检查上一行是否为空
+                if fixed_lines and fixed_lines[-1].strip() != '':
+                    fixed_lines.append('')  # 在表格前添加空行
+                in_table = True
+            # 表格行直接添加，不加额外空行
+            fixed_lines.append(line)
+        else:
+            if in_table:
+                # 表格结束：在表格后添加空行（如果下一行不是空行）
+                if line.strip() != '':
+                    fixed_lines.append('')
+                in_table = False
+            fixed_lines.append(line)
     
     return '\n'.join(fixed_lines)
 
