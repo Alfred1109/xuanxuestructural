@@ -1,0 +1,83 @@
+site_name: 玄学体系知识库
+site_description: 中国传统玄学知识体系完整文档
+site_author: Alfred
+
+# Theme Configuration
+theme:
+  name: material
+  language: zh
+  palette:
+    # Light mode
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: 切换至深色模式
+    # Dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: 切换至浅色模式
+  
+  features:
+    - navigation.instant      # 即时加载
+    - navigation.tracking     # 锚点跟踪
+    - navigation.tabs         # 顶部导航标签
+    - navigation.sections     # 导航分组
+    - navigation.expand       # 默认展开导航
+    - navigation.top          # 返回顶部按钮
+    - search.suggest          # 搜索建议
+    - search.highlight        # 搜索高亮
+    - content.code.copy       # 代码复制按钮
+    - toc.follow              # 目录跟随
+
+# Navigation Structure
+nav:
+  - 首页: index.md
+  - 根基理论: 01_根基理论.md
+  - 命理学: 02_命理学.md
+  - 风水学: 03_风水学.md
+  - 占卜学: 04_占卜学.md
+  - 相学: 05_相学.md
+  - 择日学: 06_择日学.md
+  - 玄学的局限与超越: 07_玄学的局限与超越.md
+  - 玄学与现代科学: 08_玄学与现代科学.md
+
+# Markdown Extensions
+markdown_extensions:
+  - admonition              # 警告框
+  - pymdownx.details        # 可折叠块
+  - pymdownx.superfences    # 代码块增强
+  - pymdownx.tabbed:        # 标签页
+      alternate_style: true
+  - tables                  # 表格
+  - attr_list               # 属性列表
+  - md_in_html              # HTML中的Markdown
+  - pymdownx.emoji:         # Emoji支持
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - toc:                    # 目录
+      permalink: true
+      toc_depth: 3
+
+# Plugins
+plugins:
+  - search:
+      lang: 
+        - zh
+        - en
+
+# Extra
+extra:
+  social:
+    - icon: fontawesome/solid/book
+      link: https://github.com
+      name: 玄学知识库
+  
+  generator: false  # 隐藏"Made with Material for MkDocs"
+
+# Copyright
+copyright: Copyright &copy; 2026 玄学体系知识库
