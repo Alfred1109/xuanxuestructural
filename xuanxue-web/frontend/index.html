@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>玄学预测系统 - 八字排盘</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .result {
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+        }
+
+        .bazi-display {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .pillar {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+        }
+
+        .pillar-title {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .pillar-content {
+            font-size: 32px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .info-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .info-section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .wuxing-chart {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .wuxing-item {
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+        }
+
+        .wuxing-wood { background: #4caf50; }
+        .wuxing-fire { background: #f44336; }
+        .wuxing-earth { background: #ff9800; }
+        .wuxing-metal { background: #9e9e9e; }
+        .wuxing-water { background: #2196f3; }
+
+        .analysis-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+
+        .dayun-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .dayun-item {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #2196f3;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .disclaimer {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔮 玄学预测系统</h1>
+            <p>基于传统命理学的八字排盘与分析</p>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 20px;">
+            <a href="index.html" style="color: white; text-decoration: none; padding: 10px 20px; background: rgba(255,255,255,0.4); border-radius: 20px; margin: 0 10px;">八字排盘</a>
+            <a href="liuyao.html" style="color: white; text-decoration: none; padding: 10px 20px; background: rgba(255,255,255,0.2); border-radius: 20px; margin: 0 10px;">六爻占卜</a>
+            <a href="zeri.html" style="color: white; text-decoration: none; padding: 10px 20px; background: rgba(255,255,255,0.2); border-radius: 20px; margin: 0 10px;">择日学</a>
+        </div>
+
+        <div class="card">
+            <h2 style="margin-bottom: 20px; color: #667eea;">📅 输入出生信息</h2>
+            <form id="baziForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>出生年份</label>
+                        <input type="number" id="year" min="1900" max="2100" value="1990" required>
+                    </div>
+                    <div class="form-group">
+                        <label>出生月份</label>
+                        <input type="number" id="month" min="1" max="12" value="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>出生日期</label>
+                        <input type="number" id="day" min="1" max="31" value="1" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>出生时辰</label>
+                        <input type="number" id="hour" min="0" max="23" value="12" required>
+                    </div>
+                    <div class="form-group">
+                        <label>出生分钟</label>
+                        <input type="number" id="minute" min="0" max="59" value="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label>性别</label>
+                        <select id="gender" required>
+                            <option value="男">男</option>
+                            <option value="女">女</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn" style="flex: 1;">🔍 开始排盘</button>
+                    <button type="button" class="btn" onclick="calculateWithAI()" style="flex: 1; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">🤖 AI深度分析</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; color: white;">正在计算中...</p>
+        </div>
+
+        <div class="result" id="result">
+            <div class="card">
+                <h2 style="margin-bottom: 20px; color: #667eea;">📊 八字命盘</h2>
+                
+                <div id="birthInfo" class="info-section">
+                    <h3>出生信息</h3>
+                    <p id="birthInfoText"></p>
+                </div>
+
+                <div class="bazi-display" id="baziDisplay"></div>
+
+                <div class="info-section">
+                    <h3>五行分布</h3>
+                    <div class="wuxing-chart" id="wuxingChart"></div>
+                </div>
+
+                <div class="info-section">
+                    <h3>十神关系</h3>
+                    <div id="shishenInfo"></div>
+                </div>
+
+                <div class="info-section">
+                    <h3>大运流程</h3>
+                    <div class="dayun-list" id="dayunList"></div>
+                </div>
+
+                <div class="info-section">
+                    <h3>命理分析</h3>
+                    <div id="analysisContent"></div>
+                </div>
+
+                <div class="info-section">
+                    <h3>🎯 格局分析（高级）</h3>
+                    <div id="gejuContent"></div>
+                </div>
+
+                <div class="info-section">
+                    <h3>✨ 神煞吉凶</h3>
+                    <div id="shenshaContent"></div>
+                </div>
+
+                <div class="info-section">
+                    <h3>👨‍👩‍👧‍👦 六亲关系</h3>
+                    <div id="liuqinContent"></div>
+                </div>
+
+                <div class="info-section" id="aiAnalysisSection" style="display: none;">
+                    <h3>🤖 AI深度分析</h3>
+                    <div id="aiAnalysisContent" style="background: linear-gradient(135deg, #f093fb15 0%, #f5576c15 100%); padding: 20px; border-radius: 10px; border-left: 4px solid #f5576c; line-height: 1.8; white-space: pre-wrap;"></div>
+                </div>
+
+                <div class="disclaimer">
+                    ⚠️ 免责声明：本系统仅供参考和娱乐，不应作为人生重大决策的唯一依据。命运掌握在自己手中，积极努力才是改变人生的关键。
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8002';
+
+        document.getElementById('baziForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                year: parseInt(document.getElementById('year').value),
+                month: parseInt(document.getElementById('month').value),
+                day: parseInt(document.getElementById('day').value),
+                hour: parseInt(document.getElementById('hour').value),
+                minute: parseInt(document.getElementById('minute').value),
+                gender: document.getElementById('gender').value
+            };
+
+            // 显示加载动画
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('result').classList.remove('show');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/bazi`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    throw new Error('API请求失败');
+                }
+
+                const result = await response.json();
+                displayResult(result.data);
+            } catch (error) {
+                alert('计算失败：' + error.message + '\n\n请确保后端服务已启动（运行 python backend/main.py）');
+            } finally {
+                document.getElementById('loading').classList.remove('show');
+            }
+        });
+
+        function displayResult(data) {
+            // 显示出生信息
+            const birthInfo = data.birth_info;
+            document.getElementById('birthInfoText').innerHTML = `
+                <strong>阳历：</strong>${birthInfo.solar.year}年${birthInfo.solar.month}月${birthInfo.solar.day}日 ${birthInfo.solar.hour}时${birthInfo.solar.minute}分<br>
+                <strong>农历：</strong>${birthInfo.lunar.year}年${birthInfo.lunar.month}月${birthInfo.lunar.day}日 ${birthInfo.lunar.is_leap ? '(闰月)' : ''}<br>
+                <strong>性别：</strong>${birthInfo.gender}
+            `;
+
+            // 显示八字四柱
+            const pillars = ['年柱', '月柱', '日柱', '时柱'];
+            const baziValues = [data.bazi.year, data.bazi.month, data.bazi.day, data.bazi.hour];
+            const baziDisplay = document.getElementById('baziDisplay');
+            baziDisplay.innerHTML = '';
+            
+            pillars.forEach((title, index) => {
+                baziDisplay.innerHTML += `
+                    <div class="pillar">
+                        <div class="pillar-title">${title}</div>
+                        <div class="pillar-content">${baziValues[index]}</div>
+                    </div>
+                `;
+            });
+
+            // 显示五行分布
+            const wuxingChart = document.getElementById('wuxingChart');
+            const wuxingColors = {
+                '木': 'wuxing-wood',
+                '火': 'wuxing-fire',
+                '土': 'wuxing-earth',
+                '金': 'wuxing-metal',
+                '水': 'wuxing-water'
+            };
+            wuxingChart.innerHTML = '';
+            
+            Object.entries(data.wuxing_count).forEach(([element, count]) => {
+                wuxingChart.innerHTML += `
+                    <div class="wuxing-item ${wuxingColors[element]}">
+                        <div>${element}</div>
+                        <div style="font-size: 24px; margin-top: 5px;">${count.toFixed(1)}</div>
+                    </div>
+                `;
+            });
+
+            // 显示十神
+            const shishenInfo = document.getElementById('shishenInfo');
+            shishenInfo.innerHTML = `
+                <p><strong>年干：</strong>${data.shishen.year_gan}</p>
+                <p><strong>月干：</strong>${data.shishen.month_gan}</p>
+                <p><strong>日干：</strong>${data.shishen.day_gan}（命主）</p>
+                <p><strong>时干：</strong>${data.shishen.hour_gan}</p>
+            `;
+
+            // 显示大运
+            const dayunList = document.getElementById('dayunList');
+            dayunList.innerHTML = '';
+            data.dayun.forEach(dayun => {
+                dayunList.innerHTML += `
+                    <div class="dayun-item">
+                        <div style="font-size: 20px; font-weight: bold; margin-bottom: 5px;">${dayun.ganzhi}</div>
+                        <div style="font-size: 14px;">${dayun.start_age}-${dayun.end_age}岁</div>
+                    </div>
+                `;
+            });
+
+            // 显示分析
+            const analysis = data.analysis;
+            const analysisContent = document.getElementById('analysisContent');
+            analysisContent.innerHTML = `
+                <div class="analysis-box">
+                    <h4 style="margin-bottom: 10px;">五行概况</h4>
+                    <p>${analysis.wuxing_summary}</p>
+                </div>
+                
+                <div class="analysis-box">
+                    <h4 style="margin-bottom: 10px;">最旺五行：${analysis.strong_element.element}</h4>
+                    <p>${analysis.strong_element.advice}</p>
+                </div>
+                
+                <div class="analysis-box">
+                    <h4 style="margin-bottom: 10px;">最弱五行：${analysis.weak_element.element}</h4>
+                    <p>${analysis.weak_element.advice}</p>
+                </div>
+                
+                <div class="analysis-box">
+                    <h4 style="margin-bottom: 10px;">平衡建议</h4>
+                    <p>${analysis.balance_advice}</p>
+                </div>
+                
+                <p style="margin-top: 15px; color: #666; font-size: 14px;">${analysis.disclaimer}</p>
+            `;
+
+            // 显示高级分析
+            if (data.advanced_analysis) {
+                const adv = data.advanced_analysis;
+                
+                // 格局分析
+                const geju = adv.geju;
+                document.getElementById('gejuContent').innerHTML = `
+                    <div class="analysis-box" style="background: #e8f5e9; border-color: #4caf50;">
+                        <h4 style="margin-bottom: 10px;">命局强弱：${geju.strength_level} (${geju.strength.toFixed(2)})</h4>
+                        <p><strong>格局类型：</strong>${geju.pattern_type}</p>
+                        <p style="margin-top: 10px;">${geju.pattern_description}</p>
+                    </div>
+                    <div class="analysis-box" style="background: #fff3e0; border-color: #ff9800;">
+                        <h4 style="margin-bottom: 10px;">适合职业</h4>
+                        <p>${geju.suitable_career.join('、')}</p>
+                    </div>
+                    <div class="analysis-box" style="background: #e3f2fd; border-color: #2196f3;">
+                        <h4 style="margin-bottom: 10px;">人生建议</h4>
+                        <p>${geju.life_advice}</p>
+                    </div>
+                `;
+                
+                // 神煞分析
+                const shensha = adv.shensha;
+                let shenshaHTML = `<p style="margin-bottom: 15px;"><strong>${shensha.summary}</strong></p>`;
+                if (shensha.shensha_list && shensha.shensha_list.length > 0) {
+                    shensha.shensha_list.forEach(item => {
+                        const color = item.type === '大吉' ? '#4caf50' : item.type === '吉' ? '#2196f3' : '#ff9800';
+                        shenshaHTML += `
+                            <div class="analysis-box" style="background: ${color}15; border-color: ${color};">
+                                <h4 style="margin-bottom: 10px; color: ${color};">${item.name} (${item.type})</h4>
+                                <p>${item.description}</p>
+                            </div>
+                        `;
+                    });
+                } else {
+                    shenshaHTML += '<p style="color: #666;">命局中暂无明显神煞，属于平和之象。</p>';
+                }
+                document.getElementById('shenshaContent').innerHTML = shenshaHTML;
+                
+                // 六亲分析
+                const liuqin = adv.liuqin;
+                document.getElementById('liuqinContent').innerHTML = `
+                    <div class="analysis-box">
+                        <h4 style="margin-bottom: 10px;">👨 父亲</h4>
+                        <p>${liuqin.father}</p>
+                    </div>
+                    <div class="analysis-box">
+                        <h4 style="margin-bottom: 10px;">👩 母亲</h4>
+                        <p>${liuqin.mother}</p>
+                    </div>
+                    <div class="analysis-box">
+                        <h4 style="margin-bottom: 10px;">👫 兄弟姐妹</h4>
+                        <p>${liuqin.siblings}</p>
+                    </div>
+                    <div class="analysis-box">
+                        <h4 style="margin-bottom: 10px;">💑 配偶</h4>
+                        <p>${liuqin.spouse}</p>
+                    </div>
+                    <div class="analysis-box">
+                        <h4 style="margin-bottom: 10px;">👶 子女</h4>
+                        <p>${liuqin.children}</p>
+                    </div>
+                `;
+            }
+
+            // 显示AI分析（如果有）
+            if (data.ai_analysis) {
+                document.getElementById('aiAnalysisSection').style.display = 'block';
+                document.getElementById('aiAnalysisContent').textContent = data.ai_analysis;
+            } else {
+                document.getElementById('aiAnalysisSection').style.display = 'none';
+            }
+
+            // 显示结果
+            document.getElementById('result').classList.add('show');
+            
+            // 滚动到结果
+            document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // AI深度分析函数
+        async function calculateWithAI() {
+            const data = {
+                year: parseInt(document.getElementById('year').value),
+                month: parseInt(document.getElementById('month').value),
+                day: parseInt(document.getElementById('day').value),
+                hour: parseInt(document.getElementById('hour').value),
+                minute: parseInt(document.getElementById('minute').value),
+                gender: document.getElementById('gender').value
+            };
+
+            // 显示加载动画
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('loading').querySelector('p').textContent = '正在进行AI深度分析，请稍候...';
+            document.getElementById('result').classList.remove('show');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/ai/enhance-bazi`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    throw new Error('API请求失败');
+                }
+
+                const result = await response.json();
+                
+                if (!result.ai_enabled) {
+                    alert('AI服务未配置或不可用\n\n将显示基础分析结果');
+                }
+                
+                displayResult(result.data);
+                
+                // 如果有AI分析，滚动到AI分析部分
+                if (result.data.ai_analysis) {
+                    setTimeout(() => {
+                        document.getElementById('aiAnalysisSection').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 500);
+                }
+            } catch (error) {
+                alert('AI分析失败：' + error.message + '\n\n请确保：\n1. 后端服务已启动\n2. 已配置ARK_API_KEY环境变量');
+            } finally {
+                document.getElementById('loading').classList.remove('show');
+                document.getElementById('loading').querySelector('p').textContent = '正在计算中...';
+            }
+        }
+    </script>
+</body>
+</html>

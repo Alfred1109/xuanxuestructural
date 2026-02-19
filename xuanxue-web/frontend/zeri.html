@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>择日学 - 黄道吉日查询</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #ffa751 0%, #ffe259 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .nav-links {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            margin: 0 10px;
+            transition: background 0.3s;
+        }
+
+        .nav-links a:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #ffa751 0%, #ffe259 100%);
+            color: white;
+            font-weight: bold;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #ffa751 0%, #ffe259 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .result {
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+        }
+
+        .fortune-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px;
+            border-radius: 15px;
+            color: white;
+            margin: 20px 0;
+        }
+
+        .fortune-level {
+            font-size: 48px;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .info-item {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .day-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .day-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid;
+            transition: transform 0.2s;
+        }
+
+        .day-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .day-card.大吉 { border-color: #4caf50; }
+        .day-card.吉 { border-color: #8bc34a; }
+        .day-card.平 { border-color: #ff9800; }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #ffa751;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📅 择日学 - 黄道吉日</h1>
+            <p>传统择日学，选择良辰吉日</p>
+        </div>
+
+        <div class="nav-links">
+            <a href="index.html">八字排盘</a>
+            <a href="liuyao.html">六爻占卜</a>
+            <a href="zeri.html" style="background: rgba(255,255,255,0.4);">择日学</a>
+        </div>
+
+        <div class="card">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('today')">📆 今日运势</button>
+                <button class="tab" onclick="switchTab('search')">🔍 查找吉日</button>
+            </div>
+
+            <!-- 今日运势 -->
+            <div id="today-tab" class="tab-content active">
+                <button class="btn" onclick="getTodayFortune()">查看今日运势</button>
+            </div>
+
+            <!-- 查找吉日 -->
+            <div id="search-tab" class="tab-content">
+                <form id="searchForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>年份</label>
+                            <input type="number" id="year" min="2020" max="2100" value="2026" required>
+                        </div>
+                        <div class="form-group">
+                            <label>月份</label>
+                            <input type="number" id="month" min="1" max="12" value="2" required>
+                        </div>
+                        <div class="form-group">
+                            <label>用途</label>
+                            <select id="purpose" required>
+                                <option value="通用">通用吉日</option>
+                                <option value="结婚">结婚嫁娶</option>
+                                <option value="开业">开业开市</option>
+                                <option value="搬家">搬家入宅</option>
+                                <option value="出行">出行旅游</option>
+                                <option value="动土">动土装修</option>
+                                <option value="安葬">安葬祭祀</option>
+                                <option value="祈福">祈福求神</option>
+                                <option value="求财">求财纳财</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn">🔍 查找吉日</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; color: white;">正在查询中...</p>
+        </div>
+
+        <!-- 今日运势结果 -->
+        <div class="result" id="today-result">
+            <div class="card">
+                <div class="fortune-card" id="fortuneCard">
+                    <h2 style="text-align: center; margin-bottom: 20px;">今日运势</h2>
+                    <div id="fortuneDate" style="text-align: center; font-size: 20px; margin-bottom: 10px;"></div>
+                    <div class="fortune-level" id="fortuneLevel"></div>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <strong>干支：</strong><span id="fortuneGanzhi"></span>
+                        </div>
+                        <div class="info-item">
+                            <strong>建星：</strong><span id="fortuneJianxing"></span>
+                        </div>
+                        <div class="info-item">
+                            <strong>十二神：</strong><span id="fortuneShen"></span>
+                        </div>
+                        <div class="info-item">
+                            <strong>星宿：</strong><span id="fortuneXingxiu"></span>
+                        </div>
+                    </div>
+                    <div style="margin-top: 20px; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                        <p><strong>宜：</strong><span id="fortuneSuitable"></span></p>
+                        <p style="margin-top: 10px;"><strong>忌：</strong><span id="fortuneAvoid"></span></p>
+                    </div>
+                    <div style="margin-top: 20px; padding: 20px; background: rgba(255,255,255,0.2); border-radius: 8px;">
+                        <p id="fortuneAdvice" style="line-height: 1.8;"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 吉日列表结果 -->
+        <div class="result" id="search-result">
+            <div class="card">
+                <h2 style="margin-bottom: 20px; color: #ffa751;">🎯 吉日查询结果</h2>
+                <p id="searchSummary" style="margin-bottom: 20px; font-size: 16px;"></p>
+                <div class="day-list" id="dayList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8002';
+
+        function switchTab(tab) {
+            // 切换标签
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            if (tab === 'today') {
+                document.querySelectorAll('.tab')[0].classList.add('active');
+                document.getElementById('today-tab').classList.add('active');
+            } else {
+                document.querySelectorAll('.tab')[1].classList.add('active');
+                document.getElementById('search-tab').classList.add('active');
+            }
+
+            // 隐藏结果
+            document.getElementById('today-result').classList.remove('show');
+            document.getElementById('search-result').classList.remove('show');
+        }
+
+        async function getTodayFortune() {
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('today-result').classList.remove('show');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/zeri/today`);
+                if (!response.ok) throw new Error('API请求失败');
+                
+                const result = await response.json();
+                displayTodayFortune(result.data);
+            } catch (error) {
+                alert('查询失败：' + error.message);
+            } finally {
+                document.getElementById('loading').classList.remove('show');
+            }
+        }
+
+        function displayTodayFortune(data) {
+            document.getElementById('fortuneDate').textContent = `${data.date} ${data.weekday}`;
+            document.getElementById('fortuneLevel').textContent = data.level;
+            document.getElementById('fortuneLevel').style.color = data.color;
+            document.getElementById('fortuneGanzhi').textContent = data.ganzhi;
+            document.getElementById('fortuneJianxing').textContent = data.jianxing;
+            document.getElementById('fortuneShen').textContent = `${data.shier_shen} (${data.huangdao_type})`;
+            document.getElementById('fortuneXingxiu').textContent = data.xingxiu;
+            document.getElementById('fortuneSuitable').textContent = data.suitable.join('、');
+            document.getElementById('fortuneAvoid').textContent = data.avoid.join('、');
+            document.getElementById('fortuneAdvice').textContent = data.fortune_advice;
+
+            // 设置卡片颜色
+            const card = document.getElementById('fortuneCard');
+            if (data.level === '大吉') {
+                card.style.background = 'linear-gradient(135deg, #4caf50 0%, #8bc34a 100%)';
+            } else if (data.level === '吉') {
+                card.style.background = 'linear-gradient(135deg, #2196f3 0%, #03a9f4 100%)';
+            } else if (data.level === '平') {
+                card.style.background = 'linear-gradient(135deg, #ff9800 0%, #ffc107 100%)';
+            } else {
+                card.style.background = 'linear-gradient(135deg, #f44336 0%, #e91e63 100%)';
+            }
+
+            document.getElementById('today-result').classList.add('show');
+            document.getElementById('today-result').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        document.getElementById('searchForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const year = parseInt(document.getElementById('year').value);
+            const month = parseInt(document.getElementById('month').value);
+            const purpose = document.getElementById('purpose').value;
+
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('search-result').classList.remove('show');
+
+            try {
+                const response = await fetch(
+                    `${API_BASE_URL}/api/zeri/auspicious?year=${year}&month=${month}&purpose=${encodeURIComponent(purpose)}&days=60`
+                );
+                if (!response.ok) throw new Error('API请求失败');
+                
+                const result = await response.json();
+                displaySearchResult(result.data);
+            } catch (error) {
+                alert('查询失败：' + error.message);
+            } finally {
+                document.getElementById('loading').classList.remove('show');
+            }
+        });
+
+        function displaySearchResult(data) {
+            document.getElementById('searchSummary').textContent = 
+                `找到 ${data.total_count} 个适合"${data.purpose}"的吉日`;
+
+            const dayList = document.getElementById('dayList');
+            dayList.innerHTML = '';
+
+            data.days.slice(0, 20).forEach(day => {
+                dayList.innerHTML += `
+                    <div class="day-card ${day.level}">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <h3 style="color: ${day.color}; margin: 0;">${day.date}</h3>
+                            <span style="background: ${day.color}; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold;">
+                                ${day.level}
+                            </span>
+                        </div>
+                        <p style="color: #666; margin-bottom: 10px;">${day.weekday} | ${day.ganzhi} | ${day.jianxing} | ${day.shier_shen}</p>
+                        <p style="margin: 5px 0;"><strong>评分：</strong>${day.score}</p>
+                        <p style="margin: 5px 0;"><strong>宜：</strong>${day.suitable.slice(0, 3).join('、')}</p>
+                        <p style="margin: 5px 0;"><strong>忌：</strong>${day.avoid.slice(0, 3).join('、')}</p>
+                    </div>
+                `;
+            });
+
+            document.getElementById('search-result').classList.add('show');
+            document.getElementById('search-result').scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>

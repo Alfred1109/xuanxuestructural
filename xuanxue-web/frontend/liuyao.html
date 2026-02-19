@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>六爻占卜 - 玄学预测系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .nav-links {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            margin: 0 10px;
+            transition: background 0.3s;
+        }
+
+        .nav-links a:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #f5576c;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(245, 87, 108, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .result {
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+        }
+
+        .gua-display {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .gua-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px;
+            border-radius: 15px;
+            color: white;
+            text-align: center;
+            min-width: 200px;
+        }
+
+        .gua-name {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .gua-info {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .yao-display {
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .yao-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .yao-item.dong {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+        }
+
+        .yao-symbol {
+            font-size: 24px;
+            margin-right: 15px;
+            min-width: 40px;
+        }
+
+        .yao-details {
+            flex: 1;
+        }
+
+        .info-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .info-section h3 {
+            color: #f5576c;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .analysis-box {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #f5576c;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .disclaimer {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .tips {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎲 六爻占卜</h1>
+            <p>传统周易占卜，探寻事物发展趋势</p>
+        </div>
+
+        <div class="nav-links">
+            <a href="index.html">八字排盘</a>
+            <a href="liuyao.html" style="background: rgba(255,255,255,0.4);">六爻占卜</a>
+            <a href="zeri.html">择日学</a>
+        </div>
+
+        <div class="card">
+            <div class="tips">
+                <strong>💡 占卜须知：</strong><br>
+                1. 心诚则灵，占卜前请静心思考您的问题<br>
+                2. 问题要具体明确，避免模糊不清<br>
+                3. 同一问题不宜反复占卜<br>
+                4. 占卜结果仅供参考，不可过分依赖
+            </div>
+
+            <h2 style="margin-bottom: 20px; color: #f5576c;">🔮 请输入您的问题</h2>
+            <form id="liuyaoForm">
+                <div class="form-group">
+                    <label>占卜问题（可选，但建议填写以获得更准确的解读）</label>
+                    <textarea id="question" placeholder="例如：近期事业发展如何？感情运势怎样？投资是否顺利？等等..."></textarea>
+                </div>
+
+                <button type="submit" class="btn">🎲 开始占卜</button>
+            </form>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; color: white;">正在摇卦中...</p>
+        </div>
+
+        <div class="result" id="result">
+            <div class="card">
+                <h2 style="margin-bottom: 20px; color: #f5576c;">📊 卦象结果</h2>
+                
+                <div class="info-section">
+                    <h3>占卜信息</h3>
+                    <p><strong>问题：</strong><span id="questionText"></span></p>
+                    <p><strong>时间：</strong><span id="timeText"></span></p>
+                </div>
+
+                <div class="gua-display">
+                    <div class="gua-card">
+                        <div class="gua-name" id="benguaName"></div>
+                        <div class="gua-info">
+                            <div id="benguaInfo"></div>
+                        </div>
+                    </div>
+                    <div class="gua-card" id="bianguaCard" style="display: none;">
+                        <div class="gua-name" id="bianguaName"></div>
+                        <div class="gua-info">变卦</div>
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <h3>爻象详情</h3>
+                    <div class="yao-display" id="yaoDisplay"></div>
+                </div>
+
+                <div class="info-section">
+                    <h3>卦象解释</h3>
+                    <div id="interpretationContent"></div>
+                </div>
+
+                <div class="disclaimer">
+                    ⚠️ 免责声明：占卜结果仅供参考，不应作为决策的唯一依据。人生在于努力，命运掌握在自己手中。
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8002';
+
+        document.getElementById('liuyaoForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const question = document.getElementById('question').value.trim() || '未指定问题';
+
+            // 显示加载动画
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('result').classList.remove('show');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/divination/liuyao?question=${encodeURIComponent(question)}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('API请求失败');
+                }
+
+                const result = await response.json();
+                displayResult(result.data);
+            } catch (error) {
+                alert('占卜失败：' + error.message + '\n\n请确保后端服务已启动');
+            } finally {
+                document.getElementById('loading').classList.remove('show');
+            }
+        });
+
+        function displayResult(data) {
+            // 显示问题和时间
+            document.getElementById('questionText').textContent = data.question || '未指定问题';
+            document.getElementById('timeText').textContent = data.timestamp;
+
+            const guaInfo = data.gua_info;
+            
+            // 显示本卦
+            document.getElementById('benguaName').textContent = guaInfo.bengua.name;
+            document.getElementById('benguaInfo').innerHTML = `
+                本卦<br>
+                上卦：${guaInfo.bengua.shang_gua.name}${guaInfo.bengua.shang_gua.symbol} (${guaInfo.bengua.shang_gua.nature})<br>
+                下卦：${guaInfo.bengua.xia_gua.name}${guaInfo.bengua.xia_gua.symbol} (${guaInfo.bengua.xia_gua.nature})
+            `;
+
+            // 显示变卦（如果有动爻）
+            if (guaInfo.dongyao && guaInfo.dongyao.length > 0) {
+                document.getElementById('bianguaCard').style.display = 'block';
+                document.getElementById('bianguaName').textContent = guaInfo.biangua.name;
+            } else {
+                document.getElementById('bianguaCard').style.display = 'none';
+            }
+
+            // 显示爻象
+            const yaoDisplay = document.getElementById('yaoDisplay');
+            yaoDisplay.innerHTML = '';
+            
+            guaInfo.yao_details.forEach(yao => {
+                const isDong = yao.is_dong;
+                const symbol = yao.type === '阳爻' ? '━━━━━' : '━━  ━━';
+                
+                yaoDisplay.innerHTML += `
+                    <div class="yao-item ${isDong ? 'dong' : ''}">
+                        <div class="yao-symbol">${symbol}</div>
+                        <div class="yao-details">
+                            <strong>${yao.name}</strong> - ${yao.type} (${yao.wuxing})
+                            ${isDong ? ' <span style="color: #ff9800;">●动爻</span>' : ''}
+                        </div>
+                    </div>
+                `;
+            });
+
+            // 显示解释
+            const interp = data.interpretation;
+            document.getElementById('interpretationContent').innerHTML = `
+                <div class="analysis-box" style="background: #e8f5e9; border-color: #4caf50;">
+                    <h4 style="margin-bottom: 10px;">卦象总结</h4>
+                    <p>${interp.summary}</p>
+                </div>
+                
+                <div class="analysis-box" style="background: #e3f2fd; border-color: #2196f3;">
+                    <h4 style="margin-bottom: 10px;">详细分析</h4>
+                    <p>${interp.detailed}</p>
+                </div>
+                
+                <div class="analysis-box" style="background: #fff3e0; border-color: #ff9800;">
+                    <h4 style="margin-bottom: 10px;">建议</h4>
+                    <p>${interp.advice}</p>
+                </div>
+                
+                <div class="analysis-box" style="background: #fce4ec; border-color: #e91e63;">
+                    <h4 style="margin-bottom: 10px;">时间预测</h4>
+                    <p>${interp.timing}</p>
+                </div>
+            `;
+
+            // 显示结果
+            document.getElementById('result').classList.add('show');
+            
+            // 滚动到结果
+            document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
