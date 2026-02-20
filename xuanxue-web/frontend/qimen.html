@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>奇门遁甲 - 玄学预测系统</title>
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --spacing-xs: 0.5rem;
+            --spacing-sm: 1rem;
+            --spacing-md: 1.5rem;
+            --spacing-lg: 2rem;
+            --spacing-xl: 3rem;
+            --border-radius-sm: 0.5rem;
+            --border-radius-md: 1rem;
+            --border-radius-lg: 1.25rem;
+            --max-width-content: 1400px;
+            --max-width-text: 800px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            font-size: 16px;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', Arial, sans-serif;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            padding: var(--spacing-sm);
+            position: relative;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255,255,255,0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: var(--max-width-content);
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+            padding: 0 var(--spacing-sm);
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .header h1 {
+            font-size: clamp(1.75rem, 5vw, 2.5rem);
+            margin-bottom: var(--spacing-sm);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            letter-spacing: 0.125rem;
+        }
+
+        .header p {
+            font-size: clamp(1rem, 2.5vw, 1.125rem);
+            opacity: 0.9;
+            letter-spacing: 0.0625rem;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .nav-links {
+            text-align: center;
+            margin-bottom: var(--spacing-md);
+            animation: fadeIn 1s ease-out 0.3s both;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: var(--spacing-sm);
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: rgba(255,255,255,0.2);
+            border-radius: var(--border-radius-lg);
+            display: inline-block;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.3);
+            font-size: clamp(0.875rem, 2vw, 1rem);
+        }
+
+        .nav-links a.active {
+            background: rgba(255,255,255,0.4);
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(255,255,255,0.3);
+        }
+
+        .nav-links a:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255,255,255,0.2);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: clamp(1.25rem, 4vw, 2rem);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-bottom: var(--spacing-md);
+            animation: fadeInUp 0.6s ease-out 0.4s both;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.8);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .form-group input:hover,
+        .form-group select:hover {
+            border-color: #c0c0c0;
+            background: white;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+            gap: var(--spacing-sm);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn:active {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(102, 126, 234, 0.4);
+        }
+
+        .result {
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+        }
+
+        .jiugong-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+            gap: var(--spacing-sm);
+            margin: var(--spacing-md) 0;
+            max-width: 56.25rem;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .palace {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .palace-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+            border-bottom: 2px solid rgba(255,255,255,0.5);
+            padding-bottom: 5px;
+        }
+
+        .palace-content {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .palace-content div {
+            margin: 5px 0;
+        }
+
+        .fortune-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: bold;
+            background: rgba(255,255,255,0.3);
+        }
+
+        .fortune-大吉 {
+            background: #4caf50;
+        }
+
+        .fortune-吉 {
+            background: #8bc34a;
+        }
+
+        .fortune-中平 {
+            background: #ff9800;
+        }
+
+        .fortune-凶 {
+            background: #f44336;
+        }
+
+        .fortune-大凶 {
+            background: #d32f2f;
+        }
+
+        .info-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .info-section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .prediction-box {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffe0b2 100%);
+            border-left: 4px solid #ff9800;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+
+        .prediction-box h4 {
+            color: #e65100;
+            margin-bottom: 10px;
+        }
+
+        .direction-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 18.75rem), 1fr));
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-sm);
+        }
+
+        .direction-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .direction-item h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .time-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .dun-info {
+            background: #f3e5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .dun-info span {
+            font-size: clamp(1.125rem, 3vw, 1.25rem);
+            font-weight: bold;
+            color: #7b1fa2;
+            margin: 0 var(--spacing-sm);
+        }
+
+        /* 响应式设计 - 移动端优化 */
+        @media (max-width: 768px) {
+            body {
+                padding: var(--spacing-xs);
+            }
+
+            .header {
+                margin-bottom: var(--spacing-md);
+            }
+
+            .nav-links {
+                gap: var(--spacing-xs);
+            }
+
+            .nav-links a {
+                padding: var(--spacing-xs) var(--spacing-sm);
+                font-size: 0.875rem;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .jiugong-grid {
+                grid-template-columns: 1fr;
+                gap: var(--spacing-sm);
+            }
+
+            .palace {
+                min-height: auto;
+                padding: var(--spacing-sm);
+            }
+
+            .direction-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .btn {
+                font-size: 1rem;
+                padding: var(--spacing-sm) var(--spacing-md);
+            }
+        }
+
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .jiugong-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .direction-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 1025px) {
+            .jiugong-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .direction-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        /* 可访问性改进 */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* 高对比度模式支持 */
+        @media (prefers-contrast: high) {
+            .nav-links a {
+                border: 2px solid white;
+            }
+
+            .btn {
+                border: 2px solid white;
+            }
+        }
+
+        /* 焦点可见性改进 */
+        *:focus-visible {
+            outline: 3px solid #ffd700;
+            outline-offset: 2px;
+        }
+
+        /* 打印样式 */
+        @media print {
+            body {
+                background: white;
+                color: black;
+            }
+
+            .nav-links,
+            .btn {
+                display: none;
+            }
+
+            .card {
+                box-shadow: none;
+                border: 1px solid #ccc;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔮 奇门遁甲</h1>
+            <p>帝王之学 · 最高级预测体系</p>
+        </div>
+
+        <div class="nav-links">
+            <a href="index.html">八字排盘</a>
+            <a href="liuyao.html">六爻占卜</a>
+            <a href="qimen.html" class="active">奇门遁甲</a>
+            <a href="zeri.html">择日学</a>
+        </div>
+
+        <div class="card">
+            <h2 style="margin-bottom: 20px; color: #667eea;">⏰ 选择时间与事项</h2>
+            <form id="qimenForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>年份</label>
+                        <input type="number" id="year" min="1900" max="2100" required>
+                    </div>
+                    <div class="form-group">
+                        <label>月份</label>
+                        <input type="number" id="month" min="1" max="12" required>
+                    </div>
+                    <div class="form-group">
+                        <label>日期</label>
+                        <input type="number" id="day" min="1" max="31" required>
+                    </div>
+                    <div class="form-group">
+                        <label>时辰</label>
+                        <input type="number" id="hour" min="0" max="23" required>
+                    </div>
+                    <div class="form-group">
+                        <label>分钟</label>
+                        <input type="number" id="minute" min="0" max="59" value="0" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>占卜事项</label>
+                    <select id="matterType" required>
+                        <option value="通用">通用</option>
+                        <option value="求财">求财</option>
+                        <option value="求职">求职</option>
+                        <option value="婚姻">婚姻</option>
+                        <option value="出行">出行</option>
+                        <option value="诉讼">诉讼</option>
+                        <option value="疾病">疾病</option>
+                        <option value="学业">学业</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button type="submit" class="btn" style="flex: 1; min-width: 200px;">🔍 开始排盘</button>
+                    <button type="button" class="btn" onclick="divineWithAI()" style="flex: 1; min-width: 200px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">🤖 AI深度解读</button>
+                    <button type="button" class="btn" onclick="useCurrentTime()" style="flex: 1; min-width: 200px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">⏱️ 使用当前时间</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; color: white;">正在排盘中...</p>
+        </div>
+
+        <div class="result" id="result">
+            <div class="card">
+                <h2 style="margin-bottom: 20px; color: #667eea;">📊 奇门遁甲盘</h2>
+                
+                <div class="time-info" id="timeInfo"></div>
+                <div class="dun-info" id="dunInfo"></div>
+
+                <h3 style="color: #667eea; margin: 20px 0;">九宫格局</h3>
+                <div class="jiugong-grid" id="jiugongGrid"></div>
+
+                <div class="info-section">
+                    <h3>🎯 最佳方位</h3>
+                    <div id="bestDirection"></div>
+                </div>
+
+                <div class="info-section">
+                    <h3>🔮 事项预测</h3>
+                    <div id="matterPrediction"></div>
+                </div>
+
+                <div class="info-section">
+                    <h3>🧭 八方分析</h3>
+                    <div class="direction-grid" id="directionAnalysis"></div>
+                </div>
+
+                <div style="background: #fff3e0; border-left: 4px solid #ff9800; padding: 15px; margin-top: 20px; border-radius: 5px; font-size: 14px; color: #666;">
+                    ⚠️ 免责声明：奇门遁甲是传统预测术数，本系统仅供学习参考，不应作为人生重大决策的唯一依据。
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8002';
+
+        // 页面加载时设置当前时间
+        window.onload = function() {
+            const now = new Date();
+            document.getElementById('year').value = now.getFullYear();
+            document.getElementById('month').value = now.getMonth() + 1;
+            document.getElementById('day').value = now.getDate();
+            document.getElementById('hour').value = now.getHours();
+            document.getElementById('minute').value = now.getMinutes();
+        };
+
+        function useCurrentTime() {
+            const now = new Date();
+            document.getElementById('year').value = now.getFullYear();
+            document.getElementById('month').value = now.getMonth() + 1;
+            document.getElementById('day').value = now.getDate();
+            document.getElementById('hour').value = now.getHours();
+            document.getElementById('minute').value = now.getMinutes();
+        }
+
+        document.getElementById('qimenForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const year = parseInt(document.getElementById('year').value);
+            const month = parseInt(document.getElementById('month').value);
+            const day = parseInt(document.getElementById('day').value);
+            const hour = parseInt(document.getElementById('hour').value);
+            const minute = parseInt(document.getElementById('minute').value);
+            const matterType = document.getElementById('matterType').value;
+
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('result').classList.remove('show');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/divination/qimen?year=${year}&month=${month}&day=${day}&hour=${hour}&minute=${minute}&matter_type=${encodeURIComponent(matterType)}`, {
+                    method: 'POST'
+                });
+
+                if (!response.ok) {
+                    throw new Error('API请求失败');
+                }
+
+                const result = await response.json();
+                displayResult(result.data);
+            } catch (error) {
+                alert('排盘失败：' + error.message + '\n\n请确保后端服务已启动');
+            } finally {
+                document.getElementById('loading').classList.remove('show');
+            }
+        });
+
+        async function divineWithAI() {
+            const year = parseInt(document.getElementById('year').value);
+            const month = parseInt(document.getElementById('month').value);
+            const day = parseInt(document.getElementById('day').value);
+            const hour = parseInt(document.getElementById('hour').value);
+            const minute = parseInt(document.getElementById('minute').value);
+            const matterType = document.getElementById('matterType').value;
+
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('loading').querySelector('p').textContent = '正在进行AI深度解读...';
+            document.getElementById('result').classList.remove('show');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/ai/enhance-qimen?year=${year}&month=${month}&day=${day}&hour=${hour}&minute=${minute}&matter_type=${encodeURIComponent(matterType)}`, {
+                    method: 'POST'
+                });
+
+                if (!response.ok) {
+                    throw new Error('API请求失败');
+                }
+
+                const result = await response.json();
+                
+                if (!result.ai_enabled) {
+                    alert('AI服务未配置，将显示基础解读\n\n如需使用AI功能，请设置ARK_API_KEY环境变量');
+                }
+                
+                displayResult(result.data, result.ai_enabled);
+            } catch (error) {
+                alert('排盘失败：' + error.message + '\n\n请确保后端服务已启动');
+            } finally {
+                document.getElementById('loading').classList.remove('show');
+                document.getElementById('loading').querySelector('p').textContent = '正在排盘中...';
+            }
+        }
+
+        function displayResult(data, hasAI = false) {
+            // 显示时间信息
+            const timeInfo = data.时间信息;
+            document.getElementById('timeInfo').innerHTML = `
+                <strong>时间：</strong>${timeInfo.阳历}<br>
+                <strong>四柱：</strong>${timeInfo.年柱} ${timeInfo.月柱} ${timeInfo.日柱} ${timeInfo.时柱}
+            `;
+
+            // 显示遁甲信息
+            const dunInfo = data.遁甲信息;
+            document.getElementById('dunInfo').innerHTML = `
+                <span>${dunInfo.阴阳遁}</span>
+                <span>${dunInfo.局数}</span>
+            `;
+
+            // 显示九宫格（按洛书顺序：4 9 2 / 3 5 7 / 8 1 6）
+            const palaces = data.九宫盘;
+            const palaceOrder = ['巽宫', '离宫', '坤宫', '震宫', '中宫', '兑宫', '艮宫', '坎宫', '乾宫'];
+            const jiugongGrid = document.getElementById('jiugongGrid');
+            jiugongGrid.innerHTML = '';
+
+            palaceOrder.forEach(palaceName => {
+                const palace = palaces[palaceName];
+                const gateType = palace.门吉凶.type.replace(/[大]/g, '');
+                const starType = palace.星吉凶.type.replace(/[大]/g, '');
+                
+                jiugongGrid.innerHTML += `
+                    <div class="palace">
+                        <div class="palace-title">${palace.宫位}</div>
+                        <div class="palace-content">
+                            <div><strong>地盘：</strong>${palace.地盘}</div>
+                            <div><strong>天盘：</strong>${palace.天盘}</div>
+                            <div><strong>八门：</strong>${palace.八门} <span class="fortune-badge fortune-${gateType}">${palace.门吉凶.type}</span></div>
+                            <div><strong>九星：</strong>${palace.九星} <span class="fortune-badge fortune-${starType}">${palace.星吉凶.type}</span></div>
+                            <div><strong>八神：</strong>${palace.八神}</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // 显示最佳方位
+            const bestDir = data.最佳方位;
+            document.getElementById('bestDirection').innerHTML = `
+                <div class="prediction-box">
+                    <h4>最佳方位：${bestDir.最佳方位} (${bestDir.吉凶})</h4>
+                    <p><strong>八门：</strong>${bestDir.详情.八门} - ${bestDir.详情.门吉凶.desc}</p>
+                    <p><strong>九星：</strong>${bestDir.详情.九星} - ${bestDir.详情.星吉凶.desc}</p>
+                    <p><strong>建议：</strong>此方位最为有利，可作为出行、办事的首选方向。</p>
+                </div>
+            `;
+
+            // 显示事项预测
+            const prediction = data.事项预测;
+            let predictionHTML = `
+                <div class="prediction-box">
+                    <h4>${prediction.事项} - ${prediction.综合吉凶}</h4>
+                    <p><strong>最佳宫位：</strong>${prediction.最佳宫位}</p>
+                    <p><strong>八门：</strong>${prediction.详情.八门} - ${prediction.详情.门吉凶.desc}</p>
+                    <p><strong>九星：</strong>${prediction.详情.九星} - ${prediction.详情.星吉凶.desc}</p>
+                    <p style="margin-top: 10px; font-size: 16px;"><strong>${prediction.建议}</strong></p>
+                </div>
+            `;
+
+            // 如果有AI解读，添加AI解读部分
+            if (hasAI && data.ai_interpretation) {
+                predictionHTML += `
+                    <div class="prediction-box" style="background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%); border-color: #667eea;">
+                        <h4>🤖 AI深度解读</h4>
+                        <p style="white-space: pre-wrap;">${data.ai_interpretation}</p>
+                    </div>
+                `;
+            }
+
+            document.getElementById('matterPrediction').innerHTML = predictionHTML;
+
+            // 显示八方分析
+            const directions = data.八方分析;
+            const directionAnalysis = document.getElementById('directionAnalysis');
+            directionAnalysis.innerHTML = '';
+
+            Object.values(directions).forEach(dir => {
+                const fortuneClass = dir.综合吉凶.replace(/[大]/g, '');
+                directionAnalysis.innerHTML += `
+                    <div class="direction-item">
+                        <h4>${dir.宫位} <span class="fortune-badge fortune-${fortuneClass}">${dir.综合吉凶}</span></h4>
+                        <p><strong>八门：</strong>${dir.详情.八门} (${dir.详情.门吉凶.type})</p>
+                        <p><strong>九星：</strong>${dir.详情.九星} (${dir.详情.星吉凶.type})</p>
+                        <p><strong>八神：</strong>${dir.详情.八神}</p>
+                        <p style="margin-top: 5px; font-size: 13px; color: #666;">${dir.详情.门吉凶.desc}</p>
+                    </div>
+                `;
+            });
+
+            document.getElementById('result').classList.add('show');
+            document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>

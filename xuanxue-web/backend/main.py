@@ -20,6 +20,7 @@ from core.zeri import get_today_fortune, find_auspicious_days
 from core.calendar import solar_to_lunar, lunar_to_solar, get_lichun_date
 from core.ganzhi import get_year_ganzhi
 from core.llm_helper import llm_helper
+from core.qimen import divine_qimen, get_current_qimen
 
 app = FastAPI(
     title="玄学预测系统API",
@@ -137,6 +138,118 @@ async def liuyao_divination(question: str = ""):
         raise HTTPException(status_code=500, detail=f"占卜错误: {str(e)}")
 
 
+@app.post("/api/ai/enhance-liuyao")
+async def ai_enhance_liuyao(question: str = ""):
+    """
+    AI增强六爻占卜
+    
+    参数:
+    - question: 占卜的问题（可选）
+    
+    返回: 卦象 + AI深度解读
+    """
+    try:
+        result = divine(question)
+        
+        # AI增强解读
+        if llm_helper.is_available():
+            ai_interpretation = llm_helper.enhance_liuyao_interpretation(result)
+            if ai_interpretation:
+                result['ai_interpretation'] = ai_interpretation
+        
+        return {
+            "success": True,
+            "data": result,
+            "ai_enabled": llm_helper.is_available()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"占卜错误: {str(e)}")
+
+
+@app.post("/api/divination/qimen")
+async def qimen_divination(
+    year: int,
+    month: int,
+    day: int,
+    hour: int,
+    minute: int = 0,
+    matter_type: str = "通用"
+):
+    """
+    奇门遁甲占卜API
+    
+    参数:
+    - year, month, day, hour, minute: 时间
+    - matter_type: 事项类型（求财、求职、婚姻、出行、诉讼、疾病、学业、通用）
+    
+    返回: 奇门遁甲盘和分析
+    """
+    try:
+        result = divine_qimen(year, month, day, hour, minute, matter_type)
+        return {
+            "success": True,
+            "data": result
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"占卜错误: {str(e)}")
+
+
+@app.get("/api/divination/qimen/current")
+async def get_current_qimen_api(matter_type: str = "通用"):
+    """
+    获取当前时刻的奇门遁甲盘
+    
+    参数:
+    - matter_type: 事项类型（求财、求职、婚姻、出行、诉讼、疾病、学业、通用）
+    
+    返回: 当前时刻的奇门遁甲盘和分析
+    """
+    try:
+        result = get_current_qimen(matter_type)
+        return {
+            "success": True,
+            "data": result
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"占卜错误: {str(e)}")
+
+
+@app.post("/api/ai/enhance-qimen")
+async def ai_enhance_qimen(
+    year: int,
+    month: int,
+    day: int,
+    hour: int,
+    minute: int = 0,
+    matter_type: str = "通用"
+):
+    """
+    AI增强奇门遁甲占卜
+    
+    参数:
+    - year, month, day, hour, minute: 时间
+    - matter_type: 事项类型
+    
+    返回: 奇门遁甲盘 + AI深度解读
+    """
+    try:
+        result = divine_qimen(year, month, day, hour, minute, matter_type)
+        
+        # AI增强解读
+        if llm_helper.is_available():
+            ai_interpretation = llm_helper.enhance_qimen_interpretation(result, matter_type)
+            if ai_interpretation:
+                result['ai_interpretation'] = ai_interpretation
+        
+        return {
+            "success": True,
+            "data": result,
+            "ai_enabled": llm_helper.is_available()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"占卜错误: {str(e)}")
+
+
 @app.post("/api/calendar/solar-to-lunar")
 async def convert_solar_to_lunar(request: CalendarRequest):
     """阳历转农历"""
@@ -200,6 +313,35 @@ async def get_date_fortune_api(year: int, month: int, day: int):
         return {
             "success": True,
             "data": fortune
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"计算错误: {str(e)}")
+
+
+@app.get("/api/ai/enhance-zeri/{year}/{month}/{day}")
+async def ai_enhance_zeri(year: int, month: int, day: int, purpose: str = "通用"):
+    """
+    AI增强择日分析
+    
+    参数:
+    - year, month, day: 日期
+    - purpose: 用途
+    
+    返回: 日期运势 + AI深度建议
+    """
+    try:
+        fortune = get_today_fortune(year, month, day)
+        
+        # AI增强建议
+        if llm_helper.is_available():
+            ai_advice = llm_helper.enhance_zeri_advice(fortune, purpose)
+            if ai_advice:
+                fortune['ai_advice'] = ai_advice
+        
+        return {
+            "success": True,
+            "data": fortune,
+            "ai_enabled": llm_helper.is_available()
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"计算错误: {str(e)}")

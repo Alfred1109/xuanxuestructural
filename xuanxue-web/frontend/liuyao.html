@@ -262,7 +262,8 @@
 
         <div class="nav-links">
             <a href="index.html">八字排盘</a>
-            <a href="liuyao.html" style="background: rgba(255,255,255,0.4);">六爻占卜</a>
+            <a href="liuyao.html" class="active">六爻占卜</a>
+            <a href="qimen.html">奇门遁甲</a>
             <a href="zeri.html">择日学</a>
         </div>
 
@@ -282,7 +283,10 @@
                     <textarea id="question" placeholder="例如：近期事业发展如何？感情运势怎样？投资是否顺利？等等..."></textarea>
                 </div>
 
-                <button type="submit" class="btn">🎲 开始占卜</button>
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn" style="flex: 1;">🎲 开始占卜</button>
+                    <button type="button" class="btn" style="flex: 1; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);" onclick="divineWithAI()">🤖 AI深度解读</button>
+                </div>
             </form>
         </div>
 
@@ -364,7 +368,42 @@
             }
         });
 
-        function displayResult(data) {
+        async function divineWithAI() {
+            const question = document.getElementById('question').value.trim() || '未指定问题';
+
+            // 显示加载动画
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('loading').querySelector('p').textContent = '正在进行AI深度解读...';
+            document.getElementById('result').classList.remove('show');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/ai/enhance-liuyao?question=${encodeURIComponent(question)}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('API请求失败');
+                }
+
+                const result = await response.json();
+                
+                if (!result.ai_enabled) {
+                    alert('AI服务未配置，将显示基础解读\n\n如需使用AI功能，请设置ARK_API_KEY环境变量');
+                }
+                
+                displayResult(result.data, result.ai_enabled);
+            } catch (error) {
+                alert('占卜失败：' + error.message + '\n\n请确保后端服务已启动');
+            } finally {
+                document.getElementById('loading').classList.remove('show');
+                document.getElementById('loading').querySelector('p').textContent = '正在摇卦中...';
+            }
+        }
+
+        function displayResult(data, hasAI = false) {
             // 显示问题和时间
             document.getElementById('questionText').textContent = data.question || '未指定问题';
             document.getElementById('timeText').textContent = data.timestamp;
@@ -408,7 +447,7 @@
 
             // 显示解释
             const interp = data.interpretation;
-            document.getElementById('interpretationContent').innerHTML = `
+            let interpretationHTML = `
                 <div class="analysis-box" style="background: #e8f5e9; border-color: #4caf50;">
                     <h4 style="margin-bottom: 10px;">卦象总结</h4>
                     <p>${interp.summary}</p>
@@ -429,6 +468,18 @@
                     <p>${interp.timing}</p>
                 </div>
             `;
+
+            // 如果有AI解读，添加AI解读部分
+            if (hasAI && data.ai_interpretation) {
+                interpretationHTML += `
+                    <div class="analysis-box" style="background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%); border-color: #667eea;">
+                        <h4 style="margin-bottom: 10px;">🤖 AI深度解读</h4>
+                        <p style="white-space: pre-wrap;">${data.ai_interpretation}</p>
+                    </div>
+                `;
+            }
+
+            document.getElementById('interpretationContent').innerHTML = interpretationHTML;
 
             // 显示结果
             document.getElementById('result').classList.add('show');

@@ -230,7 +230,8 @@
         <div class="nav-links">
             <a href="index.html">八字排盘</a>
             <a href="liuyao.html">六爻占卜</a>
-            <a href="zeri.html" style="background: rgba(255,255,255,0.4);">择日学</a>
+            <a href="qimen.html">奇门遁甲</a>
+            <a href="zeri.html" class="active">择日学</a>
         </div>
 
         <div class="card">
@@ -241,7 +242,10 @@
 
             <!-- 今日运势 -->
             <div id="today-tab" class="tab-content active">
-                <button class="btn" onclick="getTodayFortune()">查看今日运势</button>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn" style="flex: 1;" onclick="getTodayFortune()">查看今日运势</button>
+                    <button class="btn" style="flex: 1; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);" onclick="getTodayFortuneWithAI()">🤖 AI深度解读</button>
+                </div>
             </div>
 
             <!-- 查找吉日 -->
@@ -361,7 +365,36 @@
             }
         }
 
-        function displayTodayFortune(data) {
+        async function getTodayFortuneWithAI() {
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('loading').querySelector('p').textContent = '正在进行AI深度解读...';
+            document.getElementById('today-result').classList.remove('show');
+
+            try {
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = now.getMonth() + 1;
+                const day = now.getDate();
+                
+                const response = await fetch(`${API_BASE_URL}/api/ai/enhance-zeri/${year}/${month}/${day}?purpose=通用`);
+                if (!response.ok) throw new Error('API请求失败');
+                
+                const result = await response.json();
+                
+                if (!result.ai_enabled) {
+                    alert('AI服务未配置，将显示基础解读\n\n如需使用AI功能，请设置ARK_API_KEY环境变量');
+                }
+                
+                displayTodayFortune(result.data, result.ai_enabled);
+            } catch (error) {
+                alert('查询失败：' + error.message);
+            } finally {
+                document.getElementById('loading').classList.remove('show');
+                document.getElementById('loading').querySelector('p').textContent = '正在查询中...';
+            }
+        }
+
+        function displayTodayFortune(data, hasAI = false) {
             document.getElementById('fortuneDate').textContent = `${data.date} ${data.weekday}`;
             document.getElementById('fortuneLevel').textContent = data.level;
             document.getElementById('fortuneLevel').style.color = data.color;
@@ -371,7 +404,16 @@
             document.getElementById('fortuneXingxiu').textContent = data.xingxiu;
             document.getElementById('fortuneSuitable').textContent = data.suitable.join('、');
             document.getElementById('fortuneAvoid').textContent = data.avoid.join('、');
-            document.getElementById('fortuneAdvice').textContent = data.fortune_advice;
+            
+            // 显示建议
+            let adviceHTML = data.fortune_advice;
+            
+            // 如果有AI解读，添加AI解读部分
+            if (hasAI && data.ai_advice) {
+                adviceHTML += `<br><br><strong style="color: #ffd700;">🤖 AI深度解读：</strong><br>${data.ai_advice}`;
+            }
+            
+            document.getElementById('fortuneAdvice').innerHTML = adviceHTML;
 
             // 设置卡片颜色
             const card = document.getElementById('fortuneCard');

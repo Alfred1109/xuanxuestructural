@@ -146,6 +146,73 @@ class LLMHelper:
             print(f"LLM增强解读失败: {str(e)}")
             return None
     
+    def enhance_qimen_interpretation(self, qimen_data: Dict, matter_type: str = "通用") -> Optional[str]:
+        """
+        增强奇门遁甲解读
+        
+        Args:
+            qimen_data: 奇门遁甲数据
+            matter_type: 事项类型
+        
+        Returns:
+            AI增强的解读文本
+        """
+        if not self.is_available():
+            return None
+        
+        try:
+            time_info = qimen_data['时间信息']
+            dun_info = qimen_data['遁甲信息']
+            best_dir = qimen_data['最佳方位']
+            prediction = qimen_data['事项预测']
+            
+            prompt = f"""你是一位精通奇门遁甲的预测大师，请根据以下奇门遁甲盘信息，为问卜者提供详细的解读。
+
+时间信息：
+- 时间：{time_info['阳历']}
+- 四柱：{time_info['年柱']} {time_info['月柱']} {time_info['日柱']} {time_info['时柱']}
+- 遁甲：{dun_info['阴阳遁']} {dun_info['局数']}
+
+事项类型：{matter_type}
+
+最佳方位：{best_dir['最佳方位']} ({best_dir['吉凶']})
+- 八门：{best_dir['详情']['八门']}
+- 九星：{best_dir['详情']['九星']}
+
+事项预测：
+- 综合吉凶：{prediction['综合吉凶']}
+- 最佳宫位：{prediction['最佳宫位']}
+- 建议：{prediction['建议']}
+
+请从以下方面进行解读：
+1. 当前时局的整体分析
+2. 针对"{matter_type}"事项的具体预测
+3. 最佳行动方位和时机
+4. 需要注意的不利因素
+5. 具体的行动建议
+6. 成功概率和关键要点
+
+要求：
+- 结合奇门遁甲理论进行专业分析
+- 语言通俗易懂，避免过于晦涩
+- 给出实用可行的建议
+- 保持客观理性的态度
+- 字数控制在500字左右
+"""
+            
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.7,
+                max_tokens=1000
+            )
+            
+            return response.choices[0].message.content
+            
+        except Exception as e:
+            print(f"LLM增强解读失败: {str(e)}")
+            return None
+    
     def enhance_zeri_advice(self, zeri_data: Dict, purpose: str = "通用") -> Optional[str]:
         """
         增强择日建议
