@@ -241,6 +241,17 @@
             <a href="liuyao.html" style="color: white; text-decoration: none; padding: 10px 20px; background: rgba(255,255,255,0.2); border-radius: 20px; margin: 0 10px;">六爻占卜</a>
             <a href="qimen.html" style="color: white; text-decoration: none; padding: 10px 20px; background: rgba(255,255,255,0.2); border-radius: 20px; margin: 0 10px;">奇门遁甲</a>
             <a href="zeri.html" style="color: white; text-decoration: none; padding: 10px 20px; background: rgba(255,255,255,0.2); border-radius: 20px; margin: 0 10px;">择日学</a>
+            <a href="ai-chat.html" style="color: white; text-decoration: none; padding: 10px 20px; background: rgba(255,255,255,0.2); border-radius: 20px; margin: 0 10px;">🤖 AI助手</a>
+        </div>
+
+        <div id="aiStatusBanner" style="background: white; border-radius: 10px; padding: 12px 20px; margin-bottom: 20px; display: none; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span id="aiStatusDot" style="width: 10px; height: 10px; border-radius: 50%; display: inline-block;"></span>
+                    <span id="aiStatusText" style="font-size: 14px;"></span>
+                </div>
+                <a href="AI配置指南.md" target="_blank" style="font-size: 12px; color: #667eea; text-decoration: none;">配置指南</a>
+            </div>
         </div>
 
         <div class="card">
@@ -352,6 +363,36 @@
     <script>
         const API_BASE_URL = 'http://localhost:8002';
 
+        // 检查AI状态
+        async function checkAIStatus() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/ai/status`);
+                const result = await response.json();
+                
+                const banner = document.getElementById('aiStatusBanner');
+                const dot = document.getElementById('aiStatusDot');
+                const text = document.getElementById('aiStatusText');
+                
+                banner.style.display = 'block';
+                
+                if (result.data.available) {
+                    dot.style.background = '#4caf50';
+                    text.textContent = `✓ AI服务正常 (${result.data.model})`;
+                    text.style.color = '#4caf50';
+                } else {
+                    dot.style.background = '#ff9800';
+                    text.textContent = '⚠️ AI服务未配置 - 点击右侧查看配置指南';
+                    text.style.color = '#ff9800';
+                }
+            } catch (error) {
+                // 静默失败，不显示横幅
+                console.log('AI status check failed:', error);
+            }
+        }
+
+        // 页面加载时检查AI状态
+        checkAIStatus();
+
         document.getElementById('baziForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -384,7 +425,15 @@
                 const result = await response.json();
                 displayResult(result.data);
             } catch (error) {
-                alert('计算失败：' + error.message + '\n\n请确保后端服务已启动（运行 python backend/main.py）');
+                let errorMsg = '计算失败：' + error.message;
+                
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    errorMsg += '\n\n❌ 无法连接到后端服务\n\n解决方法：\n1. 确保后端已启动：./start.sh\n2. 检查端口8002是否被占用\n3. 查看日志：tail -f /tmp/xuanxue-backend.log';
+                } else if (error.message.includes('API请求失败')) {
+                    errorMsg += '\n\n❌ 服务器返回错误\n\n请查看后端日志了解详情：\ntail -f /tmp/xuanxue-backend.log';
+                }
+                
+                alert(errorMsg);
             } finally {
                 document.getElementById('loading').classList.remove('show');
             }
@@ -595,7 +644,12 @@
                 const result = await response.json();
                 
                 if (!result.ai_enabled) {
-                    alert('AI服务未配置或不可用\n\n将显示基础分析结果');
+                    const confirmMsg = 'AI服务未配置\n\n将显示基础分析结果。\n\n如需启用AI功能，请参考《AI配置指南.md》配置ARK_API_KEY环境变量。\n\n是否继续查看基础分析？';
+                    if (!confirm(confirmMsg)) {
+                        document.getElementById('loading').classList.remove('show');
+                        document.getElementById('loading').querySelector('p').textContent = '正在计算中...';
+                        return;
+                    }
                 }
                 
                 displayResult(result.data);
@@ -607,7 +661,15 @@
                     }, 500);
                 }
             } catch (error) {
-                alert('AI分析失败：' + error.message + '\n\n请确保：\n1. 后端服务已启动\n2. 已配置ARK_API_KEY环境变量');
+                let errorMsg = 'AI分析失败：' + error.message;
+                
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    errorMsg += '\n\n❌ 无法连接到后端服务\n\n解决方法：\n1. 确保后端已启动：./start.sh\n2. 检查端口8002是否被占用';
+                } else {
+                    errorMsg += '\n\n请确保：\n1. 后端服务已启动\n2. 已配置ARK_API_KEY环境变量\n\n配置方法见《AI配置指南.md》';
+                }
+                
+                alert(errorMsg);
             } finally {
                 document.getElementById('loading').classList.remove('show');
                 document.getElementById('loading').querySelector('p').textContent = '正在计算中...';

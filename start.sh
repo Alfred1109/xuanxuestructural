@@ -12,6 +12,22 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 BACKEND_DIR="$SCRIPT_DIR/xuanxue-web/backend"
 FRONTEND_DIR="$SCRIPT_DIR/xuanxue-web/frontend"
 
+# 加载环境变量
+if [ -f "$HOME/.bashrc" ]; then
+    source "$HOME/.bashrc" 2>/dev/null || true
+fi
+
+# 检查AI配置
+if [ -n "$ARK_API_KEY" ]; then
+    echo "✓ 检测到AI配置 (ARK_API_KEY)"
+    AI_STATUS="已启用"
+else
+    echo "⚠️  未检测到AI配置"
+    echo "   如需AI功能，请设置: export ARK_API_KEY=your_key"
+    AI_STATUS="未配置"
+fi
+echo ""
+
 # 检查虚拟环境是否存在
 if [ ! -d "$BACKEND_DIR/venv" ]; then
     echo "❌ 虚拟环境不存在，正在创建..."
@@ -33,12 +49,18 @@ fi
 # 启动后端服务器（后台运行）
 echo "🚀 启动后端服务器..."
 cd "$BACKEND_DIR"
-venv/bin/python main.py > /tmp/xuanxue-backend.log 2>&1 &
+# 传递环境变量给后端进程
+if [ -n "$ARK_API_KEY" ]; then
+    ARK_API_KEY="$ARK_API_KEY" venv/bin/python main.py > /tmp/xuanxue-backend.log 2>&1 &
+else
+    venv/bin/python main.py > /tmp/xuanxue-backend.log 2>&1 &
+fi
 BACKEND_PID=$!
 echo "✓ 后端服务器已启动 (PID: $BACKEND_PID)"
 echo "   访问地址: http://localhost:8002"
 echo "   API文档: http://localhost:8002/docs"
 echo "   日志文件: /tmp/xuanxue-backend.log"
+echo "   AI状态: $AI_STATUS"
 echo ""
 
 # 等待后端启动
@@ -89,7 +111,11 @@ echo "   或运行: ./stop.sh"
 echo ""
 echo "💡 提示："
 echo "   - 后端日志: tail -f /tmp/xuanxue-backend.log"
-echo "   - 如需AI增强功能，请设置环境变量: export ARK_API_KEY=your_key"
+if [ -z "$ARK_API_KEY" ]; then
+    echo "   - AI功能: 未启用，设置方法见 AI配置指南.md"
+else
+    echo "   - AI功能: 已启用 ✓"
+fi
 echo ""
 
 # 保存PID到文件，方便停止
