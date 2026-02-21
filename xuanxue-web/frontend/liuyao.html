@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>六爻占卜 - 玄学预测系统</title>
+    <link rel="stylesheet" href="common-header.css">
     <style>
         * {
             margin: 0;
@@ -13,7 +14,7 @@
 
         body {
             font-family: 'Microsoft YaHei', Arial, sans-serif;
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
         }
@@ -21,47 +22,6 @@
         .container {
             max-width: 1000px;
             margin: 0 auto;
-        }
-
-        .header {
-            text-align: center;
-            color: white;
-            margin-bottom: 30px;
-        }
-
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .header p {
-            font-size: 1.1em;
-            opacity: 0.9;
-        }
-
-        .nav-links {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .nav-links a {
-            color: white;
-            text-decoration: none;
-            padding: 10px 20px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 20px;
-            margin: 0 10px;
-            display: inline-block;
-            transition: all 0.3s;
-        }
-
-        .nav-links a:hover {
-            background: rgba(255,255,255,0.3);
-        }
-
-        .nav-links a.active {
-            background: rgba(255,255,255,0.4);
         }
 
         .card {
@@ -259,20 +219,25 @@
     </style>
 </head>
 <body>
+    <!-- 统一的顶部通栏 -->
+    <div class="unified-header">
+        <div class="container">
+            <div class="site-title">
+                <h1>🔮 玄学预测系统</h1>
+                <p>传统命理学 · 现代科技 · 智能分析</p>
+            </div>
+            <nav class="unified-nav">
+                <a href="index.html">八字排盘</a>
+                <a href="liuyao.html" class="active">六爻占卜</a>
+                <a href="qimen.html">奇门遁甲</a>
+                <a href="zeri.html">择日学</a>
+                <a href="ai-chat.html">🤖 AI助手</a>
+                <a href="http://localhost:8004" target="_blank">📚 知识库</a>
+            </nav>
+        </div>
+    </div>
+
     <div class="container">
-        <div class="header">
-            <h1>🎲 六爻占卜</h1>
-            <p>传统周易占卜，探寻事物发展趋势</p>
-        </div>
-
-        <div class="nav-links">
-            <a href="index.html">八字排盘</a>
-            <a href="liuyao.html" class="active">六爻占卜</a>
-            <a href="qimen.html">奇门遁甲</a>
-            <a href="zeri.html">择日学</a>
-            <a href="ai-chat.html">🤖 AI助手</a>
-        </div>
-
         <div class="card">
             <div class="tips">
                 <strong>💡 占卜须知：</strong><br>
@@ -343,6 +308,27 @@
 
     <script>
         const API_BASE_URL = 'http://localhost:8002';
+
+        // Markdown渲染函数
+        function renderMarkdown(text) {
+            if (!text) return '';
+            
+            let html = text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/^### (.*$)/gim, '<h4 style="margin-top: 15px; margin-bottom: 10px; color: #f5576c;">$1</h4>')
+                .replace(/^## (.*$)/gim, '<h3 style="margin-top: 15px; margin-bottom: 10px; color: #f5576c;">$1</h3>')
+                .replace(/^# (.*$)/gim, '<h2 style="margin-top: 15px; margin-bottom: 10px; color: #f5576c;">$1</h2>')
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.+?)\*/g, '<em>$1</em>')
+                .replace(/^\- (.+)$/gim, '<li style="margin-left: 20px;">$1</li>')
+                .replace(/^\* (.+)$/gim, '<li style="margin-left: 20px;">$1</li>')
+                .replace(/\n\n/g, '<br><br>')
+                .replace(/\n/g, '<br>');
+            
+            return html;
+        }
 
         document.getElementById('liuyaoForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -480,7 +466,7 @@
                 interpretationHTML += `
                     <div class="analysis-box" style="background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%); border-color: #667eea;">
                         <h4 style="margin-bottom: 10px;">🤖 AI深度解读</h4>
-                        <p style="white-space: pre-wrap;">${data.ai_interpretation}</p>
+                        <div style="line-height: 1.8;">${renderMarkdown(data.ai_interpretation)}</div>
                     </div>
                 `;
             }

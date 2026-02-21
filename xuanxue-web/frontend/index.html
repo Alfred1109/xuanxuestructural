@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>玄学预测系统 - 八字排盘</title>
+    <link rel="stylesheet" href="common-header.css">
     <style>
         * {
             margin: 0;
@@ -21,23 +22,6 @@
         .container {
             max-width: 1200px;
             margin: 0 auto;
-        }
-
-        .header {
-            text-align: center;
-            color: white;
-            margin-bottom: 30px;
-        }
-
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .header p {
-            font-size: 1.1em;
-            opacity: 0.9;
         }
 
         .card {
@@ -230,19 +214,25 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🔮 玄学预测系统</h1>
-            <p>基于传统命理学的八字排盘与分析</p>
+    <!-- 统一的顶部通栏 -->
+    <div class="unified-header">
+        <div class="container">
+            <div class="site-title">
+                <h1>🔮 玄学预测系统</h1>
+                <p>传统命理学 · 现代科技 · 智能分析</p>
+            </div>
+            <nav class="unified-nav">
+                <a href="index.html" class="active">八字排盘</a>
+                <a href="liuyao.html">六爻占卜</a>
+                <a href="qimen.html">奇门遁甲</a>
+                <a href="zeri.html">择日学</a>
+                <a href="ai-chat.html">🤖 AI助手</a>
+                <a href="http://localhost:8004" target="_blank">📚 知识库</a>
+            </nav>
         </div>
+    </div>
 
-        <div style="text-align: center; margin-bottom: 20px;">
-            <a href="index.html" style="color: white; text-decoration: none; padding: 10px 20px; background: rgba(255,255,255,0.4); border-radius: 20px; margin: 0 10px;">八字排盘</a>
-            <a href="liuyao.html" style="color: white; text-decoration: none; padding: 10px 20px; background: rgba(255,255,255,0.2); border-radius: 20px; margin: 0 10px;">六爻占卜</a>
-            <a href="qimen.html" style="color: white; text-decoration: none; padding: 10px 20px; background: rgba(255,255,255,0.2); border-radius: 20px; margin: 0 10px;">奇门遁甲</a>
-            <a href="zeri.html" style="color: white; text-decoration: none; padding: 10px 20px; background: rgba(255,255,255,0.2); border-radius: 20px; margin: 0 10px;">择日学</a>
-            <a href="ai-chat.html" style="color: white; text-decoration: none; padding: 10px 20px; background: rgba(255,255,255,0.2); border-radius: 20px; margin: 0 10px;">🤖 AI助手</a>
-        </div>
+    <div class="container">
 
         <div id="aiStatusBanner" style="background: white; border-radius: 10px; padding: 12px 20px; margin-bottom: 20px; display: none; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
             <div style="display: flex; align-items: center; justify-content: space-between;">
@@ -362,6 +352,33 @@
 
     <script>
         const API_BASE_URL = 'http://localhost:8002';
+
+        // Markdown渲染函数
+        function renderMarkdown(text) {
+            if (!text) return '';
+            
+            let html = text
+                // 转义HTML特殊字符
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                // 标题
+                .replace(/^### (.*$)/gim, '<h4 style="margin-top: 15px; margin-bottom: 10px; color: #667eea;">$1</h4>')
+                .replace(/^## (.*$)/gim, '<h3 style="margin-top: 15px; margin-bottom: 10px; color: #667eea;">$1</h3>')
+                .replace(/^# (.*$)/gim, '<h2 style="margin-top: 15px; margin-bottom: 10px; color: #667eea;">$1</h2>')
+                // 粗体
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                // 斜体
+                .replace(/\*(.+?)\*/g, '<em>$1</em>')
+                // 列表项
+                .replace(/^\- (.+)$/gim, '<li style="margin-left: 20px;">$1</li>')
+                .replace(/^\* (.+)$/gim, '<li style="margin-left: 20px;">$1</li>')
+                // 换行
+                .replace(/\n\n/g, '<br><br>')
+                .replace(/\n/g, '<br>');
+            
+            return html;
+        }
 
         // 检查AI状态
         async function checkAIStatus() {
@@ -600,7 +617,7 @@
             // 显示AI分析（如果有）
             if (data.ai_analysis) {
                 document.getElementById('aiAnalysisSection').style.display = 'block';
-                document.getElementById('aiAnalysisContent').textContent = data.ai_analysis;
+                document.getElementById('aiAnalysisContent').innerHTML = renderMarkdown(data.ai_analysis);
             } else {
                 document.getElementById('aiAnalysisSection').style.display = 'none';
             }

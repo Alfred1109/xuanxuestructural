@@ -7,7 +7,7 @@ echo "  玄学预测系统 - 停止服务..."
 echo "======================================"
 echo ""
 
-# 从PID文件读取进程ID
+# 停止后端服务
 if [ -f /tmp/xuanxue-backend.pid ]; then
     BACKEND_PID=$(cat /tmp/xuanxue-backend.pid)
     
@@ -29,7 +29,7 @@ if [ -f /tmp/xuanxue-backend.pid ]; then
     
     rm -f /tmp/xuanxue-backend.pid
 else
-    echo "⚠️  未找到PID文件，尝试查找进程..."
+    echo "⚠️  未找到后端PID文件，尝试查找进程..."
     
     # 尝试通过端口查找进程
     PIDS=$(lsof -ti:8002 2>/dev/null)
@@ -38,9 +38,42 @@ else
         echo "🛑 找到占用8002端口的进程: $PIDS"
         kill $PIDS
         sleep 1
-        echo "✓ 进程已停止"
+        echo "✓ 后端进程已停止"
     else
         echo "✓ 没有找到运行中的后端服务"
+    fi
+fi
+
+# 停止MkDocs知识库服务
+if [ -f /tmp/xuanxue-mkdocs.pid ]; then
+    MKDOCS_PID=$(cat /tmp/xuanxue-mkdocs.pid)
+    
+    if ps -p $MKDOCS_PID > /dev/null 2>&1; then
+        echo "🛑 停止知识库服务 (PID: $MKDOCS_PID)..."
+        kill $MKDOCS_PID
+        sleep 1
+        
+        # 检查是否成功停止
+        if ps -p $MKDOCS_PID > /dev/null 2>&1; then
+            echo "⚠️  进程未响应，强制停止..."
+            kill -9 $MKDOCS_PID
+        fi
+        
+        echo "✓ 知识库服务已停止"
+    else
+        echo "⚠️  知识库服务未运行 (PID: $MKDOCS_PID)"
+    fi
+    
+    rm -f /tmp/xuanxue-mkdocs.pid
+else
+    # 尝试通过端口查找进程
+    PIDS=$(lsof -ti:8004 2>/dev/null)
+    
+    if [ -n "$PIDS" ]; then
+        echo "🛑 找到占用8004端口的进程: $PIDS"
+        kill $PIDS
+        sleep 1
+        echo "✓ 知识库进程已停止"
     fi
 fi
 
