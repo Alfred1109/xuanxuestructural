@@ -45,7 +45,7 @@ nav:
   - 择日学: 06_择日学.md
   - 玄学的局限与超越: 07_玄学的局限与超越.md
   - 玄学与现代科学: 08_玄学与现代科学.md
-  - 🔮 返回应用: http://localhost:8002/
+  - 🔮 返回应用: http://localhost:8003/
 
 # Markdown Extensions
 markdown_extensions:
