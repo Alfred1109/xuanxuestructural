@@ -3,10 +3,18 @@
 LLM Helper Module - AI-Enhanced Analysis
 """
 
-from openai import OpenAI
 import os
 import json
 from typing import Dict, Optional
+
+# 尝试导入 OpenAI，如果没有安装则设为 None
+try:
+    from openai import OpenAI
+    OPENAI_AVAILABLE = True
+except ImportError:
+    OpenAI = None
+    OPENAI_AVAILABLE = False
+    print("提示：openai 包未安装，AI增强功能将不可用")
 
 
 class LLMHelper:
@@ -16,7 +24,10 @@ class LLMHelper:
         # 从环境变量获取API KEY
         self.api_key = os.getenv('ARK_API_KEY')
         
-        if not self.api_key:
+        if not OPENAI_AVAILABLE:
+            print("警告：openai 包未安装，AI增强功能将不可用")
+            self.client = None
+        elif not self.api_key:
             print("警告：未设置 ARK_API_KEY 环境变量，AI增强功能将不可用")
             self.client = None
         else:
