@@ -91,24 +91,30 @@ else
 fi
 echo ""
 
-# 打开前端页面
-echo "🌐 打开前端页面..."
-FRONTEND_INDEX="$FRONTEND_DIR/index.html"
+# 启动前端HTTP服务器
+echo "🌐 启动前端服务器..."
+cd "$FRONTEND_DIR"
+python3 -m http.server 8003 > /tmp/xuanxue-frontend.log 2>&1 &
+FRONTEND_PID=$!
+echo "✓ 前端服务器已启动 (PID: $FRONTEND_PID)"
+echo "   访问地址: http://localhost:8003"
+echo "   日志文件: /tmp/xuanxue-frontend.log"
+echo $FRONTEND_PID > /tmp/xuanxue-frontend.pid
+echo ""
 
-if [ -f "$FRONTEND_INDEX" ]; then
-    # 尝试使用默认浏览器打开
-    if command -v xdg-open > /dev/null; then
-        xdg-open "$FRONTEND_INDEX" 2>/dev/null &
-        echo "✓ 前端页面已在浏览器中打开"
-    elif command -v gnome-open > /dev/null; then
-        gnome-open "$FRONTEND_INDEX" 2>/dev/null &
-        echo "✓ 前端页面已在浏览器中打开"
-    else
-        echo "⚠️  无法自动打开浏览器"
-        echo "   请手动打开: file://$FRONTEND_INDEX"
-    fi
+# 等待前端服务启动
+sleep 2
+
+# 打开浏览器
+if command -v xdg-open > /dev/null; then
+    xdg-open "http://localhost:8003/index.html" 2>/dev/null &
+    echo "✓ 前端页面已在浏览器中打开"
+elif command -v gnome-open > /dev/null; then
+    gnome-open "http://localhost:8003/index.html" 2>/dev/null &
+    echo "✓ 前端页面已在浏览器中打开"
 else
-    echo "❌ 前端文件不存在: $FRONTEND_INDEX"
+    echo "⚠️  无法自动打开浏览器"
+    echo "   请手动打开: http://localhost:8003/index.html"
 fi
 
 echo ""
@@ -117,7 +123,7 @@ echo "  系统启动完成！"
 echo "======================================"
 echo ""
 echo "📌 使用说明："
-echo "   - 前端界面: file://$FRONTEND_INDEX"
+echo "   - 前端界面: http://localhost:8003"
 echo "   - 后端API: http://localhost:8002"
 echo "   - API文档: http://localhost:8002/docs"
 if [ -f /tmp/xuanxue-mkdocs.pid ]; then
@@ -128,6 +134,7 @@ echo "📌 停止服务："
 echo "   运行: ./stop.sh"
 echo ""
 echo "💡 提示："
+echo "   - 前端日志: tail -f /tmp/xuanxue-frontend.log"
 echo "   - 后端日志: tail -f /tmp/xuanxue-backend.log"
 if [ -f /tmp/xuanxue-mkdocs.pid ]; then
     echo "   - 知识库日志: tail -f /tmp/xuanxue-mkdocs.log"
