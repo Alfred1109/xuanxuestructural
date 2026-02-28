@@ -50,9 +50,10 @@ def lunar_year_days(year: int) -> int:
     sum_days = 348  # 12个月，每月29天
     info = LUNAR_INFO[year - 1900]
     
-    # 计算12个月的大小月
+    # 计算12个月的大小月（从 0x8000 到 0x10）
+    # 注意：0x10000 位用于闰月大小，不能计入常规12个月
     for i in range(12):
-        if info & (0x10000 >> i):
+        if info & (0x8000 >> i):
             sum_days += 1
     
     # 加上闰月天数
@@ -100,6 +101,8 @@ def solar_to_lunar(year: int, month: int, day: int) -> Tuple[int, int, int, bool
     # 基准日期：1900年1月31日，农历1900年正月初一
     base_date = datetime(1900, 1, 31)
     target_date = datetime(year, month, day)
+    if target_date < base_date or target_date > datetime(2100, 12, 31):
+        raise ValueError("仅支持 1900-01-31 到 2100-12-31 的日期")
     
     offset = (target_date - base_date).days
     
@@ -150,6 +153,19 @@ def lunar_to_solar(year: int, month: int, day: int, is_leap: bool = False) -> Tu
     农历转阳历
     返回: (阳历年, 阳历月, 阳历日)
     """
+    if year < 1900 or year > 2100:
+        raise ValueError("农历年份仅支持 1900-2100")
+    if month < 1 or month > 12:
+        raise ValueError("农历月份必须在 1-12")
+
+    leap = leap_month(year)
+    if is_leap and leap != month:
+        raise ValueError(f"{year}年农历{month}月不是闰月")
+
+    max_day = leap_days(year) if is_leap else lunar_month_days(year, month)
+    if day < 1 or day > max_day:
+        raise ValueError(f"农历日期超出范围：{year}年{month}月最多{max_day}天")
+
     # 基准日期：1900年1月31日，农历1900年正月初一
     base_date = datetime(1900, 1, 31)
     

@@ -84,6 +84,7 @@ class DateSelection:
         """获取十二神（黄道黑道）"""
         day_ganzhi = get_day_ganzhi(self.year, self.month, self.day)
         day_gan = day_ganzhi[0]
+        day_zhi = day_ganzhi[1]
         
         # 根据日干确定起始神
         start_map = {
@@ -95,8 +96,9 @@ class DateSelection:
         }
         
         start_index = start_map.get(day_gan, 0)
-        hour_index = self.date.hour // 2  # 时辰索引
-        shen_index = (start_index + hour_index) % 12
+        # 按日支推进，避免固定 0 点导致结果失真
+        day_zhi_index = DIZHI.index(day_zhi)
+        shen_index = (start_index + day_zhi_index) % 12
         
         return SHIER_SHEN[shen_index]
     

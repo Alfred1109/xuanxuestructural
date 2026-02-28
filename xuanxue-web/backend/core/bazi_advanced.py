@@ -112,13 +112,20 @@ class BaZiAdvancedAnalysis:
     
     def _determine_pattern_type(self, strength: float, wuxing_count: Dict) -> str:
         """判断格局类型"""
-        if strength >= 5:
+        # 从格判定不能只看强弱分值，还要看五行是否明显偏一边
+        # 否则容易把普通身旺/身弱误判为从格
+        max_wuxing = max(wuxing_count, key=wuxing_count.get)
+        max_count = wuxing_count[max_wuxing]
+        total = sum(wuxing_count.values()) or 1.0
+        dominance_ratio = max_count / total
+        day_relation_to_max = self._get_wuxing_relation(self.day_wuxing, max_wuxing)
+
+        if strength >= 5 and dominance_ratio >= 0.38 and day_relation_to_max in ('同', '生我'):
             return '从强格'
-        elif strength <= -5:
+        elif strength <= -5 and dominance_ratio >= 0.38 and day_relation_to_max in ('克我', '我生', '我克'):
             return '从弱格'
         elif -2 <= strength <= 2:
             # 中和格局，看用神
-            max_wuxing = max(wuxing_count, key=wuxing_count.get)
             if max_wuxing == self.day_wuxing:
                 return '比劫格'
             else:
@@ -209,11 +216,13 @@ class BaZiAdvancedAnalysis:
                     break
         
         # 驿马（寅申巳亥）
+        # 经典规则：
+        # 寅午戌见申，申子辰见寅，巳酉丑见亥，亥卯未见巳
         yima_map = {
-            '寅': '申', '午': '寅', '戌': '寅',
+            '寅': '申', '午': '申', '戌': '申',
             '申': '寅', '子': '寅', '辰': '寅',
-            '巳': '亥', '酉': '巳', '丑': '巳',
-            '亥': '巳', '卯': '亥', '未': '亥'
+            '巳': '亥', '酉': '亥', '丑': '亥',
+            '亥': '巳', '卯': '巳', '未': '巳'
         }
         
         for zhi in self.chart.get_dizhi():
@@ -291,47 +300,64 @@ class BaZiAdvancedAnalysis:
     def _analyze_father(self, shishen: Dict) -> str:
         """分析父亲关系"""
         # 偏财代表父亲
-        if '偏财' in str(shishen.values()):
+        values = self._collect_shishen_values(shishen)
+        if '偏财' in values:
             return '与父亲关系较好，父亲对您有帮助。'
         return '父亲缘分一般，需要主动维系关系。'
     
     def _analyze_mother(self, shishen: Dict) -> str:
         """分析母亲关系"""
         # 正印代表母亲
-        if '正印' in str(shishen.values()):
+        values = self._collect_shishen_values(shishen)
+        if '正印' in values:
             return '与母亲关系亲密，母亲对您关爱有加。'
         return '母亲缘分一般，但仍有母爱呵护。'
     
     def _analyze_siblings(self, shishen: Dict) -> str:
         """分析兄弟姐妹关系"""
         # 比肩劫财代表兄弟姐妹
-        if '比肩' in str(shishen.values()) or '劫财' in str(shishen.values()):
+        values = self._collect_shishen_values(shishen)
+        if '比肩' in values or '劫财' in values:
             return '兄弟姐妹缘分深，互相帮助，但也可能有竞争。'
         return '兄弟姐妹缘分较浅，各自发展。'
     
     def _analyze_spouse(self, shishen: Dict) -> str:
         """分析配偶关系"""
+        values = self._collect_shishen_values(shishen)
         gender = self.chart.gender
         if gender == '男':
             # 男命看财星
-            if '正财' in str(shishen.values()):
+            if '正财' in values:
                 return '婚姻稳定，配偶贤惠顾家，夫妻关系和睦。'
-            elif '偏财' in str(shishen.values()):
+            elif '偏财' in values:
                 return '异性缘好，但需注意专一，避免感情波折。'
         else:
             # 女命看官星
-            if '正官' in str(shishen.values()):
+            if '正官' in values:
                 return '婚姻美满，配偶有责任心，家庭和谐。'
-            elif '七杀' in str(shishen.values()):
+            elif '七杀' in values:
                 return '配偶性格强势，需要互相理解包容。'
         return '婚姻缘分需要经营，注重沟通和理解。'
     
     def _analyze_children(self, shishen: Dict) -> str:
         """分析子女关系"""
         # 食伤代表子女
-        if '食神' in str(shishen.values()) or '伤官' in str(shishen.values()):
+        values = self._collect_shishen_values(shishen)
+        if '食神' in values or '伤官' in values:
             return '子女聪明伶俐，有才华，亲子关系融洽。'
         return '子女缘分正常，需要用心培养。'
+
+    def _collect_shishen_values(self, shishen: Dict) -> set:
+        """收集十神字典中的有效值，避免字符串包含判断带来的误判"""
+        values = set()
+        for value in shishen.values():
+            if isinstance(value, str) and value:
+                values.add(value)
+            elif isinstance(value, (list, tuple, set)):
+                for item in value:
+                    if isinstance(item, str) and item:
+                        values.add(item)
+        return values
 
 
 def get_advanced_analysis(bazi_chart) -> Dict:

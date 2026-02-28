@@ -170,6 +170,41 @@
             padding: 20px;
         }
 
+        .ai-status-banner {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            border-left: 4px solid #ff9800;
+            background: #fff8e1;
+            color: #8a6d3b;
+        }
+
+        .ai-status-banner.available {
+            border-left-color: #4caf50;
+            background: #e8f5e9;
+            color: #1b5e20;
+        }
+
+        .ai-status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ff9800;
+            flex-shrink: 0;
+        }
+
+        .ai-status-banner.available .ai-status-dot {
+            background: #4caf50;
+        }
+
+        .ai-status-meta {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
         .loading.show {
             display: block;
         }
@@ -212,6 +247,12 @@
     <div class="container">
 
         <div class="card">
+            <div class="ai-status-banner" id="aiStatusBanner">
+                <span class="ai-status-dot" id="aiStatusDot"></span>
+                <strong id="aiStatusText">正在检查AI状态...</strong>
+                <span class="ai-status-meta" id="aiStatusDetail"></span>
+            </div>
+
             <div class="tabs">
                 <button class="tab active" onclick="switchTab('today')">📆 今日运势</button>
                 <button class="tab" onclick="switchTab('search')">🔍 查找吉日</button>
@@ -304,29 +345,46 @@
         </div>
     </div>
 
+    <script src="config.js"></script>
+    <script src="common-ui.js"></script>
+    <script src="markdown.js"></script>
+    <script src="api-client.js"></script>
+    <script src="ai-status.js"></script>
     <script>
-        const API_BASE_URL = 'http://localhost:8002';
-
-        // Markdown渲染函数
-        function renderMarkdown(text) {
-            if (!text) return '';
-            
-            let html = text
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/^### (.*$)/gim, '<h4 style="margin-top: 15px; margin-bottom: 10px; color: #ffd700;">$1</h4>')
-                .replace(/^## (.*$)/gim, '<h3 style="margin-top: 15px; margin-bottom: 10px; color: #ffd700;">$1</h3>')
-                .replace(/^# (.*$)/gim, '<h2 style="margin-top: 15px; margin-bottom: 10px; color: #ffd700;">$1</h2>')
-                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                .replace(/\*(.+?)\*/g, '<em>$1</em>')
-                .replace(/^\- (.+)$/gim, '<li style="margin-left: 20px;">$1</li>')
-                .replace(/^\* (.+)$/gim, '<li style="margin-left: 20px;">$1</li>')
-                .replace(/\n\n/g, '<br><br>')
-                .replace(/\n/g, '<br>');
-            
-            return html;
+        const esc = (value) => (window.escapeHtml ? window.escapeHtml(value ?? '') : String(value ?? ''));
+        function sanitizeDayLevel(level) {
+            const allowed = ['大吉', '吉', '平', '凶'];
+            return allowed.includes(level) ? level : '平';
         }
+        function sanitizeColor(value) {
+            const text = String(value || '').trim();
+            const isHex = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(text);
+            const isRgb = /^rgba?\((\s*\d+\s*,){2,3}\s*[\d.]+\s*\)$/.test(text);
+            const isHsl = /^hsla?\((\s*[\d.]+\s*,){2}\s*[\d.]+%?\s*(,\s*[\d.]+\s*)?\)$/.test(text);
+            return isHex || isRgb || isHsl ? text : '#666666';
+        }
+        function isConnectivityError(error) {
+            const msg = String((error && error.message) || '');
+            return msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('无法连接');
+        }
+
+        const renderMarkdown = (text) => window.renderMarkdownSimple(text, '#ffd700');
+        const aiMonitor = window.createAIStatusMonitor({
+            bannerId: 'aiStatusBanner',
+            dotId: 'aiStatusDot',
+            textId: 'aiStatusText',
+            detailId: 'aiStatusDetail',
+            onTransition: function (state) {
+                if (state === 'unconfigured') {
+                    showToast('AI服务未配置，当前仅可使用基础解读', 'warn');
+                } else if (state === 'degraded') {
+                    showToast('AI服务波动中，将自动回退基础解读', 'warn');
+                } else if (state === 'offline') {
+                    showToast('后端连接异常，请检查服务状态', 'error');
+                }
+            }
+        });
+        aiMonitor.start();
 
         function switchTab(tab) {
             // 切换标签
@@ -351,13 +409,13 @@
             document.getElementById('today-result').classList.remove('show');
 
             try {
-                const response = await fetch(`${API_BASE_URL}/api/zeri/today`);
-                if (!response.ok) throw new Error('API请求失败');
-                
-                const result = await response.json();
+                const result = await window.apiClient.get('/api/zeri/today');
                 displayTodayFortune(result.data);
             } catch (error) {
-                alert('查询失败：' + error.message);
+                if (isConnectivityError(error)) {
+                    aiMonitor.applyState('offline', {});
+                }
+                showToast('查询失败：' + error.message, 'error');
             } finally {
                 document.getElementById('loading').classList.remove('show');
             }
@@ -374,18 +432,29 @@
                 const month = now.getMonth() + 1;
                 const day = now.getDate();
                 
-                const response = await fetch(`${API_BASE_URL}/api/ai/enhance-zeri/${year}/${month}/${day}?purpose=通用`);
-                if (!response.ok) throw new Error('API请求失败');
-                
-                const result = await response.json();
-                
-                if (!result.ai_enabled) {
-                    alert('AI服务未配置，将显示基础解读\n\n如需使用AI功能，请设置ARK_API_KEY环境变量');
+                const result = await window.apiClient.get(`/api/ai/enhance-zeri/${year}/${month}/${day}`, { purpose: '通用' });
+
+                if (!result.ai_enhanced && result.ai_message) {
+                    if (result.ai_enabled) {
+                        aiMonitor.applyState('degraded', { message: result.ai_message });
+                    } else {
+                        aiMonitor.applyState('unconfigured', { message: result.ai_message });
+                    }
+                    showToast(result.ai_message, 'warn');
+                } else if (result.ai_enhanced) {
+                    aiMonitor.applyState('available', {});
                 }
                 
-                displayTodayFortune(result.data, result.ai_enabled);
+                displayTodayFortune(result.data, !!result.ai_enhanced);
             } catch (error) {
-                alert('查询失败：' + error.message);
+                if (error.message.includes('AI服务未配置')) {
+                    aiMonitor.applyState('unconfigured', { message: error.message });
+                } else if (error.message.includes('AI服务暂时不可用')) {
+                    aiMonitor.applyState('degraded', { message: error.message });
+                } else if (isConnectivityError(error)) {
+                    aiMonitor.applyState('offline', {});
+                }
+                showToast('查询失败：' + error.message, 'error');
             } finally {
                 document.getElementById('loading').classList.remove('show');
                 document.getElementById('loading').querySelector('p').textContent = '正在查询中...';
@@ -395,7 +464,7 @@
         function displayTodayFortune(data, hasAI = false) {
             document.getElementById('fortuneDate').textContent = `${data.date} ${data.weekday}`;
             document.getElementById('fortuneLevel').textContent = data.level;
-            document.getElementById('fortuneLevel').style.color = data.color;
+            document.getElementById('fortuneLevel').style.color = sanitizeColor(data.color);
             document.getElementById('fortuneGanzhi').textContent = data.ganzhi;
             document.getElementById('fortuneJianxing').textContent = data.jianxing;
             document.getElementById('fortuneShen').textContent = `${data.shier_shen} (${data.huangdao_type})`;
@@ -404,7 +473,7 @@
             document.getElementById('fortuneAvoid').textContent = data.avoid.join('、');
             
             // 显示建议
-            let adviceHTML = data.fortune_advice;
+            let adviceHTML = esc(data.fortune_advice);
             
             // 如果有AI解读，添加AI解读部分
             if (hasAI && data.ai_advice) {
@@ -440,15 +509,18 @@
             document.getElementById('search-result').classList.remove('show');
 
             try {
-                const response = await fetch(
-                    `${API_BASE_URL}/api/zeri/auspicious?year=${year}&month=${month}&purpose=${encodeURIComponent(purpose)}&days=60`
-                );
-                if (!response.ok) throw new Error('API请求失败');
-                
-                const result = await response.json();
+                const result = await window.apiClient.get('/api/zeri/auspicious', {
+                    year,
+                    month,
+                    purpose,
+                    days: 60
+                });
                 displaySearchResult(result.data);
             } catch (error) {
-                alert('查询失败：' + error.message);
+                if (isConnectivityError(error)) {
+                    aiMonitor.applyState('offline', {});
+                }
+                showToast('查询失败：' + error.message, 'error');
             } finally {
                 document.getElementById('loading').classList.remove('show');
             }
@@ -462,18 +534,20 @@
             dayList.innerHTML = '';
 
             data.days.slice(0, 20).forEach(day => {
+                const safeLevel = sanitizeDayLevel(day.level);
+                const safeColor = sanitizeColor(day.color);
                 dayList.innerHTML += `
-                    <div class="day-card ${day.level}">
+                    <div class="day-card ${safeLevel}">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                            <h3 style="color: ${day.color}; margin: 0;">${day.date}</h3>
-                            <span style="background: ${day.color}; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold;">
-                                ${day.level}
+                            <h3 style="color: ${safeColor}; margin: 0;">${esc(day.date)}</h3>
+                            <span style="background: ${safeColor}; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold;">
+                                ${esc(day.level)}
                             </span>
                         </div>
-                        <p style="color: #666; margin-bottom: 10px;">${day.weekday} | ${day.ganzhi} | ${day.jianxing} | ${day.shier_shen}</p>
-                        <p style="margin: 5px 0;"><strong>评分：</strong>${day.score}</p>
-                        <p style="margin: 5px 0;"><strong>宜：</strong>${day.suitable.slice(0, 3).join('、')}</p>
-                        <p style="margin: 5px 0;"><strong>忌：</strong>${day.avoid.slice(0, 3).join('、')}</p>
+                        <p style="color: #666; margin-bottom: 10px;">${esc(day.weekday)} | ${esc(day.ganzhi)} | ${esc(day.jianxing)} | ${esc(day.shier_shen)}</p>
+                        <p style="margin: 5px 0;"><strong>评分：</strong>${esc(day.score)}</p>
+                        <p style="margin: 5px 0;"><strong>宜：</strong>${(day.suitable || []).slice(0, 3).map(item => esc(item)).join('、')}</p>
+                        <p style="margin: 5px 0;"><strong>忌：</strong>${(day.avoid || []).slice(0, 3).map(item => esc(item)).join('、')}</p>
                     </div>
                 `;
             });

@@ -322,6 +322,41 @@
             margin-bottom: 15px;
         }
 
+        .ai-status-banner {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            border-left: 4px solid #ff9800;
+            background: #fff8e1;
+            color: #8a6d3b;
+        }
+
+        .ai-status-banner.available {
+            border-left-color: #4caf50;
+            background: #e8f5e9;
+            color: #1b5e20;
+        }
+
+        .ai-status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ff9800;
+            flex-shrink: 0;
+        }
+
+        .ai-status-banner.available .ai-status-dot {
+            background: #4caf50;
+        }
+
+        .ai-status-meta {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
         .dun-info {
             background: #f3e5f5;
             padding: 15px;
@@ -469,6 +504,12 @@
     <div class="container">
 
         <div class="card">
+            <div class="ai-status-banner" id="aiStatusBanner">
+                <span class="ai-status-dot" id="aiStatusDot"></span>
+                <strong id="aiStatusText">正在检查AI状态...</strong>
+                <span class="ai-status-meta" id="aiStatusDetail"></span>
+            </div>
+
             <h2 style="margin-bottom: 20px; color: #667eea;">⏰ 选择时间与事项</h2>
             <form id="qimenForm">
                 <div class="form-row">
@@ -553,29 +594,39 @@
         </div>
     </div>
 
+    <script src="config.js"></script>
+    <script src="common-ui.js"></script>
+    <script src="markdown.js"></script>
+    <script src="api-client.js"></script>
+    <script src="ai-status.js"></script>
     <script>
-        const API_BASE_URL = 'http://localhost:8002';
-
-        // Markdown渲染函数
-        function renderMarkdown(text) {
-            if (!text) return '';
-            
-            let html = text
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/^### (.*$)/gim, '<h4 style="margin-top: 15px; margin-bottom: 10px; color: #4caf50;">$1</h4>')
-                .replace(/^## (.*$)/gim, '<h3 style="margin-top: 15px; margin-bottom: 10px; color: #4caf50;">$1</h3>')
-                .replace(/^# (.*$)/gim, '<h2 style="margin-top: 15px; margin-bottom: 10px; color: #4caf50;">$1</h2>')
-                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                .replace(/\*(.+?)\*/g, '<em>$1</em>')
-                .replace(/^\- (.+)$/gim, '<li style="margin-left: 20px;">$1</li>')
-                .replace(/^\* (.+)$/gim, '<li style="margin-left: 20px;">$1</li>')
-                .replace(/\n\n/g, '<br><br>')
-                .replace(/\n/g, '<br>');
-            
-            return html;
+        const esc = (value) => (window.escapeHtml ? window.escapeHtml(value ?? '') : String(value ?? ''));
+        function sanitizeFortuneType(value) {
+            const normalized = String(value || '').replace(/[大]/g, '');
+            return ['吉', '凶', '平'].includes(normalized) ? normalized : '平';
         }
+        function isConnectivityError(error) {
+            const msg = String((error && error.message) || '');
+            return msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('无法连接');
+        }
+
+        const renderMarkdown = (text) => window.renderMarkdownSimple(text, '#4caf50');
+        const aiMonitor = window.createAIStatusMonitor({
+            bannerId: 'aiStatusBanner',
+            dotId: 'aiStatusDot',
+            textId: 'aiStatusText',
+            detailId: 'aiStatusDetail',
+            onTransition: function (state) {
+                if (state === 'unconfigured') {
+                    showToast('AI服务未配置，当前仅可使用基础解读', 'warn');
+                } else if (state === 'degraded') {
+                    showToast('AI服务波动中，将自动回退基础解读', 'warn');
+                } else if (state === 'offline') {
+                    showToast('后端连接异常，请检查服务状态', 'error');
+                }
+            }
+        });
+        aiMonitor.start();
 
         // 页面加载时设置当前时间
         window.onload = function() {
@@ -610,18 +661,20 @@
             document.getElementById('result').classList.remove('show');
 
             try {
-                const response = await fetch(`${API_BASE_URL}/api/divination/qimen?year=${year}&month=${month}&day=${day}&hour=${hour}&minute=${minute}&matter_type=${encodeURIComponent(matterType)}`, {
-                    method: 'POST'
+                const result = await window.apiClient.post('/api/divination/qimen', {
+                    year,
+                    month,
+                    day,
+                    hour,
+                    minute,
+                    matter_type: matterType
                 });
-
-                if (!response.ok) {
-                    throw new Error('API请求失败');
-                }
-
-                const result = await response.json();
                 displayResult(result.data);
             } catch (error) {
-                alert('排盘失败：' + error.message + '\n\n请确保后端服务已启动');
+                if (isConnectivityError(error)) {
+                    aiMonitor.applyState('offline', {});
+                }
+                showToast('排盘失败：' + error.message + '\n\n请确保后端服务已启动', 'error');
             } finally {
                 document.getElementById('loading').classList.remove('show');
             }
@@ -640,23 +693,36 @@
             document.getElementById('result').classList.remove('show');
 
             try {
-                const response = await fetch(`${API_BASE_URL}/api/ai/enhance-qimen?year=${year}&month=${month}&day=${day}&hour=${hour}&minute=${minute}&matter_type=${encodeURIComponent(matterType)}`, {
-                    method: 'POST'
+                const result = await window.apiClient.post('/api/ai/enhance-qimen', {
+                    year,
+                    month,
+                    day,
+                    hour,
+                    minute,
+                    matter_type: matterType
                 });
 
-                if (!response.ok) {
-                    throw new Error('API请求失败');
+                if (!result.ai_enhanced && result.ai_message) {
+                    if (result.ai_enabled) {
+                        aiMonitor.applyState('degraded', { message: result.ai_message });
+                    } else {
+                        aiMonitor.applyState('unconfigured', { message: result.ai_message });
+                    }
+                    showToast(result.ai_message, 'warn');
+                } else if (result.ai_enhanced) {
+                    aiMonitor.applyState('available', {});
                 }
-
-                const result = await response.json();
                 
-                if (!result.ai_enabled) {
-                    alert('AI服务未配置，将显示基础解读\n\n如需使用AI功能，请设置ARK_API_KEY环境变量');
-                }
-                
-                displayResult(result.data, result.ai_enabled);
+                displayResult(result.data, !!result.ai_enhanced);
             } catch (error) {
-                alert('排盘失败：' + error.message + '\n\n请确保后端服务已启动');
+                if (error.message.includes('AI服务未配置')) {
+                    aiMonitor.applyState('unconfigured', { message: error.message });
+                } else if (error.message.includes('AI服务暂时不可用')) {
+                    aiMonitor.applyState('degraded', { message: error.message });
+                } else if (isConnectivityError(error)) {
+                    aiMonitor.applyState('offline', {});
+                }
+                showToast('排盘失败：' + error.message + '\n\n请确保后端服务已启动', 'error');
             } finally {
                 document.getElementById('loading').classList.remove('show');
                 document.getElementById('loading').querySelector('p').textContent = '正在排盘中...';
@@ -667,15 +733,15 @@
             // 显示时间信息
             const timeInfo = data.时间信息;
             document.getElementById('timeInfo').innerHTML = `
-                <strong>时间：</strong>${timeInfo.阳历}<br>
-                <strong>四柱：</strong>${timeInfo.年柱} ${timeInfo.月柱} ${timeInfo.日柱} ${timeInfo.时柱}
+                <strong>时间：</strong>${esc(timeInfo.阳历)}<br>
+                <strong>四柱：</strong>${esc(timeInfo.年柱)} ${esc(timeInfo.月柱)} ${esc(timeInfo.日柱)} ${esc(timeInfo.时柱)}
             `;
 
             // 显示遁甲信息
             const dunInfo = data.遁甲信息;
             document.getElementById('dunInfo').innerHTML = `
-                <span>${dunInfo.阴阳遁}</span>
-                <span>${dunInfo.局数}</span>
+                <span>${esc(dunInfo.阴阳遁)}</span>
+                <span>${esc(dunInfo.局数)}</span>
             `;
 
             // 显示九宫格（按洛书顺序：4 9 2 / 3 5 7 / 8 1 6）
@@ -686,18 +752,18 @@
 
             palaceOrder.forEach(palaceName => {
                 const palace = palaces[palaceName];
-                const gateType = palace.门吉凶.type.replace(/[大]/g, '');
-                const starType = palace.星吉凶.type.replace(/[大]/g, '');
+                const gateType = sanitizeFortuneType(palace.门吉凶.type);
+                const starType = sanitizeFortuneType(palace.星吉凶.type);
                 
                 jiugongGrid.innerHTML += `
                     <div class="palace">
-                        <div class="palace-title">${palace.宫位}</div>
+                        <div class="palace-title">${esc(palace.宫位)}</div>
                         <div class="palace-content">
-                            <div><strong>地盘：</strong>${palace.地盘}</div>
-                            <div><strong>天盘：</strong>${palace.天盘}</div>
-                            <div><strong>八门：</strong>${palace.八门} <span class="fortune-badge fortune-${gateType}">${palace.门吉凶.type}</span></div>
-                            <div><strong>九星：</strong>${palace.九星} <span class="fortune-badge fortune-${starType}">${palace.星吉凶.type}</span></div>
-                            <div><strong>八神：</strong>${palace.八神}</div>
+                            <div><strong>地盘：</strong>${esc(palace.地盘)}</div>
+                            <div><strong>天盘：</strong>${esc(palace.天盘)}</div>
+                            <div><strong>八门：</strong>${esc(palace.八门)} <span class="fortune-badge fortune-${gateType}">${esc(palace.门吉凶.type)}</span></div>
+                            <div><strong>九星：</strong>${esc(palace.九星)} <span class="fortune-badge fortune-${starType}">${esc(palace.星吉凶.type)}</span></div>
+                            <div><strong>八神：</strong>${esc(palace.八神)}</div>
                         </div>
                     </div>
                 `;
@@ -707,9 +773,9 @@
             const bestDir = data.最佳方位;
             document.getElementById('bestDirection').innerHTML = `
                 <div class="prediction-box">
-                    <h4>最佳方位：${bestDir.最佳方位} (${bestDir.吉凶})</h4>
-                    <p><strong>八门：</strong>${bestDir.详情.八门} - ${bestDir.详情.门吉凶.desc}</p>
-                    <p><strong>九星：</strong>${bestDir.详情.九星} - ${bestDir.详情.星吉凶.desc}</p>
+                    <h4>最佳方位：${esc(bestDir.最佳方位)} (${esc(bestDir.吉凶)})</h4>
+                    <p><strong>八门：</strong>${esc(bestDir.详情.八门)} - ${esc(bestDir.详情.门吉凶.desc)}</p>
+                    <p><strong>九星：</strong>${esc(bestDir.详情.九星)} - ${esc(bestDir.详情.星吉凶.desc)}</p>
                     <p><strong>建议：</strong>此方位最为有利，可作为出行、办事的首选方向。</p>
                 </div>
             `;
@@ -718,11 +784,11 @@
             const prediction = data.事项预测;
             let predictionHTML = `
                 <div class="prediction-box">
-                    <h4>${prediction.事项} - ${prediction.综合吉凶}</h4>
-                    <p><strong>最佳宫位：</strong>${prediction.最佳宫位}</p>
-                    <p><strong>八门：</strong>${prediction.详情.八门} - ${prediction.详情.门吉凶.desc}</p>
-                    <p><strong>九星：</strong>${prediction.详情.九星} - ${prediction.详情.星吉凶.desc}</p>
-                    <p style="margin-top: 10px; font-size: 16px;"><strong>${prediction.建议}</strong></p>
+                    <h4>${esc(prediction.事项)} - ${esc(prediction.综合吉凶)}</h4>
+                    <p><strong>最佳宫位：</strong>${esc(prediction.最佳宫位)}</p>
+                    <p><strong>八门：</strong>${esc(prediction.详情.八门)} - ${esc(prediction.详情.门吉凶.desc)}</p>
+                    <p><strong>九星：</strong>${esc(prediction.详情.九星)} - ${esc(prediction.详情.星吉凶.desc)}</p>
+                    <p style="margin-top: 10px; font-size: 16px;"><strong>${esc(prediction.建议)}</strong></p>
                 </div>
             `;
 
@@ -744,14 +810,14 @@
             directionAnalysis.innerHTML = '';
 
             Object.values(directions).forEach(dir => {
-                const fortuneClass = dir.综合吉凶.replace(/[大]/g, '');
+                const fortuneClass = sanitizeFortuneType(dir.综合吉凶);
                 directionAnalysis.innerHTML += `
                     <div class="direction-item">
-                        <h4>${dir.宫位} <span class="fortune-badge fortune-${fortuneClass}">${dir.综合吉凶}</span></h4>
-                        <p><strong>八门：</strong>${dir.详情.八门} (${dir.详情.门吉凶.type})</p>
-                        <p><strong>九星：</strong>${dir.详情.九星} (${dir.详情.星吉凶.type})</p>
-                        <p><strong>八神：</strong>${dir.详情.八神}</p>
-                        <p style="margin-top: 5px; font-size: 13px; color: #666;">${dir.详情.门吉凶.desc}</p>
+                        <h4>${esc(dir.宫位)} <span class="fortune-badge fortune-${fortuneClass}">${esc(dir.综合吉凶)}</span></h4>
+                        <p><strong>八门：</strong>${esc(dir.详情.八门)} (${esc(dir.详情.门吉凶.type)})</p>
+                        <p><strong>九星：</strong>${esc(dir.详情.九星)} (${esc(dir.详情.星吉凶.type)})</p>
+                        <p><strong>八神：</strong>${esc(dir.详情.八神)}</p>
+                        <p style="margin-top: 5px; font-size: 13px; color: #666;">${esc(dir.详情.门吉凶.desc)}</p>
                     </div>
                 `;
             });

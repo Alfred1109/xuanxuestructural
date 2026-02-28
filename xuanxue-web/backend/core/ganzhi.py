@@ -87,6 +87,9 @@ def get_month_ganzhi(year: int, month: int) -> str:
     计算月份的干支
     月建：寅月（正月）开始
     """
+    if month < 1 or month > 12:
+        raise ValueError("month must be between 1 and 12")
+
     # 年干决定月干的起始
     year_gan_index = (year - 1984) % 10
     
@@ -137,6 +140,11 @@ def get_hour_ganzhi(day_gan_index: int, hour: int) -> str:
     day_gan_index: 日干的索引(0-9)
     hour: 小时(0-23)
     """
+    if day_gan_index < 0 or day_gan_index > 9:
+        raise ValueError("day_gan_index must be between 0 and 9")
+    if hour < 0 or hour > 23:
+        raise ValueError("hour must be between 0 and 23")
+
     # 时辰对应关系
     hour_to_zhi = {
         (23, 1): 0,   # 子时 23:00-01:00

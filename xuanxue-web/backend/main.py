@@ -2,11 +2,12 @@
 玄学预测系统 - FastAPI后端主程序
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query, Path
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 from datetime import datetime
+from os import getenv
 
 # 导入核心模块
 import sys
@@ -28,10 +29,35 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# 运行时AI状态（用于对外暴露可观测状态）
+AI_RUNTIME_STATE = {
+    "last_error": None,
+    "last_error_at": None
+}
+
+
+def mark_ai_failure(error_message: str) -> None:
+    AI_RUNTIME_STATE["last_error"] = error_message
+    AI_RUNTIME_STATE["last_error_at"] = datetime.now().isoformat(timespec="seconds")
+
+
+def mark_ai_success() -> None:
+    AI_RUNTIME_STATE["last_error"] = None
+    AI_RUNTIME_STATE["last_error_at"] = None
+
+
+# CORS来源配置（逗号分隔），默认仅允许本地前端地址
+# 示例: CORS_ALLOW_ORIGINS="https://example.com,https://app.example.com"
+cors_origins = [
+    origin.strip()
+    for origin in getenv("CORS_ALLOW_ORIGINS", "http://localhost:8003,http://127.0.0.1:8003").split(",")
+    if origin.strip()
+]
+
 # 配置CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 生产环境应该限制具体域名
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -40,18 +66,25 @@ app.add_middleware(
 
 # 请求模型
 class BaZiRequest(BaseModel):
-    year: int
-    month: int
-    day: int
-    hour: int
-    minute: int = 0
-    gender: str = "男"
+    year: int = Field(..., ge=1900, le=2100)
+    month: int = Field(..., ge=1, le=12)
+    day: int = Field(..., ge=1, le=31)
+    hour: int = Field(..., ge=0, le=23)
+    minute: int = Field(0, ge=0, le=59)
+    gender: str = Field("男", min_length=1, max_length=1)
+
+    @field_validator("gender")
+    @classmethod
+    def validate_gender(cls, value: str) -> str:
+        if value not in ("男", "女"):
+            raise ValueError("gender must be '男' or '女'")
+        return value
 
 
 class CalendarRequest(BaseModel):
-    year: int
-    month: int
-    day: int
+    year: int = Field(..., ge=1900, le=2100)
+    month: int = Field(..., ge=1, le=12)
+    day: int = Field(..., ge=1, le=31)
 
 
 @app.get("/")
@@ -119,7 +152,7 @@ async def calculate_bazi(request: BaZiRequest):
 
 
 @app.post("/api/divination/liuyao")
-async def liuyao_divination(question: str = ""):
+async def liuyao_divination(question: str = Query("", max_length=500)):
     """
     六爻占卜API
     
@@ -139,7 +172,7 @@ async def liuyao_divination(question: str = ""):
 
 
 @app.post("/api/ai/enhance-liuyao")
-async def ai_enhance_liuyao(question: str = ""):
+async def ai_enhance_liuyao(question: str = Query("", max_length=500)):
     """
     AI增强六爻占卜
     
@@ -150,17 +183,27 @@ async def ai_enhance_liuyao(question: str = ""):
     """
     try:
         result = divine(question)
-        
-        # AI增强解读
-        if llm_helper.is_available():
+        ai_enabled = llm_helper.is_available()
+        ai_enhanced = False
+        ai_message = "AI服务未配置，已返回基础解读"
+
+        if ai_enabled:
             ai_interpretation = llm_helper.enhance_liuyao_interpretation(result)
             if ai_interpretation:
                 result['ai_interpretation'] = ai_interpretation
-        
+                ai_enhanced = True
+                ai_message = ""
+                mark_ai_success()
+            else:
+                ai_message = "AI服务暂时不可用，已返回基础解读"
+                mark_ai_failure("enhance_liuyao_empty")
+
         return {
             "success": True,
             "data": result,
-            "ai_enabled": llm_helper.is_available()
+            "ai_enabled": ai_enabled,
+            "ai_enhanced": ai_enhanced,
+            "ai_message": ai_message
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"占卜错误: {str(e)}")
@@ -168,12 +211,12 @@ async def ai_enhance_liuyao(question: str = ""):
 
 @app.post("/api/divination/qimen")
 async def qimen_divination(
-    year: int,
-    month: int,
-    day: int,
-    hour: int,
-    minute: int = 0,
-    matter_type: str = "通用"
+    year: int = Query(..., ge=1900, le=2100),
+    month: int = Query(..., ge=1, le=12),
+    day: int = Query(..., ge=1, le=31),
+    hour: int = Query(..., ge=0, le=23),
+    minute: int = Query(0, ge=0, le=59),
+    matter_type: str = Query("通用", min_length=1, max_length=20)
 ):
     """
     奇门遁甲占卜API
@@ -185,17 +228,20 @@ async def qimen_divination(
     返回: 奇门遁甲盘和分析
     """
     try:
+        datetime(year, month, day, hour, minute)
         result = divine_qimen(year, month, day, hour, minute, matter_type)
         return {
             "success": True,
             "data": result
         }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"日期格式错误: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"占卜错误: {str(e)}")
 
 
 @app.get("/api/divination/qimen/current")
-async def get_current_qimen_api(matter_type: str = "通用"):
+async def get_current_qimen_api(matter_type: str = Query("通用", min_length=1, max_length=20)):
     """
     获取当前时刻的奇门遁甲盘
     
@@ -216,12 +262,12 @@ async def get_current_qimen_api(matter_type: str = "通用"):
 
 @app.post("/api/ai/enhance-qimen")
 async def ai_enhance_qimen(
-    year: int,
-    month: int,
-    day: int,
-    hour: int,
-    minute: int = 0,
-    matter_type: str = "通用"
+    year: int = Query(..., ge=1900, le=2100),
+    month: int = Query(..., ge=1, le=12),
+    day: int = Query(..., ge=1, le=31),
+    hour: int = Query(..., ge=0, le=23),
+    minute: int = Query(0, ge=0, le=59),
+    matter_type: str = Query("通用", min_length=1, max_length=20)
 ):
     """
     AI增强奇门遁甲占卜
@@ -233,19 +279,32 @@ async def ai_enhance_qimen(
     返回: 奇门遁甲盘 + AI深度解读
     """
     try:
+        datetime(year, month, day, hour, minute)
         result = divine_qimen(year, month, day, hour, minute, matter_type)
-        
-        # AI增强解读
-        if llm_helper.is_available():
+        ai_enabled = llm_helper.is_available()
+        ai_enhanced = False
+        ai_message = "AI服务未配置，已返回基础解读"
+
+        if ai_enabled:
             ai_interpretation = llm_helper.enhance_qimen_interpretation(result, matter_type)
             if ai_interpretation:
                 result['ai_interpretation'] = ai_interpretation
-        
+                ai_enhanced = True
+                ai_message = ""
+                mark_ai_success()
+            else:
+                ai_message = "AI服务暂时不可用，已返回基础解读"
+                mark_ai_failure("enhance_qimen_empty")
+
         return {
             "success": True,
             "data": result,
-            "ai_enabled": llm_helper.is_available()
+            "ai_enabled": ai_enabled,
+            "ai_enhanced": ai_enhanced,
+            "ai_message": ai_message
         }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"日期格式错误: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"占卜错误: {str(e)}")
 
@@ -271,12 +330,14 @@ async def convert_solar_to_lunar(request: CalendarRequest):
                 }
             }
         }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"日期格式错误: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"转换错误: {str(e)}")
 
 
 @app.get("/api/ganzhi/year/{year}")
-async def get_year_ganzhi_api(year: int):
+async def get_year_ganzhi_api(year: int = Path(..., ge=1900, le=2100)):
     """获取年份干支"""
     try:
         ganzhi = get_year_ganzhi(year)
@@ -287,6 +348,8 @@ async def get_year_ganzhi_api(year: int):
                 "ganzhi": ganzhi
             }
         }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"年份错误: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"计算错误: {str(e)}")
 
@@ -306,7 +369,11 @@ async def get_today_fortune_api():
 
 
 @app.get("/api/zeri/date/{year}/{month}/{day}")
-async def get_date_fortune_api(year: int, month: int, day: int):
+async def get_date_fortune_api(
+    year: int = Path(..., ge=1900, le=2100),
+    month: int = Path(..., ge=1, le=12),
+    day: int = Path(..., ge=1, le=31)
+):
     """获取指定日期运势"""
     try:
         fortune = get_today_fortune(year, month, day)
@@ -314,12 +381,19 @@ async def get_date_fortune_api(year: int, month: int, day: int):
             "success": True,
             "data": fortune
         }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"日期格式错误: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"计算错误: {str(e)}")
 
 
 @app.get("/api/ai/enhance-zeri/{year}/{month}/{day}")
-async def ai_enhance_zeri(year: int, month: int, day: int, purpose: str = "通用"):
+async def ai_enhance_zeri(
+    year: int = Path(..., ge=1900, le=2100),
+    month: int = Path(..., ge=1, le=12),
+    day: int = Path(..., ge=1, le=31),
+    purpose: str = Query("通用", min_length=1, max_length=20)
+):
     """
     AI增强择日分析
     
@@ -331,28 +405,40 @@ async def ai_enhance_zeri(year: int, month: int, day: int, purpose: str = "通�
     """
     try:
         fortune = get_today_fortune(year, month, day)
-        
-        # AI增强建议
-        if llm_helper.is_available():
+        ai_enabled = llm_helper.is_available()
+        ai_enhanced = False
+        ai_message = "AI服务未配置，已返回基础解读"
+
+        if ai_enabled:
             ai_advice = llm_helper.enhance_zeri_advice(fortune, purpose)
             if ai_advice:
                 fortune['ai_advice'] = ai_advice
-        
+                ai_enhanced = True
+                ai_message = ""
+                mark_ai_success()
+            else:
+                ai_message = "AI服务暂时不可用，已返回基础解读"
+                mark_ai_failure("enhance_zeri_empty")
+
         return {
             "success": True,
             "data": fortune,
-            "ai_enabled": llm_helper.is_available()
+            "ai_enabled": ai_enabled,
+            "ai_enhanced": ai_enhanced,
+            "ai_message": ai_message
         }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"日期格式错误: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"计算错误: {str(e)}")
 
 
 @app.get("/api/zeri/auspicious")
 async def find_auspicious_days_api(
-    year: int,
-    month: int,
-    purpose: str = "通用",
-    days: int = 30
+    year: int = Query(..., ge=1900, le=2100),
+    month: int = Query(..., ge=1, le=12),
+    purpose: str = Query("通用", min_length=1, max_length=20),
+    days: int = Query(30, ge=1, le=366)
 ):
     """
     查找吉日
@@ -375,12 +461,17 @@ async def find_auspicious_days_api(
                 "days": auspicious_days
             }
         }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"日期格式错误: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"查找错误: {str(e)}")
 
 
 @app.post("/api/ai/chat")
-async def ai_chat(question: str, context: str = ""):
+async def ai_chat(
+    question: str = Query(..., min_length=1, max_length=500),
+    context: str = Query("", max_length=2000)
+):
     """
     AI对话接口
     
@@ -392,27 +483,32 @@ async def ai_chat(question: str, context: str = ""):
     """
     try:
         if not llm_helper.is_available():
-            return {
-                "success": False,
-                "message": "AI服务未配置，请设置ARK_API_KEY环境变量"
-            }
+            raise HTTPException(
+                status_code=503,
+                detail="AI服务未配置，请设置ARK_API_KEY环境变量"
+            )
         
         response = llm_helper.chat(question, context if context else None)
         
-        if response:
-            return {
-                "success": True,
-                "data": {
-                    "question": question,
-                    "answer": response
-                }
+        if not response:
+            mark_ai_failure("chat_empty_response")
+            raise HTTPException(
+                status_code=502,
+                detail="AI服务暂时不可用"
+            )
+
+        mark_ai_success()
+        return {
+            "success": True,
+            "data": {
+                "question": question,
+                "answer": response
             }
-        else:
-            return {
-                "success": False,
-                "message": "AI服务暂时不可用"
-            }
+        }
+    except HTTPException:
+        raise
     except Exception as e:
+        mark_ai_failure(f"chat_exception: {str(e)}")
         raise HTTPException(status_code=500, detail=f"对话错误: {str(e)}")
 
 
@@ -440,17 +536,27 @@ async def ai_enhance_bazi(request: BaZiRequest):
         result = chart.to_dict()
         result['analysis'] = generate_simple_analysis(chart)
         result['advanced_analysis'] = get_advanced_analysis(chart)
-        
-        # AI增强分析
-        if llm_helper.is_available():
+        ai_enabled = llm_helper.is_available()
+        ai_enhanced = False
+        ai_message = "AI服务未配置，已返回基础解读"
+
+        if ai_enabled:
             ai_analysis = llm_helper.enhance_bazi_analysis(result)
             if ai_analysis:
                 result['ai_analysis'] = ai_analysis
-        
+                ai_enhanced = True
+                ai_message = ""
+                mark_ai_success()
+            else:
+                ai_message = "AI服务暂时不可用，已返回基础解读"
+                mark_ai_failure("enhance_bazi_empty")
+
         return {
             "success": True,
             "data": result,
-            "ai_enabled": llm_helper.is_available()
+            "ai_enabled": ai_enabled,
+            "ai_enhanced": ai_enhanced,
+            "ai_message": ai_message
         }
         
     except ValueError as e:
@@ -462,12 +568,26 @@ async def ai_enhance_bazi(request: BaZiRequest):
 @app.get("/api/ai/status")
 async def ai_status():
     """检查AI服务状态"""
+    available = llm_helper.is_available()
+    if not available:
+        status = "unconfigured"
+        message = "AI服务未配置"
+    elif AI_RUNTIME_STATE["last_error"]:
+        status = "degraded"
+        message = "AI服务可用但最近一次请求失败"
+    else:
+        status = "available"
+        message = "AI服务正常"
+
     return {
         "success": True,
         "data": {
-            "available": llm_helper.is_available(),
-            "model": llm_helper.model if llm_helper.is_available() else None,
-            "message": "AI服务正常" if llm_helper.is_available() else "AI服务未配置"
+            "status": status,
+            "available": available,
+            "model": llm_helper.model if available else None,
+            "message": message,
+            "last_error": AI_RUNTIME_STATE["last_error"],
+            "last_error_at": AI_RUNTIME_STATE["last_error_at"]
         }
     }
 

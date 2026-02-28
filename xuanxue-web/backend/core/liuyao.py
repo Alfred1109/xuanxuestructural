@@ -65,7 +65,7 @@ class LiuYaoDivination:
         self.biangua = None  # 变卦
         self.dongyao = []  # 动爻
         
-    def cast_coins(self) -> List[int]:
+    def cast_coins(self, rng: random.Random = None) -> List[int]:
         """
         摇卦（模拟投掷三枚铜钱）
         正面为3，反面为2
@@ -74,10 +74,11 @@ class LiuYaoDivination:
         两正一反（少阳）= 7 → 静爻，阳
         两反一正（少阴）= 8 → 静爻，阴
         """
+        rand = rng if rng is not None else random
         yao_list = []
         for i in range(6):
             # 模拟投掷三枚铜钱
-            coins = [random.choice([2, 3]) for _ in range(3)]
+            coins = [rand.choice([2, 3]) for _ in range(3)]
             total = sum(coins)
             yao_list.append(total)
         
@@ -262,7 +263,14 @@ def divine(question: str = "", use_time: bool = False) -> Dict:
         占卜结果
     """
     divination = LiuYaoDivination(question)
-    divination.cast_coins()
+    if use_time:
+        # 使用“年月日时分”构造稳定种子，实现同一分钟可复现的时间起卦
+        now = datetime.now()
+        seed = int(now.strftime("%Y%m%d%H%M"))
+        rng = random.Random(seed)
+        divination.cast_coins(rng=rng)
+    else:
+        divination.cast_coins()
     result = divination.interpret()
     
     # 添加时间戳

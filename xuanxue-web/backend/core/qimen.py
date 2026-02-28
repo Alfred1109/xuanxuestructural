@@ -5,7 +5,7 @@ Qi Men Dun Jia (Mysterious Door Escaping Technique)
 
 from datetime import datetime
 from typing import Dict, List, Tuple
-from .ganzhi import get_year_ganzhi, get_month_ganzhi, get_day_ganzhi, get_hour_ganzhi
+from .ganzhi import TIANGAN, get_year_ganzhi, get_month_ganzhi, get_day_ganzhi, get_hour_ganzhi
 from .calendar import get_solar_term_date
 
 
@@ -72,8 +72,7 @@ class QiMenChart:
         
         # 获取日干索引用于时柱
         day_gan = self.day_gz[0]
-        tiangan = "甲乙丙丁戊己庚辛壬癸"
-        day_gan_index = tiangan.index(day_gan)
+        day_gan_index = TIANGAN.index(day_gan)
         self.hour_gz = get_hour_ganzhi(day_gan_index, hour)
         
         # 确定阴阳遁和局数
@@ -91,7 +90,8 @@ class QiMenChart:
         dongzhi = get_solar_term_date(self.year, 21)  # 冬至是第22个节气（索引21）
         xiazhi = get_solar_term_date(self.year, 9)    # 夏至是第10个节气（索引9）
         
-        if dongzhi <= self.datetime < xiazhi or self.datetime >= dongzhi:
+        # 冬至到次年夏至是跨年的区间：date >= 冬至 或 date < 夏至
+        if self.datetime >= dongzhi or self.datetime < xiazhi:
             dun_type = "阳遁"
         else:
             dun_type = "阴遁"
@@ -105,31 +105,30 @@ class QiMenChart:
     def _arrange_chart(self) -> Dict:
         """排盘"""
         chart = {}
+        palace_order = [4, 9, 2, 3, 5, 7, 8, 1, 6]
         
         # 确定值符宫位（简化：根据时辰）
         zhifu_palace = (self.hour % 8) + 1
         if zhifu_palace == 5:
             zhifu_palace = 2  # 中宫寄坤二宫
+        zhifu_offset = palace_order.index(zhifu_palace) if zhifu_palace in palace_order else 0
         
         # 为每个宫位分配天干、八门、九星、八神
-        for palace_num in [4, 9, 2, 3, 5, 7, 8, 1, 6]:
+        for palace_index, palace_num in enumerate(palace_order):
             palace_name = self.PALACES[palace_num]
-            
-            # 计算该宫的索引
-            palace_index = palace_num - 1
             
             # 分配天干（地盘和天盘）
             dipan_gan = self.TIANGAN_ORDER[palace_index % 9]
             tianpan_gan = self.TIANGAN_ORDER[(palace_index + self.ju_number) % 9]
             
             # 分配八门
-            gate = self.EIGHT_GATES[palace_index % 8]
+            gate = self.EIGHT_GATES[(palace_index + zhifu_offset) % 8]
             
             # 分配九星
-            star = self.NINE_STARS[palace_index % 9]
+            star = self.NINE_STARS[(palace_index + zhifu_offset) % 9]
             
             # 分配八神
-            spirit = self.EIGHT_SPIRITS[palace_index % 8]
+            spirit = self.EIGHT_SPIRITS[(palace_index + zhifu_offset) % 8]
             
             chart[palace_name] = {
                 "宫位": palace_name,
@@ -162,23 +161,23 @@ class QiMenChart:
         
         # 简单的吉凶评分
         fortune_score = 0
-        if "大吉" in gate_type:
+        if "大凶" in gate_type:
+            fortune_score -= 2
+        elif "大吉" in gate_type:
             fortune_score += 2
         elif "吉" in gate_type:
             fortune_score += 1
         elif "凶" in gate_type:
             fortune_score -= 1
-        elif "大凶" in gate_type:
-            fortune_score -= 2
         
-        if "大吉" in star_type:
+        if "大凶" in star_type:
+            fortune_score -= 2
+        elif "大吉" in star_type:
             fortune_score += 2
         elif "吉" in star_type:
             fortune_score += 1
         elif "凶" in star_type:
             fortune_score -= 1
-        elif "大凶" in star_type:
-            fortune_score -= 2
         
         if fortune_score >= 3:
             overall = "大吉"
@@ -204,6 +203,8 @@ class QiMenChart:
         best_score = -999
         
         for palace_name, palace_data in self.chart.items():
+            if palace_name == "中宫":
+                continue
             analysis = self.analyze_palace(palace_name)
             score = analysis["吉凶分数"]
             
@@ -236,6 +237,8 @@ class QiMenChart:
         # 找到对应的宫位
         relevant_palaces = []
         for palace_name, palace_data in self.chart.items():
+            if palace_name == "中宫":
+                continue
             if palace_data["八门"] in target_gates:
                 analysis = self.analyze_palace(palace_name)
                 relevant_palaces.append(analysis)

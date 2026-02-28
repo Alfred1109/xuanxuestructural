@@ -216,6 +216,41 @@
             margin-bottom: 20px;
             border-radius: 5px;
         }
+
+        .ai-status-banner {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            border-left: 4px solid #ff9800;
+            background: #fff8e1;
+            color: #8a6d3b;
+        }
+
+        .ai-status-banner.available {
+            border-left-color: #4caf50;
+            background: #e8f5e9;
+            color: #1b5e20;
+        }
+
+        .ai-status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ff9800;
+            flex-shrink: 0;
+        }
+
+        .ai-status-banner.available .ai-status-dot {
+            background: #4caf50;
+        }
+
+        .ai-status-meta {
+            font-size: 13px;
+            opacity: 0.9;
+        }
     </style>
 </head>
 <body>
@@ -239,6 +274,12 @@
 
     <div class="container">
         <div class="card">
+            <div class="ai-status-banner" id="aiStatusBanner">
+                <span class="ai-status-dot" id="aiStatusDot"></span>
+                <strong id="aiStatusText">正在检查AI状态...</strong>
+                <span class="ai-status-meta" id="aiStatusDetail"></span>
+            </div>
+
             <div class="tips">
                 <strong>💡 占卜须知：</strong><br>
                 1. 心诚则灵，占卜前请静心思考您的问题<br>
@@ -306,29 +347,35 @@
         </div>
     </div>
 
+    <script src="config.js"></script>
+    <script src="common-ui.js"></script>
+    <script src="markdown.js"></script>
+    <script src="api-client.js"></script>
+    <script src="ai-status.js"></script>
     <script>
-        const API_BASE_URL = 'http://localhost:8002';
+        const esc = (value) => (window.escapeHtml ? window.escapeHtml(value ?? '') : String(value ?? ''));
 
-        // Markdown渲染函数
-        function renderMarkdown(text) {
-            if (!text) return '';
-            
-            let html = text
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/^### (.*$)/gim, '<h4 style="margin-top: 15px; margin-bottom: 10px; color: #f5576c;">$1</h4>')
-                .replace(/^## (.*$)/gim, '<h3 style="margin-top: 15px; margin-bottom: 10px; color: #f5576c;">$1</h3>')
-                .replace(/^# (.*$)/gim, '<h2 style="margin-top: 15px; margin-bottom: 10px; color: #f5576c;">$1</h2>')
-                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                .replace(/\*(.+?)\*/g, '<em>$1</em>')
-                .replace(/^\- (.+)$/gim, '<li style="margin-left: 20px;">$1</li>')
-                .replace(/^\* (.+)$/gim, '<li style="margin-left: 20px;">$1</li>')
-                .replace(/\n\n/g, '<br><br>')
-                .replace(/\n/g, '<br>');
-            
-            return html;
+        const renderMarkdown = (text) => window.renderMarkdownSimple(text, '#f5576c');
+        function isConnectivityError(error) {
+            const msg = String((error && error.message) || '');
+            return msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('无法连接');
         }
+        const aiMonitor = window.createAIStatusMonitor({
+            bannerId: 'aiStatusBanner',
+            dotId: 'aiStatusDot',
+            textId: 'aiStatusText',
+            detailId: 'aiStatusDetail',
+            onTransition: function (state) {
+                if (state === 'unconfigured') {
+                    showToast('AI服务未配置，当前仅可使用基础解读', 'warn');
+                } else if (state === 'degraded') {
+                    showToast('AI服务波动中，将自动回退基础解读', 'warn');
+                } else if (state === 'offline') {
+                    showToast('后端连接异常，请检查服务状态', 'error');
+                }
+            }
+        });
+        aiMonitor.start();
 
         document.getElementById('liuyaoForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -340,21 +387,13 @@
             document.getElementById('result').classList.remove('show');
 
             try {
-                const response = await fetch(`${API_BASE_URL}/api/divination/liuyao?question=${encodeURIComponent(question)}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error('API请求失败');
-                }
-
-                const result = await response.json();
+                const result = await window.apiClient.post('/api/divination/liuyao', { question });
                 displayResult(result.data);
             } catch (error) {
-                alert('占卜失败：' + error.message + '\n\n请确保后端服务已启动');
+                if (isConnectivityError(error)) {
+                    aiMonitor.applyState('offline', {});
+                }
+                showToast('占卜失败：' + error.message + '\n\n请确保后端服务已启动', 'error');
             } finally {
                 document.getElementById('loading').classList.remove('show');
             }
@@ -369,26 +408,29 @@
             document.getElementById('result').classList.remove('show');
 
             try {
-                const response = await fetch(`${API_BASE_URL}/api/ai/enhance-liuyao?question=${encodeURIComponent(question)}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
+                const result = await window.apiClient.post('/api/ai/enhance-liuyao', { question });
+
+                if (!result.ai_enhanced && result.ai_message) {
+                    if (result.ai_enabled) {
+                        aiMonitor.applyState('degraded', { message: result.ai_message });
+                    } else {
+                        aiMonitor.applyState('unconfigured', { message: result.ai_message });
                     }
-                });
-
-                if (!response.ok) {
-                    throw new Error('API请求失败');
-                }
-
-                const result = await response.json();
-                
-                if (!result.ai_enabled) {
-                    alert('AI服务未配置，将显示基础解读\n\n如需使用AI功能，请设置ARK_API_KEY环境变量');
+                    showToast(result.ai_message, 'warn');
+                } else if (result.ai_enhanced) {
+                    aiMonitor.applyState('available', {});
                 }
                 
-                displayResult(result.data, result.ai_enabled);
+                displayResult(result.data, !!result.ai_enhanced);
             } catch (error) {
-                alert('占卜失败：' + error.message + '\n\n请确保后端服务已启动');
+                if (error.message.includes('AI服务未配置')) {
+                    aiMonitor.applyState('unconfigured', { message: error.message });
+                } else if (error.message.includes('AI服务暂时不可用')) {
+                    aiMonitor.applyState('degraded', { message: error.message });
+                } else if (isConnectivityError(error)) {
+                    aiMonitor.applyState('offline', {});
+                }
+                showToast('占卜失败：' + error.message + '\n\n请确保后端服务已启动', 'error');
             } finally {
                 document.getElementById('loading').classList.remove('show');
                 document.getElementById('loading').querySelector('p').textContent = '正在摇卦中...';
@@ -406,8 +448,8 @@
             document.getElementById('benguaName').textContent = guaInfo.bengua.name;
             document.getElementById('benguaInfo').innerHTML = `
                 本卦<br>
-                上卦：${guaInfo.bengua.shang_gua.name}${guaInfo.bengua.shang_gua.symbol} (${guaInfo.bengua.shang_gua.nature})<br>
-                下卦：${guaInfo.bengua.xia_gua.name}${guaInfo.bengua.xia_gua.symbol} (${guaInfo.bengua.xia_gua.nature})
+                上卦：${esc(guaInfo.bengua.shang_gua.name)}${esc(guaInfo.bengua.shang_gua.symbol)} (${esc(guaInfo.bengua.shang_gua.nature)})<br>
+                下卦：${esc(guaInfo.bengua.xia_gua.name)}${esc(guaInfo.bengua.xia_gua.symbol)} (${esc(guaInfo.bengua.xia_gua.nature)})
             `;
 
             // 显示变卦（如果有动爻）
@@ -428,9 +470,9 @@
                 
                 yaoDisplay.innerHTML += `
                     <div class="yao-item ${isDong ? 'dong' : ''}">
-                        <div class="yao-symbol">${symbol}</div>
+                        <div class="yao-symbol">${esc(symbol)}</div>
                         <div class="yao-details">
-                            <strong>${yao.name}</strong> - ${yao.type} (${yao.wuxing})
+                            <strong>${esc(yao.name)}</strong> - ${esc(yao.type)} (${esc(yao.wuxing)})
                             ${isDong ? ' <span style="color: #ff9800;">●动爻</span>' : ''}
                         </div>
                     </div>
@@ -442,22 +484,22 @@
             let interpretationHTML = `
                 <div class="analysis-box" style="background: #e8f5e9; border-color: #4caf50;">
                     <h4 style="margin-bottom: 10px;">卦象总结</h4>
-                    <p>${interp.summary}</p>
+                    <p>${esc(interp.summary)}</p>
                 </div>
                 
                 <div class="analysis-box" style="background: #e3f2fd; border-color: #2196f3;">
                     <h4 style="margin-bottom: 10px;">详细分析</h4>
-                    <p>${interp.detailed}</p>
+                    <p>${esc(interp.detailed)}</p>
                 </div>
                 
                 <div class="analysis-box" style="background: #fff3e0; border-color: #ff9800;">
                     <h4 style="margin-bottom: 10px;">建议</h4>
-                    <p>${interp.advice}</p>
+                    <p>${esc(interp.advice)}</p>
                 </div>
                 
                 <div class="analysis-box" style="background: #fce4ec; border-color: #e91e63;">
                     <h4 style="margin-bottom: 10px;">时间预测</h4>
-                    <p>${interp.timing}</p>
+                    <p>${esc(interp.timing)}</p>
                 </div>
             `;
 

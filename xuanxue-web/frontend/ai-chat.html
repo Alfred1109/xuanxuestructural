@@ -356,76 +356,15 @@
         </div>
     </div>
 
+    <script src="config.js"></script>
+    <script src="markdown.js"></script>
+    <script src="api-client.js"></script>
+    <script src="ai-status.js"></script>
     <script>
-        const API_BASE_URL = 'http://localhost:8002';
-        let isAIAvailable = false;
-
-        // Markdown渲染函数
-        function renderMarkdown(text) {
-            if (!text) return '';
-            
-            let html = text
-                // 转义HTML特殊字符
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                // 标题
-                .replace(/^### (.*$)/gim, '<h4 style="margin-top: 15px; margin-bottom: 10px; color: #f5576c;">$1</h4>')
-                .replace(/^## (.*$)/gim, '<h3 style="margin-top: 15px; margin-bottom: 10px; color: #f5576c;">$1</h3>')
-                .replace(/^# (.*$)/gim, '<h2 style="margin-top: 15px; margin-bottom: 10px; color: #f5576c;">$1</h2>')
-                // 粗体
-                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                // 斜体
-                .replace(/\*(.+?)\*/g, '<em>$1</em>')
-                // 列表项
-                .replace(/^\- (.+)$/gim, '<li style="margin-left: 20px;">$1</li>')
-                .replace(/^\* (.+)$/gim, '<li style="margin-left: 20px;">$1</li>')
-                // 换行
-                .replace(/\n\n/g, '<br><br>')
-                .replace(/\n/g, '<br>');
-            
-            return html;
-        }
-
-        // 检查AI状态
-        async function checkAIStatus() {
-            try {
-                const response = await fetch(`${API_BASE_URL}/api/ai/status`);
-                const result = await response.json();
-                
-                const statusDiv = document.getElementById('aiStatus');
-                const statusDot = document.getElementById('statusDot');
-                const statusText = document.getElementById('statusText');
-                const statusModel = document.getElementById('statusModel');
-                
-                if (result.data.available) {
-                    isAIAvailable = true;
-                    statusDiv.className = 'ai-status available';
-                    statusDot.className = 'status-dot green';
-                    statusText.textContent = 'AI服务正常';
-                    statusModel.textContent = `模型: ${result.data.model}`;
-                } else {
-                    isAIAvailable = false;
-                    statusDiv.className = 'ai-status unavailable';
-                    statusDot.className = 'status-dot orange';
-                    statusText.textContent = 'AI服务未配置';
-                    statusModel.textContent = '请配置ARK_API_KEY';
-                    
-                    // 显示配置提示
-                    addSystemMessage('⚠️ AI服务未配置。如需使用AI功能，请参考《AI配置指南.md》设置ARK_API_KEY环境变量。');
-                }
-            } catch (error) {
-                isAIAvailable = false;
-                const statusDiv = document.getElementById('aiStatus');
-                const statusDot = document.getElementById('statusDot');
-                const statusText = document.getElementById('statusText');
-                
-                statusDiv.className = 'ai-status unavailable';
-                statusDot.className = 'status-dot orange';
-                statusText.textContent = '无法连接到后端服务';
-                
-                addSystemMessage('❌ 无法连接到后端服务。请确保后端已启动（运行 ./start.sh）。');
-            }
+        const renderMarkdown = (text) => window.renderMarkdownSimple(text, '#f5576c');
+        function isConnectivityError(error) {
+            const msg = String((error && error.message) || '');
+            return msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('无法连接');
         }
 
         // 添加消息到聊天窗口
@@ -440,17 +379,28 @@
             messageDiv.className = `message ${isUser ? 'user' : 'ai'}`;
             
             const time = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-            
-            // 对AI消息使用Markdown渲染，用户消息保持原样
-            const displayContent = isUser ? content : renderMarkdown(content);
-            
-            messageDiv.innerHTML = `
-                <div class="message-avatar">${isUser ? '👤' : '🤖'}</div>
-                <div>
-                    <div class="message-content">${displayContent}</div>
-                    <div class="message-time">${time}</div>
-                </div>
-            `;
+
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = isUser ? '👤' : '🤖';
+
+            const bodyWrap = document.createElement('div');
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            if (isUser) {
+                contentDiv.textContent = content;
+            } else {
+                contentDiv.innerHTML = renderMarkdown(content);
+            }
+
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'message-time';
+            timeDiv.textContent = time;
+
+            bodyWrap.appendChild(contentDiv);
+            bodyWrap.appendChild(timeDiv);
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(bodyWrap);
             
             messagesDiv.appendChild(messageDiv);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
@@ -465,6 +415,44 @@
             messagesDiv.appendChild(errorDiv);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
+
+        const chatAIMonitor = window.createAIStatusMonitor({
+            bannerId: 'aiStatus',
+            dotId: 'statusDot',
+            textId: 'statusText',
+            detailId: 'statusModel',
+            intervalMs: 30000,
+            renderStatus: function (state, data, _previous, elements) {
+                elements.banner.className = 'ai-status unavailable';
+                elements.dot.className = 'status-dot orange';
+                elements.detail.textContent = '';
+
+                if (state === 'available') {
+                    elements.banner.className = 'ai-status available';
+                    elements.dot.className = 'status-dot green';
+                    elements.text.textContent = 'AI服务正常';
+                    elements.detail.textContent = data && data.model ? `模型: ${data.model}` : '模型信息不可用';
+                } else if (state === 'degraded') {
+                    elements.text.textContent = 'AI服务波动中';
+                    elements.detail.textContent = data && data.message ? data.message : '系统将自动重试';
+                } else if (state === 'unconfigured') {
+                    elements.text.textContent = 'AI服务未配置';
+                    elements.detail.textContent = '请配置ARK_API_KEY';
+                } else {
+                    elements.text.textContent = '无法连接到后端服务';
+                    elements.detail.textContent = '请检查后端进程与端口';
+                }
+            },
+            onTransition: function (state) {
+                if (state === 'unconfigured') {
+                    addSystemMessage('⚠️ AI服务未配置。如需使用AI功能，请参考《AI配置指南.md》设置ARK_API_KEY环境变量。');
+                } else if (state === 'offline') {
+                    addSystemMessage('❌ 无法连接到后端服务。请确保后端已启动（运行 ./start.sh）。');
+                } else if (state === 'degraded') {
+                    addSystemMessage('⚠️ AI服务当前波动，已自动降级为基础解读。');
+                }
+            }
+        });
 
         // 显示输入中指示器
         function showTypingIndicator() {
@@ -518,25 +506,24 @@
             showTypingIndicator();
             
             try {
-                const response = await fetch(`${API_BASE_URL}/api/ai/chat?question=${encodeURIComponent(question)}`, {
-                    method: 'POST'
-                });
-                
-                if (!response.ok) {
-                    throw new Error('API请求失败');
-                }
-                
-                const result = await response.json();
+                const result = await window.apiClient.post('/api/ai/chat', { question });
                 
                 hideTypingIndicator();
                 
-                if (result.success) {
+                if (result && result.data && result.data.answer) {
                     addMessage(result.data.answer, false);
                 } else {
-                    addSystemMessage('❌ ' + (result.message || '请求失败'));
+                    addSystemMessage('❌ AI返回内容为空，请稍后重试');
                 }
             } catch (error) {
                 hideTypingIndicator();
+                if (error.message.includes('AI服务暂时不可用')) {
+                    chatAIMonitor.applyState('degraded', { message: error.message });
+                } else if (error.message.includes('AI服务未配置')) {
+                    chatAIMonitor.applyState('unconfigured', { message: error.message });
+                } else if (isConnectivityError(error)) {
+                    chatAIMonitor.applyState('offline');
+                }
                 addSystemMessage('❌ 请求失败: ' + error.message + '\n\n请确保：\n1. 后端服务已启动\n2. 已配置ARK_API_KEY环境变量');
             } finally {
                 sendBtn.disabled = false;
@@ -554,11 +541,7 @@
             }
         });
 
-        // 页面加载时检查AI状态
-        checkAIStatus();
-        
-        // 每30秒检查一次AI状态
-        setInterval(checkAIStatus, 30000);
+        chatAIMonitor.start();
     </script>
 </body>
 </html>

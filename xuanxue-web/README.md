@@ -6,44 +6,29 @@
 
 ```
 xuanxue-web/
-├── backend/                 # Python后端
-│   ├── api/                # API接口
-│   │   ├── bazi.py        # 八字命理API
-│   │   ├── fengshui.py    # 风水API
-│   │   ├── divination.py  # 占卜API
-│   │   ├── physiognomy.py # 相学API
-│   │   ├── date_selection.py # 择日API
-│   │   └── name.py        # 姓名学API
-│   ├── core/              # 核心算法
-│   │   ├── calendar.py    # 万年历（阴阳历转换）
-│   │   ├── ganzhi.py      # 天干地支计算
-│   │   ├── wuxing.py      # 五行计算
-│   │   ├── bazi_core.py   # 八字核心算法
-│   │   ├── ziwei.py       # 紫微斗数
-│   │   └── liuyao.py      # 六爻算法
-│   ├── analysis/          # 分析引擎
-│   │   ├── bazi_analyzer.py    # 八字分析
-│   │   ├── pattern_matcher.py  # 格局识别
-│   │   └── advice_generator.py # 建议生成
-│   ├── models/            # 数据模型
-│   ├── utils/             # 工具函数
-│   ├── main.py            # FastAPI主程序
-│   └── requirements.txt   # Python依赖
+├── backend/                   # Python 后端（FastAPI）
+│   ├── main.py                # API 入口（路由 + 服务编排）
+│   ├── requirements.txt       # Python 依赖
+│   └── core/                  # 核心算法模块
+│       ├── bazi_core.py       # 八字核心算法
+│       ├── bazi_advanced.py   # 八字高级分析
+│       ├── liuyao.py          # 六爻占卜
+│       ├── qimen.py           # 奇门遁甲
+│       ├── zeri.py            # 择日学
+│       ├── calendar.py        # 阴阳历转换
+│       ├── ganzhi.py          # 干支计算
+│       └── llm_helper.py      # AI增强能力封装
 │
-├── frontend/              # React前端
-│   ├── public/
-│   ├── src/
-│   │   ├── components/    # 组件
-│   │   │   ├── BaZi/     # 八字组件
-│   │   │   ├── FengShui/ # 风水组件
-│   │   │   └── ...
-│   │   ├── pages/        # 页面
-│   │   ├── services/     # API服务
-│   │   ├── utils/        # 工具函数
-│   │   └── App.jsx
-│   └── package.json
+├── frontend/                  # 多页静态前端（原生 HTML/CSS/JS）
+│   ├── index.html             # 八字排盘
+│   ├── liuyao.html            # 六爻占卜
+│   ├── qimen.html             # 奇门遁甲
+│   ├── zeri.html              # 择日学
+│   ├── ai-chat.html           # AI助手
+│   ├── common-header.css      # 公共顶部导航样式
+│   └── config.js              # 前端统一配置（API_BASE_URL）
 │
-└── docs/                 # 文档（已有的知识库）
+└── ../docs + ../mkdocs.yml    # 知识库文档与站点配置
 ```
 
 ## 开发阶段
@@ -88,11 +73,9 @@ xuanxue-web/
 - **缓存**: Redis (可选)
 
 ### 前端
-- **框架**: React 18
-- **UI库**: Ant Design / Material-UI
-- **状态管理**: Redux Toolkit / Zustand
-- **图表**: ECharts / D3.js
-- **构建工具**: Vite
+- **形态**: 多页静态页面（原生 HTML/CSS/JS）
+- **样式**: 页面内样式 + 公共头部样式 (`common-header.css`)
+- **配置**: `config.js` 统一管理 `API_BASE_URL`
 
 ### 部署
 - **容器化**: Docker

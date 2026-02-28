@@ -4,6 +4,7 @@ BaZi (Eight Characters) Core Engine
 """
 
 from datetime import datetime, timedelta
+import math
 from typing import Dict, List, Tuple
 from .ganzhi import (
     TIANGAN, DIZHI, get_year_ganzhi, get_month_ganzhi,
@@ -11,6 +12,7 @@ from .ganzhi import (
     get_nayin, DIZHI_CANGGAN, WUXING_TIANGAN
 )
 from .calendar import get_lichun_date, solar_to_lunar
+from .calendar import get_solar_term_date
 
 
 class BaZiChart:
@@ -46,8 +48,9 @@ class BaZiChart:
         
         self.year_pillar = get_year_ganzhi(year_for_ganzhi)
         
-        # 2. 月柱：以节气为界（简化处理，实际应该精确到节气时刻）
-        self.month_pillar = get_month_ganzhi(year_for_ganzhi, self.birth_month)
+        # 2. 月柱：按节令月（寅月起于立春）计算
+        month_index = self._get_bazi_month_index(birth_date)
+        self.month_pillar = get_month_ganzhi(year_for_ganzhi, month_index)
         
         # 3. 日柱：计算从1900-01-01开始的天数
         base_date = datetime(1900, 1, 1)
@@ -57,6 +60,46 @@ class BaZiChart:
         # 4. 时柱
         day_gan_index = TIANGAN.index(self.day_pillar[0])
         self.hour_pillar = get_hour_ganzhi(day_gan_index, self.birth_hour)
+
+    def _get_bazi_month_index(self, birth_date: datetime) -> int:
+        """
+        根据节气边界计算八字月序：
+        寅月=1, 卯月=2, ... 子月=11, 丑月=12
+        """
+        year = birth_date.year
+        lichun_cur = get_solar_term_date(year, 2)
+
+        # 立春后使用当年节令序列，立春前使用上一年节令序列
+        if birth_date >= lichun_cur:
+            base_year = year
+            next_year = year + 1
+        else:
+            base_year = year - 1
+            next_year = year
+
+        boundaries = [
+            (get_solar_term_date(base_year, 2), 1),   # 立春 -> 寅月
+            (get_solar_term_date(base_year, 4), 2),   # 惊蛰 -> 卯月
+            (get_solar_term_date(base_year, 6), 3),   # 清明 -> 辰月
+            (get_solar_term_date(base_year, 8), 4),   # 立夏 -> 巳月
+            (get_solar_term_date(base_year, 10), 5),  # 芒种 -> 午月
+            (get_solar_term_date(base_year, 12), 6),  # 小暑 -> 未月
+            (get_solar_term_date(base_year, 14), 7),  # 立秋 -> 申月
+            (get_solar_term_date(base_year, 16), 8),  # 白露 -> 酉月
+            (get_solar_term_date(base_year, 18), 9),  # 寒露 -> 戌月
+            (get_solar_term_date(base_year, 20), 10), # 立冬 -> 亥月
+            (get_solar_term_date(base_year, 22), 11), # 大雪 -> 子月
+            (get_solar_term_date(next_year, 0), 12),  # 小寒 -> 丑月
+        ]
+
+        month_index = 12  # 默认丑月（兜底）
+        for boundary, idx in boundaries:
+            if birth_date >= boundary:
+                month_index = idx
+            else:
+                break
+
+        return month_index
     
     def get_pillars(self) -> Dict[str, str]:
         """获取四柱"""
@@ -120,14 +163,15 @@ class BaZiChart:
         shishen_map = {
             ('同', '同'): '比肩',
             ('同', '异'): '劫财',
-            ('生我', '同'): '正印',
-            ('生我', '异'): '偏印',
-            ('我生', '同'): '伤官',
-            ('我生', '异'): '食神',
-            ('我克', '同'): '正财',
-            ('我克', '异'): '偏财',
-            ('克我', '同'): '正官',
-            ('克我', '异'): '七杀'
+            # 阴阳同者为偏，异者为正（比劫除外）
+            ('生我', '同'): '偏印',
+            ('生我', '异'): '正印',
+            ('我生', '同'): '食神',
+            ('我生', '异'): '伤官',
+            ('我克', '同'): '偏财',
+            ('我克', '异'): '正财',
+            ('克我', '同'): '七杀',
+            ('克我', '异'): '正官'
         }
         
         # 五行生克关系
@@ -198,20 +242,68 @@ class BaZiChart:
         month_zhi_index = DIZHI.index(self.month_pillar[1])
         
         dayun_list = []
+        # 起运年龄：支持外部指定；未指定时按“出生与节令差值/3”自动估算
+        if start_age is not None:
+            base_start_age = start_age
+        else:
+            base_start_age = self._estimate_dayun_start_age(direction)
+
         for i in range(8):  # 排8步大运
             gan_index = (month_gan_index + direction * (i + 1)) % 10
             zhi_index = (month_zhi_index + direction * (i + 1)) % 12
             
             dayun_ganzhi = TIANGAN[gan_index] + DIZHI[zhi_index]
-            start_age = 1 + i * 10  # 简化处理，实际应该根据出生日期到节气的天数计算
+            current_start_age = base_start_age + i * 10  # 简化处理，实际应该根据出生日期到节气的天数计算
             
             dayun_list.append({
                 'ganzhi': dayun_ganzhi,
-                'start_age': start_age,
-                'end_age': start_age + 9
+                'start_age': current_start_age,
+                'end_age': current_start_age + 9
             })
         
         return dayun_list
+
+    def _estimate_dayun_start_age(self, direction: int) -> int:
+        """
+        估算起运年龄（简化）：
+        - 顺排：取出生后到下一“节”的天数
+        - 逆排：取出生前到上一“节”的天数
+        按传统换算约“3天=1岁”
+        """
+        birth_dt = datetime(
+            self.birth_year, self.birth_month, self.birth_day, self.birth_hour, self.birth_minute
+        )
+        prev_jie, next_jie = self._get_prev_next_jieqi(birth_dt)
+
+        if direction == 1:
+            delta_days = (next_jie - birth_dt).total_seconds() / 86400
+        else:
+            delta_days = (birth_dt - prev_jie).total_seconds() / 86400
+
+        # 最少按1岁起运；向上取整避免低估
+        return max(1, int(math.ceil(delta_days / 3.0)))
+
+    def _get_prev_next_jieqi(self, dt: datetime) -> Tuple[datetime, datetime]:
+        """获取某时刻前后最近的“节”（12节，不含中气）"""
+        # 12节索引：小寒、立春、惊蛰、清明、立夏、芒种、小暑、立秋、白露、寒露、立冬、大雪
+        jie_indexes = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22]
+
+        candidates = []
+        for y in (dt.year - 1, dt.year, dt.year + 1):
+            for idx in jie_indexes:
+                candidates.append(get_solar_term_date(y, idx))
+        candidates.sort()
+
+        prev_jie = candidates[0]
+        next_jie = candidates[-1]
+        for term_dt in candidates:
+            if term_dt <= dt:
+                prev_jie = term_dt
+            if term_dt > dt:
+                next_jie = term_dt
+                break
+
+        return prev_jie, next_jie
     
     def get_nayin_all(self) -> Dict[str, str]:
         """获取四柱纳音"""

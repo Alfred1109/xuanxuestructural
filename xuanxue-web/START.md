@@ -36,10 +36,10 @@ python main.py
 ```
 ==================================================
 玄学预测系统API服务启动中...
-访问地址: http://localhost:8000
-API文档: http://localhost:8000/docs
+访问地址: http://localhost:8002
+API文档: http://localhost:8002/docs
 ==================================================
-INFO:     Uvicorn running on http://0.0.0.0:8000
+INFO:     Uvicorn running on http://0.0.0.0:8002
 ```
 
 ### 3. 打开前端页面
@@ -47,10 +47,10 @@ INFO:     Uvicorn running on http://0.0.0.0:8000
 用浏览器打开：
 
 ```
-xuanxue-web/frontend/index.html
+http://localhost:8003/index.html
 ```
 
-或者直接双击 `index.html` 文件。
+推荐使用仓库根目录的 `./start.sh` 一键启动前后端与知识库。
 
 ## 🎯 使用方法
 
@@ -73,14 +73,14 @@ xuanxue-web/frontend/index.html
 
 ## 🔍 测试API
 
-访问 http://localhost:8000/docs 可以看到完整的API文档，可以直接在浏览器中测试API。
+访问 http://localhost:8002/docs 可以看到完整的API文档，可以直接在浏览器中测试API。
 
 ### 测试示例
 
 使用curl测试八字排盘：
 
 ```bash
-curl -X POST "http://localhost:8000/api/bazi" \
+curl -X POST "http://localhost:8002/api/bazi" \
   -H "Content-Type: application/json" \
   -d '{
     "year": 1990,
@@ -108,9 +108,9 @@ pip install -r requirements.txt
 **问题**：前端显示"计算失败：API请求失败"
 
 **解决**：
-- 确保后端服务已启动（http://localhost:8000）
+- 确保后端服务已启动（http://localhost:8002）
 - 检查浏览器控制台是否有CORS错误
-- 确认防火墙没有阻止8000端口
+- 确认防火墙没有阻止8002端口
 
 ### 3. 端口被占用
 
@@ -118,12 +118,13 @@ pip install -r requirements.txt
 
 **解决**：修改 `backend/main.py` 最后一行的端口号：
 ```python
-uvicorn.run(app, host="0.0.0.0", port=8001)  # 改为8001或其他端口
+uvicorn.run(app, host="0.0.0.0", port=8005)  # 改为8005或其他端口
 ```
 
-同时修改 `frontend/index.html` 中的API地址：
+同时修改 `frontend/config.js` 中的API地址：
 ```javascript
-const API_BASE_URL = 'http://localhost:8001';
+// 现在推荐在 frontend/config.js 中统一修改
+window.APP_CONFIG = { API_BASE_URL: 'http://localhost:8005' };
 ```
 
 ## 📚 API接口说明
@@ -182,10 +183,21 @@ const API_BASE_URL = 'http://localhost:8001';
 
 ### 扩展后端功能
 
-在 `backend/api/` 目录下添加新的API模块，例如：
-- `fengshui.py` - 风水分析
-- `divination.py` - 占卜功能
-- `physiognomy.py` - 相学分析
+当前后端以 `backend/main.py` 作为路由入口、`backend/core/` 存放算法模块。
+
+扩展建议：
+- 在 `backend/core/` 增加新的算法文件（如 `fengshui.py`）
+- 在 `backend/main.py` 新增对应接口路由并调用算法模块
+
+### 配置CORS来源（可选）
+
+后端默认只允许本地前端地址（`http://localhost:8003` 和 `http://127.0.0.1:8003`）。
+
+如需允许其他域名，可在启动前设置环境变量：
+
+```bash
+export CORS_ALLOW_ORIGINS="https://example.com,https://app.example.com"
+```
 
 ## 📊 项目结构
 

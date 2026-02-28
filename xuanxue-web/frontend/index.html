@@ -350,65 +350,41 @@
         </div>
     </div>
 
+    <script src="config.js"></script>
+    <script src="common-ui.js"></script>
+    <script src="markdown.js"></script>
+    <script src="api-client.js"></script>
+    <script src="ai-status.js"></script>
     <script>
-        const API_BASE_URL = 'http://localhost:8002';
-
-        // Markdown渲染函数
-        function renderMarkdown(text) {
-            if (!text) return '';
-            
-            let html = text
-                // 转义HTML特殊字符
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                // 标题
-                .replace(/^### (.*$)/gim, '<h4 style="margin-top: 15px; margin-bottom: 10px; color: #667eea;">$1</h4>')
-                .replace(/^## (.*$)/gim, '<h3 style="margin-top: 15px; margin-bottom: 10px; color: #667eea;">$1</h3>')
-                .replace(/^# (.*$)/gim, '<h2 style="margin-top: 15px; margin-bottom: 10px; color: #667eea;">$1</h2>')
-                // 粗体
-                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                // 斜体
-                .replace(/\*(.+?)\*/g, '<em>$1</em>')
-                // 列表项
-                .replace(/^\- (.+)$/gim, '<li style="margin-left: 20px;">$1</li>')
-                .replace(/^\* (.+)$/gim, '<li style="margin-left: 20px;">$1</li>')
-                // 换行
-                .replace(/\n\n/g, '<br><br>')
-                .replace(/\n/g, '<br>');
-            
-            return html;
-        }
-
-        // 检查AI状态
-        async function checkAIStatus() {
-            try {
-                const response = await fetch(`${API_BASE_URL}/api/ai/status`);
-                const result = await response.json();
-                
-                const banner = document.getElementById('aiStatusBanner');
-                const dot = document.getElementById('aiStatusDot');
-                const text = document.getElementById('aiStatusText');
-                
-                banner.style.display = 'block';
-                
-                if (result.data.available) {
-                    dot.style.background = '#4caf50';
-                    text.textContent = `✓ AI服务正常 (${result.data.model})`;
-                    text.style.color = '#4caf50';
+        const esc = (value) => (window.escapeHtml ? window.escapeHtml(value ?? '') : String(value ?? ''));
+        const renderMarkdown = (text) => window.renderMarkdownSimple(text, '#667eea');
+        const indexAIMonitor = window.createAIStatusMonitor({
+            bannerId: 'aiStatusBanner',
+            dotId: 'aiStatusDot',
+            textId: 'aiStatusText',
+            intervalMs: 30000,
+            renderStatus: function (state, data, _prev, elements) {
+                elements.banner.style.display = 'block';
+                if (state === 'available') {
+                    elements.dot.style.background = '#4caf50';
+                    elements.text.textContent = `✓ AI服务正常 (${data.model || '模型信息不可用'})`;
+                    elements.text.style.color = '#4caf50';
+                } else if (state === 'degraded') {
+                    elements.dot.style.background = '#ff9800';
+                    elements.text.textContent = '⚠️ AI服务波动中 - 将自动回退基础分析';
+                    elements.text.style.color = '#ff9800';
+                } else if (state === 'unconfigured') {
+                    elements.dot.style.background = '#ff9800';
+                    elements.text.textContent = '⚠️ AI服务未配置 - 点击右侧查看配置指南';
+                    elements.text.style.color = '#ff9800';
                 } else {
-                    dot.style.background = '#ff9800';
-                    text.textContent = '⚠️ AI服务未配置 - 点击右侧查看配置指南';
-                    text.style.color = '#ff9800';
+                    elements.dot.style.background = '#ff9800';
+                    elements.text.textContent = '⚠️ 后端连接异常 - 请检查服务状态';
+                    elements.text.style.color = '#ff9800';
                 }
-            } catch (error) {
-                // 静默失败，不显示横幅
-                console.log('AI status check failed:', error);
             }
-        }
-
-        // 页面加载时检查AI状态
-        checkAIStatus();
+        });
+        indexAIMonitor.start();
 
         document.getElementById('baziForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -427,19 +403,7 @@
             document.getElementById('result').classList.remove('show');
 
             try {
-                const response = await fetch(`${API_BASE_URL}/api/bazi`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(data)
-                });
-
-                if (!response.ok) {
-                    throw new Error('API请求失败');
-                }
-
-                const result = await response.json();
+                const result = await window.apiClient.postJson('/api/bazi', data);
                 displayResult(result.data);
             } catch (error) {
                 let errorMsg = '计算失败：' + error.message;
@@ -450,7 +414,7 @@
                     errorMsg += '\n\n❌ 服务器返回错误\n\n请查看后端日志了解详情：\ntail -f /tmp/xuanxue-backend.log';
                 }
                 
-                alert(errorMsg);
+                showToast(errorMsg, 'error');
             } finally {
                 document.getElementById('loading').classList.remove('show');
             }
@@ -460,9 +424,9 @@
             // 显示出生信息
             const birthInfo = data.birth_info;
             document.getElementById('birthInfoText').innerHTML = `
-                <strong>阳历：</strong>${birthInfo.solar.year}年${birthInfo.solar.month}月${birthInfo.solar.day}日 ${birthInfo.solar.hour}时${birthInfo.solar.minute}分<br>
-                <strong>农历：</strong>${birthInfo.lunar.year}年${birthInfo.lunar.month}月${birthInfo.lunar.day}日 ${birthInfo.lunar.is_leap ? '(闰月)' : ''}<br>
-                <strong>性别：</strong>${birthInfo.gender}
+                <strong>阳历：</strong>${esc(birthInfo.solar.year)}年${esc(birthInfo.solar.month)}月${esc(birthInfo.solar.day)}日 ${esc(birthInfo.solar.hour)}时${esc(birthInfo.solar.minute)}分<br>
+                <strong>农历：</strong>${esc(birthInfo.lunar.year)}年${esc(birthInfo.lunar.month)}月${esc(birthInfo.lunar.day)}日 ${birthInfo.lunar.is_leap ? '(闰月)' : ''}<br>
+                <strong>性别：</strong>${esc(birthInfo.gender)}
             `;
 
             // 显示八字四柱
@@ -475,7 +439,7 @@
                 baziDisplay.innerHTML += `
                     <div class="pillar">
                         <div class="pillar-title">${title}</div>
-                        <div class="pillar-content">${baziValues[index]}</div>
+                        <div class="pillar-content">${esc(baziValues[index])}</div>
                     </div>
                 `;
             });
@@ -494,7 +458,7 @@
             Object.entries(data.wuxing_count).forEach(([element, count]) => {
                 wuxingChart.innerHTML += `
                     <div class="wuxing-item ${wuxingColors[element]}">
-                        <div>${element}</div>
+                        <div>${esc(element)}</div>
                         <div style="font-size: 24px; margin-top: 5px;">${count.toFixed(1)}</div>
                     </div>
                 `;
@@ -503,10 +467,10 @@
             // 显示十神
             const shishenInfo = document.getElementById('shishenInfo');
             shishenInfo.innerHTML = `
-                <p><strong>年干：</strong>${data.shishen.year_gan}</p>
-                <p><strong>月干：</strong>${data.shishen.month_gan}</p>
-                <p><strong>日干：</strong>${data.shishen.day_gan}（命主）</p>
-                <p><strong>时干：</strong>${data.shishen.hour_gan}</p>
+                <p><strong>年干：</strong>${esc(data.shishen.year_gan)}</p>
+                <p><strong>月干：</strong>${esc(data.shishen.month_gan)}</p>
+                <p><strong>日干：</strong>${esc(data.shishen.day_gan)}（命主）</p>
+                <p><strong>时干：</strong>${esc(data.shishen.hour_gan)}</p>
             `;
 
             // 显示大运
@@ -515,8 +479,8 @@
             data.dayun.forEach(dayun => {
                 dayunList.innerHTML += `
                     <div class="dayun-item">
-                        <div style="font-size: 20px; font-weight: bold; margin-bottom: 5px;">${dayun.ganzhi}</div>
-                        <div style="font-size: 14px;">${dayun.start_age}-${dayun.end_age}岁</div>
+                        <div style="font-size: 20px; font-weight: bold; margin-bottom: 5px;">${esc(dayun.ganzhi)}</div>
+                        <div style="font-size: 14px;">${esc(dayun.start_age)}-${esc(dayun.end_age)}岁</div>
                     </div>
                 `;
             });
@@ -527,25 +491,25 @@
             analysisContent.innerHTML = `
                 <div class="analysis-box">
                     <h4 style="margin-bottom: 10px;">五行概况</h4>
-                    <p>${analysis.wuxing_summary}</p>
+                    <p>${esc(analysis.wuxing_summary)}</p>
                 </div>
                 
                 <div class="analysis-box">
-                    <h4 style="margin-bottom: 10px;">最旺五行：${analysis.strong_element.element}</h4>
-                    <p>${analysis.strong_element.advice}</p>
+                    <h4 style="margin-bottom: 10px;">最旺五行：${esc(analysis.strong_element.element)}</h4>
+                    <p>${esc(analysis.strong_element.advice)}</p>
                 </div>
                 
                 <div class="analysis-box">
-                    <h4 style="margin-bottom: 10px;">最弱五行：${analysis.weak_element.element}</h4>
-                    <p>${analysis.weak_element.advice}</p>
+                    <h4 style="margin-bottom: 10px;">最弱五行：${esc(analysis.weak_element.element)}</h4>
+                    <p>${esc(analysis.weak_element.advice)}</p>
                 </div>
                 
                 <div class="analysis-box">
                     <h4 style="margin-bottom: 10px;">平衡建议</h4>
-                    <p>${analysis.balance_advice}</p>
+                    <p>${esc(analysis.balance_advice)}</p>
                 </div>
                 
-                <p style="margin-top: 15px; color: #666; font-size: 14px;">${analysis.disclaimer}</p>
+                <p style="margin-top: 15px; color: #666; font-size: 14px;">${esc(analysis.disclaimer)}</p>
             `;
 
             // 显示高级分析
@@ -556,30 +520,30 @@
                 const geju = adv.geju;
                 document.getElementById('gejuContent').innerHTML = `
                     <div class="analysis-box" style="background: #e8f5e9; border-color: #4caf50;">
-                        <h4 style="margin-bottom: 10px;">命局强弱：${geju.strength_level} (${geju.strength.toFixed(2)})</h4>
-                        <p><strong>格局类型：</strong>${geju.pattern_type}</p>
-                        <p style="margin-top: 10px;">${geju.pattern_description}</p>
+                        <h4 style="margin-bottom: 10px;">命局强弱：${esc(geju.strength_level)} (${esc(geju.strength.toFixed(2))})</h4>
+                        <p><strong>格局类型：</strong>${esc(geju.pattern_type)}</p>
+                        <p style="margin-top: 10px;">${esc(geju.pattern_description)}</p>
                     </div>
                     <div class="analysis-box" style="background: #fff3e0; border-color: #ff9800;">
                         <h4 style="margin-bottom: 10px;">适合职业</h4>
-                        <p>${geju.suitable_career.join('、')}</p>
+                        <p>${(geju.suitable_career || []).map(item => esc(item)).join('、')}</p>
                     </div>
                     <div class="analysis-box" style="background: #e3f2fd; border-color: #2196f3;">
                         <h4 style="margin-bottom: 10px;">人生建议</h4>
-                        <p>${geju.life_advice}</p>
+                        <p>${esc(geju.life_advice)}</p>
                     </div>
                 `;
                 
                 // 神煞分析
                 const shensha = adv.shensha;
-                let shenshaHTML = `<p style="margin-bottom: 15px;"><strong>${shensha.summary}</strong></p>`;
+                let shenshaHTML = `<p style="margin-bottom: 15px;"><strong>${esc(shensha.summary)}</strong></p>`;
                 if (shensha.shensha_list && shensha.shensha_list.length > 0) {
                     shensha.shensha_list.forEach(item => {
                         const color = item.type === '大吉' ? '#4caf50' : item.type === '吉' ? '#2196f3' : '#ff9800';
                         shenshaHTML += `
                             <div class="analysis-box" style="background: ${color}15; border-color: ${color};">
-                                <h4 style="margin-bottom: 10px; color: ${color};">${item.name} (${item.type})</h4>
-                                <p>${item.description}</p>
+                                <h4 style="margin-bottom: 10px; color: ${color};">${esc(item.name)} (${esc(item.type)})</h4>
+                                <p>${esc(item.description)}</p>
                             </div>
                         `;
                     });
@@ -593,23 +557,23 @@
                 document.getElementById('liuqinContent').innerHTML = `
                     <div class="analysis-box">
                         <h4 style="margin-bottom: 10px;">👨 父亲</h4>
-                        <p>${liuqin.father}</p>
+                        <p>${esc(liuqin.father)}</p>
                     </div>
                     <div class="analysis-box">
                         <h4 style="margin-bottom: 10px;">👩 母亲</h4>
-                        <p>${liuqin.mother}</p>
+                        <p>${esc(liuqin.mother)}</p>
                     </div>
                     <div class="analysis-box">
                         <h4 style="margin-bottom: 10px;">👫 兄弟姐妹</h4>
-                        <p>${liuqin.siblings}</p>
+                        <p>${esc(liuqin.siblings)}</p>
                     </div>
                     <div class="analysis-box">
                         <h4 style="margin-bottom: 10px;">💑 配偶</h4>
-                        <p>${liuqin.spouse}</p>
+                        <p>${esc(liuqin.spouse)}</p>
                     </div>
                     <div class="analysis-box">
                         <h4 style="margin-bottom: 10px;">👶 子女</h4>
-                        <p>${liuqin.children}</p>
+                        <p>${esc(liuqin.children)}</p>
                     </div>
                 `;
             }
@@ -646,27 +610,10 @@
             document.getElementById('result').classList.remove('show');
 
             try {
-                const response = await fetch(`${API_BASE_URL}/api/ai/enhance-bazi`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(data)
-                });
+                const result = await window.apiClient.postJson('/api/ai/enhance-bazi', data);
 
-                if (!response.ok) {
-                    throw new Error('API请求失败');
-                }
-
-                const result = await response.json();
-                
-                if (!result.ai_enabled) {
-                    const confirmMsg = 'AI服务未配置\n\n将显示基础分析结果。\n\n如需启用AI功能，请参考《AI配置指南.md》配置ARK_API_KEY环境变量。\n\n是否继续查看基础分析？';
-                    if (!confirm(confirmMsg)) {
-                        document.getElementById('loading').classList.remove('show');
-                        document.getElementById('loading').querySelector('p').textContent = '正在计算中...';
-                        return;
-                    }
+                if (!result.ai_enhanced && result.ai_message) {
+                    showToast(result.ai_message, 'warn');
                 }
                 
                 displayResult(result.data);
@@ -686,7 +633,7 @@
                     errorMsg += '\n\n请确保：\n1. 后端服务已启动\n2. 已配置ARK_API_KEY环境变量\n\n配置方法见《AI配置指南.md》';
                 }
                 
-                alert(errorMsg);
+                showToast(errorMsg, 'error');
             } finally {
                 document.getElementById('loading').classList.remove('show');
                 document.getElementById('loading').querySelector('p').textContent = '正在计算中...';
