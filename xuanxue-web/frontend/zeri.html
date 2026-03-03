@@ -5,33 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>择日学 - 玄学预测系统</title>
     <link rel="stylesheet" href="common-header.css">
+    <link rel="stylesheet" href="common-theme.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Microsoft YaHei', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .card {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            margin-bottom: 20px;
-        }
-
         .tabs {
             display: flex;
             gap: 10px;
@@ -40,19 +15,21 @@
 
         .tab {
             flex: 1;
-            padding: 15px;
-            background: #f0f0f0;
-            border: none;
+            padding: 12px;
+            background: #f3f7fb;
+            border: 1px solid #d7e1ea;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 15px;
             transition: all 0.3s;
+            color: #1f3243;
         }
 
         .tab.active {
-            background: linear-gradient(135deg, #ffa751 0%, #ffe259 100%);
+            background: linear-gradient(135deg, #1f5f8b 0%, #2a6c8a 100%);
             color: white;
             font-weight: bold;
+            border-color: transparent;
         }
 
         .tab-content {
@@ -63,58 +40,14 @@
             display: block;
         }
 
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 16px;
-        }
-
         .form-row {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
         }
 
-        .btn {
-            background: linear-gradient(135deg, #ffa751 0%, #ffe259 100%);
-            color: white;
-            border: none;
-            padding: 15px 40px;
-            font-size: 18px;
-            border-radius: 8px;
-            cursor: pointer;
-            width: 100%;
-            transition: transform 0.2s;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-        }
-
-        .result {
-            display: none;
-        }
-
-        .result.show {
-            display: block;
-        }
-
         .fortune-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1f5f8b 0%, #2a6c8a 100%);
             padding: 30px;
             border-radius: 15px;
             color: white;
@@ -141,6 +74,12 @@
             border-radius: 8px;
         }
 
+        .traditional-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 10px;
+        }
+
         .day-list {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -164,64 +103,27 @@
         .day-card.吉 { border-color: #8bc34a; }
         .day-card.平 { border-color: #ff9800; }
 
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 20px;
-        }
-
-        .ai-status-banner {
+        .today-btn-row {
             display: flex;
-            align-items: center;
             gap: 10px;
-            padding: 12px 14px;
-            border-radius: 10px;
-            margin-bottom: 16px;
-            border-left: 4px solid #ff9800;
-            background: #fff8e1;
-            color: #8a6d3b;
         }
 
-        .ai-status-banner.available {
-            border-left-color: #4caf50;
-            background: #e8f5e9;
-            color: #1b5e20;
+        .today-btn-row .btn {
+            flex: 1;
         }
 
-        .ai-status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #ff9800;
-            flex-shrink: 0;
+        .day-level-pill {
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
         }
 
-        .ai-status-banner.available .ai-status-dot {
-            background: #4caf50;
-        }
-
-        .ai-status-meta {
-            font-size: 13px;
-            opacity: 0.9;
-        }
-
-        .loading.show {
-            display: block;
-        }
-
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #ffa751;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        @media (max-width: 768px) {
+            .today-btn-row {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
@@ -260,9 +162,9 @@
 
             <!-- 今日运势 -->
             <div id="today-tab" class="tab-content active">
-                <div style="display: flex; gap: 10px;">
-                    <button class="btn" style="flex: 1;" onclick="getTodayFortune()">查看今日运势</button>
-                    <button class="btn" style="flex: 1; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);" onclick="getTodayFortuneWithAI()">🤖 AI深度解读</button>
+                <div class="today-btn-row">
+                    <button class="btn btn-accent" onclick="getTodayFortune()">查看今日运势</button>
+                    <button class="btn btn-ai" onclick="getTodayFortuneWithAI()">🤖 AI深度解读</button>
                 </div>
             </div>
 
@@ -300,7 +202,7 @@
 
         <div class="loading" id="loading">
             <div class="spinner"></div>
-            <p style="margin-top: 10px; color: white;">正在查询中...</p>
+            <p class="loading-text">正在查询中...</p>
         </div>
 
         <!-- 今日运势结果 -->
@@ -332,13 +234,18 @@
                         <p id="fortuneAdvice" style="line-height: 1.8;"></p>
                     </div>
                 </div>
+
+                <div class="info-section">
+                    <h3>📚 传统择日补充</h3>
+                    <div id="traditionalInsight"></div>
+                </div>
             </div>
         </div>
 
         <!-- 吉日列表结果 -->
         <div class="result" id="search-result">
             <div class="card">
-                <h2 style="margin-bottom: 20px; color: #ffa751;">🎯 吉日查询结果</h2>
+                <h2 style="margin-bottom: 20px; color: #1f5f8b;">🎯 吉日查询结果</h2>
                 <p id="searchSummary" style="margin-bottom: 20px; font-size: 16px;"></p>
                 <div class="day-list" id="dayList"></div>
             </div>
@@ -368,7 +275,47 @@
             return msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('无法连接');
         }
 
-        const renderMarkdown = (text) => window.renderMarkdownSimple(text, '#ffd700');
+        const renderMarkdown = (text) => window.renderMarkdownSimple(text, '#1f5f8b');
+
+        function getScoreComment(score) {
+            if (score >= 80) return '诸事推进窗口期，适合处理重要事项。';
+            if (score >= 65) return '整体运势可用，建议先主后次分配任务。';
+            if (score >= 50) return '运势中性，宜做维护型或准备型工作。';
+            return '运势偏弱，建议减少关键决策并保守行事。';
+        }
+
+        function buildTraditionalInsight(data) {
+            const jianInfo = data.jianxing_info || {};
+            const pengzu = data.pengzu_baiji || {};
+
+            return `
+                <div class="traditional-grid">
+                    <div class="analysis-box info">
+                        <h4>建星等级</h4>
+                        <p>${esc(data.jianxing)}（${esc(jianInfo.level || '未知')}）</p>
+                        <p class="text-muted">宜：${(jianInfo.suitable || []).map((item) => esc(item)).join('、') || '无'}</p>
+                        <p class="text-muted">忌：${(jianInfo.avoid || []).map((item) => esc(item)).join('、') || '无'}</p>
+                    </div>
+                    <div class="analysis-box warn">
+                        <h4>彭祖百忌</h4>
+                        <p>${esc(pengzu.gan_ji || '无')}</p>
+                        <p>${esc(pengzu.zhi_ji || '无')}</p>
+                    </div>
+                    <div class="analysis-box success">
+                        <h4>黄道黑道与评分</h4>
+                        <p>${esc(data.shier_shen)} 属于 ${esc(data.huangdao_type)}，当日评分 ${esc(data.score)}。</p>
+                        <p>${esc(getScoreComment(data.score || 0))}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function initSearchDate() {
+            const now = new Date();
+            document.getElementById('year').value = now.getFullYear();
+            document.getElementById('month').value = now.getMonth() + 1;
+        }
+
         const aiMonitor = window.createAIStatusMonitor({
             bannerId: 'aiStatusBanner',
             dotId: 'aiStatusDot',
@@ -385,6 +332,7 @@
             }
         });
         aiMonitor.start();
+        initSearchDate();
 
         function switchTab(tab) {
             // 切换标签
@@ -477,21 +425,22 @@
             
             // 如果有AI解读，添加AI解读部分
             if (hasAI && data.ai_advice) {
-                adviceHTML += `<br><br><strong style="color: #ffd700;">🤖 AI深度解读：</strong><br><div style="line-height: 1.8;">${renderMarkdown(data.ai_advice)}</div>`;
+                adviceHTML += `<br><br><strong>🤖 AI深度解读：</strong><br><div style="line-height: 1.8;">${renderMarkdown(data.ai_advice)}</div>`;
             }
             
             document.getElementById('fortuneAdvice').innerHTML = adviceHTML;
+            document.getElementById('traditionalInsight').innerHTML = buildTraditionalInsight(data);
 
             // 设置卡片颜色
             const card = document.getElementById('fortuneCard');
             if (data.level === '大吉') {
-                card.style.background = 'linear-gradient(135deg, #4caf50 0%, #8bc34a 100%)';
+                card.style.background = 'linear-gradient(135deg, #2d8f57 0%, #4ca66b 100%)';
             } else if (data.level === '吉') {
-                card.style.background = 'linear-gradient(135deg, #2196f3 0%, #03a9f4 100%)';
+                card.style.background = 'linear-gradient(135deg, #2f76a1 0%, #3c88b7 100%)';
             } else if (data.level === '平') {
-                card.style.background = 'linear-gradient(135deg, #ff9800 0%, #ffc107 100%)';
+                card.style.background = 'linear-gradient(135deg, #c27c1a 0%, #d39a42 100%)';
             } else {
-                card.style.background = 'linear-gradient(135deg, #f44336 0%, #e91e63 100%)';
+                card.style.background = 'linear-gradient(135deg, #b94939 0%, #c76a5f 100%)';
             }
 
             document.getElementById('today-result').classList.add('show');
@@ -540,14 +489,15 @@
                     <div class="day-card ${safeLevel}">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                             <h3 style="color: ${safeColor}; margin: 0;">${esc(day.date)}</h3>
-                            <span style="background: ${safeColor}; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold;">
+                            <span class="day-level-pill" style="background: ${safeColor};">
                                 ${esc(day.level)}
                             </span>
                         </div>
-                        <p style="color: #666; margin-bottom: 10px;">${esc(day.weekday)} | ${esc(day.ganzhi)} | ${esc(day.jianxing)} | ${esc(day.shier_shen)}</p>
+                        <p class="text-muted" style="margin-bottom: 10px;">${esc(day.weekday)} | ${esc(day.ganzhi)} | ${esc(day.jianxing)} | ${esc(day.shier_shen)}</p>
                         <p style="margin: 5px 0;"><strong>评分：</strong>${esc(day.score)}</p>
                         <p style="margin: 5px 0;"><strong>宜：</strong>${(day.suitable || []).slice(0, 3).map(item => esc(item)).join('、')}</p>
                         <p style="margin: 5px 0;"><strong>忌：</strong>${(day.avoid || []).slice(0, 3).map(item => esc(item)).join('、')}</p>
+                        <p class="text-muted" style="margin-top: 8px;">${esc(getScoreComment(day.score || 0))}</p>
                     </div>
                 `;
             });

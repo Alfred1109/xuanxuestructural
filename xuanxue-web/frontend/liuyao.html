@@ -5,251 +5,104 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>六爻占卜 - 玄学预测系统</title>
     <link rel="stylesheet" href="common-header.css">
+    <link rel="stylesheet" href="common-theme.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        .page-title {
+            margin-bottom: 16px;
+            color: #1f5f8b;
         }
 
-        body {
-            font-family: 'Microsoft YaHei', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        .card {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            margin-bottom: 20px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .form-group input,
-        .form-group textarea {
-            width: 100%;
+        .tips {
+            background: #edf6fc;
+            border-left: 4px solid #2474a7;
             padding: 12px;
-            border: 2px solid #e0e0e0;
+            margin-bottom: 18px;
             border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-            font-family: 'Microsoft YaHei', Arial, sans-serif;
         }
 
-        .form-group textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
-
-        .form-group input:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #f5576c;
-        }
-
-        .btn {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
-            border: none;
-            padding: 15px 40px;
-            font-size: 18px;
-            border-radius: 8px;
-            cursor: pointer;
-            width: 100%;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(245, 87, 108, 0.4);
-        }
-
-        .btn:active {
-            transform: translateY(0);
-        }
-
-        .result {
-            display: none;
-        }
-
-        .result.show {
-            display: block;
+        .btn-row .btn {
+            flex: 1;
         }
 
         .gua-display {
             display: flex;
             justify-content: center;
-            gap: 30px;
-            margin: 30px 0;
+            gap: 18px;
+            margin: 18px 0;
             flex-wrap: wrap;
         }
 
         .gua-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 30px;
-            border-radius: 15px;
-            color: white;
+            background: linear-gradient(135deg, #2a6c8a 0%, #1f5f8b 100%);
+            padding: 20px;
+            border-radius: 12px;
+            color: #fff;
             text-align: center;
-            min-width: 200px;
+            min-width: 220px;
+        }
+
+        .gua-card.hidden {
+            display: none;
         }
 
         .gua-name {
-            font-size: 28px;
-            font-weight: bold;
-            margin-bottom: 15px;
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 8px;
         }
 
         .gua-info {
             font-size: 14px;
-            opacity: 0.9;
+            opacity: 0.93;
         }
 
         .yao-display {
             display: flex;
             flex-direction: column-reverse;
-            gap: 10px;
-            margin: 20px 0;
+            gap: 8px;
+            margin: 12px 0;
         }
 
         .yao-item {
             display: flex;
             align-items: center;
-            padding: 12px;
-            background: #f8f9fa;
+            padding: 10px 12px;
+            background: #ffffff;
             border-radius: 8px;
-            border-left: 4px solid #667eea;
+            border: 1px solid #d6e2ec;
         }
 
         .yao-item.dong {
-            background: #fff3cd;
-            border-left-color: #ffc107;
+            background: #fff8ed;
+            border-color: #e7c692;
         }
 
         .yao-symbol {
             font-size: 24px;
             margin-right: 15px;
             min-width: 40px;
+            color: #1f5f8b;
         }
 
         .yao-details {
             flex: 1;
         }
 
-        .info-section {
-            margin: 20px 0;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 10px;
+        .dong-mark {
+            color: #b97f2e;
+            font-weight: 600;
         }
 
-        .info-section h3 {
-            color: #f5576c;
-            margin-bottom: 15px;
-            font-size: 1.3em;
-        }
-
-        .analysis-box {
-            background: #e8f5e9;
-            border-left: 4px solid #4caf50;
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 5px;
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 20px;
-        }
-
-        .loading.show {
-            display: block;
-        }
-
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #f5576c;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .disclaimer {
-            background: #fff3e0;
-            border-left: 4px solid #ff9800;
-            padding: 15px;
-            margin-top: 20px;
-            border-radius: 5px;
-            font-size: 14px;
-            color: #666;
-        }
-
-        .tips {
-            background: #e3f2fd;
-            border-left: 4px solid #2196f3;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-        }
-
-        .ai-status-banner {
-            display: flex;
-            align-items: center;
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 10px;
-            padding: 12px 14px;
-            border-radius: 10px;
-            margin-bottom: 16px;
-            border-left: 4px solid #ff9800;
-            background: #fff8e1;
-            color: #8a6d3b;
         }
 
-        .ai-status-banner.available {
-            border-left-color: #4caf50;
-            background: #e8f5e9;
-            color: #1b5e20;
-        }
-
-        .ai-status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #ff9800;
-            flex-shrink: 0;
-        }
-
-        .ai-status-banner.available .ai-status-dot {
-            background: #4caf50;
-        }
-
-        .ai-status-meta {
-            font-size: 13px;
-            opacity: 0.9;
+        @media (max-width: 768px) {
+            .gua-card {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -288,28 +141,28 @@
                 4. 占卜结果仅供参考，不可过分依赖
             </div>
 
-            <h2 style="margin-bottom: 20px; color: #f5576c;">🔮 请输入您的问题</h2>
+            <h2 class="page-title">🔮 请输入您的问题</h2>
             <form id="liuyaoForm">
                 <div class="form-group">
                     <label>占卜问题（可选，但建议填写以获得更准确的解读）</label>
                     <textarea id="question" placeholder="例如：近期事业发展如何？感情运势怎样？投资是否顺利？等等..."></textarea>
                 </div>
 
-                <div style="display: flex; gap: 10px;">
-                    <button type="submit" class="btn" style="flex: 1;">🎲 开始占卜</button>
-                    <button type="button" class="btn" style="flex: 1; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);" onclick="divineWithAI()">🤖 AI深度解读</button>
+                <div class="btn-row">
+                    <button type="submit" class="btn">🎲 开始占卜</button>
+                    <button type="button" class="btn btn-ai" onclick="divineWithAI()">🤖 AI深度解读</button>
                 </div>
             </form>
         </div>
 
         <div class="loading" id="loading">
             <div class="spinner"></div>
-            <p style="margin-top: 10px; color: white;">正在摇卦中...</p>
+            <p class="loading-text">正在摇卦中...</p>
         </div>
 
         <div class="result" id="result">
             <div class="card">
-                <h2 style="margin-bottom: 20px; color: #f5576c;">📊 卦象结果</h2>
+                <h2 class="page-title">📊 卦象结果</h2>
                 
                 <div class="info-section">
                     <h3>占卜信息</h3>
@@ -324,7 +177,7 @@
                             <div id="benguaInfo"></div>
                         </div>
                     </div>
-                    <div class="gua-card" id="bianguaCard" style="display: none;">
+                    <div class="gua-card hidden" id="bianguaCard">
                         <div class="gua-name" id="bianguaName"></div>
                         <div class="gua-info">变卦</div>
                     </div>
@@ -338,6 +191,11 @@
                 <div class="info-section">
                     <h3>卦象解释</h3>
                     <div id="interpretationContent"></div>
+                </div>
+
+                <div class="info-section">
+                    <h3>📐 卦象结构分析</h3>
+                    <div id="structureContent"></div>
                 </div>
 
                 <div class="disclaimer">
@@ -355,11 +213,89 @@
     <script>
         const esc = (value) => (window.escapeHtml ? window.escapeHtml(value ?? '') : String(value ?? ''));
 
-        const renderMarkdown = (text) => window.renderMarkdownSimple(text, '#f5576c');
+        const renderMarkdown = (text) => window.renderMarkdownSimple(text, '#1f5f8b');
+        const SHENG_MAP = { '木': '火', '火': '土', '土': '金', '金': '水', '水': '木' };
+        const KE_MAP = { '木': '土', '土': '水', '水': '火', '火': '金', '金': '木' };
+
         function isConnectivityError(error) {
             const msg = String((error && error.message) || '');
             return msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('无法连接');
         }
+
+        function getWuxingRelation(upper, lower) {
+            if (upper === lower) {
+                return '上下同气，主事态内外一致，执行阻力较小。';
+            }
+            if (SHENG_MAP[upper] === lower) {
+                return `上卦${upper}生下卦${lower}，外部条件可滋养当前局面。`;
+            }
+            if (SHENG_MAP[lower] === upper) {
+                return `下卦${lower}生上卦${upper}，基础较稳，后续发展有承托。`;
+            }
+            if (KE_MAP[upper] === lower) {
+                return `上卦${upper}克下卦${lower}，易出现外压，需要稳住节奏。`;
+            }
+            if (KE_MAP[lower] === upper) {
+                return `下卦${lower}克上卦${upper}，内在因素较强，注意方向一致。`;
+            }
+            return '上下卦关系中性，建议结合动爻与问题背景综合判断。';
+        }
+
+        function getActionHint(movingCount) {
+            if (movingCount === 0) {
+                return '动爻为0，局面偏稳，适合先巩固基础再推进。';
+            }
+            if (movingCount <= 2) {
+                return '动爻较少，重点盯住关键变化点，避免分散投入。';
+            }
+            return '动爻较多，局势波动明显，建议分阶段执行并设置缓冲方案。';
+        }
+
+        function buildStructureInsight(guaInfo) {
+            const yaoDetails = guaInfo.yao_details || [];
+            const moving = yaoDetails.filter((item) => item.is_dong);
+            const yinCount = yaoDetails.filter((item) => item.type === '阴爻').length;
+            const yangCount = yaoDetails.length - yinCount;
+            const wuxingCount = {};
+            yaoDetails.forEach((item) => {
+                wuxingCount[item.wuxing] = (wuxingCount[item.wuxing] || 0) + 1;
+            });
+            const wuxingRank = Object.entries(wuxingCount).sort((a, b) => b[1] - a[1]);
+            const dominant = wuxingRank[0] || ['未知', 0];
+            const upper = guaInfo.bengua.shang_gua.wuxing;
+            const lower = guaInfo.bengua.xia_gua.wuxing;
+
+            return `
+                <div class="summary-grid">
+                    <div class="metric-item">
+                        <div class="metric-label">动爻数量</div>
+                        <div class="metric-value">${moving.length} / 6</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">阴阳比例</div>
+                        <div class="metric-value">阳 ${yangCount} : 阴 ${yinCount}</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">主导五行</div>
+                        <div class="metric-value">${esc(dominant[0])} (${esc(dominant[1])} 爻)</div>
+                    </div>
+                </div>
+                <div class="analysis-box info">
+                    <h4>变化强度</h4>
+                    <p>${moving.length ? `动爻位于第 ${moving.map((x) => x.position).join('、')} 爻。` : '本卦无动爻。'} ${getActionHint(moving.length)}</p>
+                </div>
+                <div class="analysis-box warn">
+                    <h4>五行分布</h4>
+                    <p>${wuxingRank.map((item) => `${esc(item[0])}:${esc(item[1])}`).join(' ｜ ') || '暂无数据'}</p>
+                </div>
+                <div class="analysis-box success">
+                    <h4>上下卦关系</h4>
+                    <p>上卦${esc(guaInfo.bengua.shang_gua.name)}（${esc(upper)}）/ 下卦${esc(guaInfo.bengua.xia_gua.name)}（${esc(lower)}）</p>
+                    <p>${esc(getWuxingRelation(upper, lower))}</p>
+                </div>
+            `;
+        }
+
         const aiMonitor = window.createAIStatusMonitor({
             bannerId: 'aiStatusBanner',
             dotId: 'aiStatusDot',
@@ -454,10 +390,10 @@
 
             // 显示变卦（如果有动爻）
             if (guaInfo.dongyao && guaInfo.dongyao.length > 0) {
-                document.getElementById('bianguaCard').style.display = 'block';
+                document.getElementById('bianguaCard').classList.remove('hidden');
                 document.getElementById('bianguaName').textContent = guaInfo.biangua.name;
             } else {
-                document.getElementById('bianguaCard').style.display = 'none';
+                document.getElementById('bianguaCard').classList.add('hidden');
             }
 
             // 显示爻象
@@ -473,7 +409,7 @@
                         <div class="yao-symbol">${esc(symbol)}</div>
                         <div class="yao-details">
                             <strong>${esc(yao.name)}</strong> - ${esc(yao.type)} (${esc(yao.wuxing)})
-                            ${isDong ? ' <span style="color: #ff9800;">●动爻</span>' : ''}
+                            ${isDong ? ' <span class="dong-mark">●动爻</span>' : ''}
                         </div>
                     </div>
                 `;
@@ -482,23 +418,23 @@
             // 显示解释
             const interp = data.interpretation;
             let interpretationHTML = `
-                <div class="analysis-box" style="background: #e8f5e9; border-color: #4caf50;">
-                    <h4 style="margin-bottom: 10px;">卦象总结</h4>
+                <div class="analysis-box success">
+                    <h4>卦象总结</h4>
                     <p>${esc(interp.summary)}</p>
                 </div>
                 
-                <div class="analysis-box" style="background: #e3f2fd; border-color: #2196f3;">
-                    <h4 style="margin-bottom: 10px;">详细分析</h4>
+                <div class="analysis-box info">
+                    <h4>详细分析</h4>
                     <p>${esc(interp.detailed)}</p>
                 </div>
                 
-                <div class="analysis-box" style="background: #fff3e0; border-color: #ff9800;">
-                    <h4 style="margin-bottom: 10px;">建议</h4>
+                <div class="analysis-box warn">
+                    <h4>建议</h4>
                     <p>${esc(interp.advice)}</p>
                 </div>
                 
-                <div class="analysis-box" style="background: #fce4ec; border-color: #e91e63;">
-                    <h4 style="margin-bottom: 10px;">时间预测</h4>
+                <div class="analysis-box">
+                    <h4>时间预测</h4>
                     <p>${esc(interp.timing)}</p>
                 </div>
             `;
@@ -506,14 +442,15 @@
             // 如果有AI解读，添加AI解读部分
             if (hasAI && data.ai_interpretation) {
                 interpretationHTML += `
-                    <div class="analysis-box" style="background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%); border-color: #667eea;">
-                        <h4 style="margin-bottom: 10px;">🤖 AI深度解读</h4>
-                        <div style="line-height: 1.8;">${renderMarkdown(data.ai_interpretation)}</div>
+                    <div class="analysis-box ai">
+                        <h4>🤖 AI深度解读</h4>
+                        <div>${renderMarkdown(data.ai_interpretation)}</div>
                     </div>
                 `;
             }
 
             document.getElementById('interpretationContent').innerHTML = interpretationHTML;
+            document.getElementById('structureContent').innerHTML = buildStructureInsight(guaInfo);
 
             // 显示结果
             document.getElementById('result').classList.add('show');

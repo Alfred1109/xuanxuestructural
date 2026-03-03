@@ -5,163 +5,68 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>玄学预测系统 - 八字排盘</title>
     <link rel="stylesheet" href="common-header.css">
+    <link rel="stylesheet" href="common-theme.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        .page-title {
+            margin-bottom: 18px;
+            color: #1f5f8b;
         }
 
-        body {
-            font-family: 'Microsoft YaHei', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .card {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            margin-bottom: 20px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-        }
-
-        .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 15px 40px;
-            font-size: 18px;
-            border-radius: 8px;
-            cursor: pointer;
-            width: 100%;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn:active {
-            transform: translateY(0);
-        }
-
-        .result {
-            display: none;
-        }
-
-        .result.show {
-            display: block;
+        .btn-row .btn {
+            flex: 1;
         }
 
         .bazi-display {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
-            margin: 20px 0;
+            gap: 12px;
+            margin: 14px 0;
         }
 
         .pillar {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            padding: 20px;
-            border-radius: 10px;
+            background: linear-gradient(135deg, #2a6c8a 0%, #1f5f8b 100%);
+            padding: 16px;
+            border-radius: 12px;
             text-align: center;
-            color: white;
+            color: #fff;
         }
 
         .pillar-title {
-            font-size: 14px;
+            font-size: 13px;
             opacity: 0.9;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .pillar-content {
-            font-size: 32px;
+            font-size: 29px;
             font-weight: bold;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-        }
-
-        .info-section {
-            margin: 20px 0;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 10px;
-        }
-
-        .info-section h3 {
-            color: #667eea;
-            margin-bottom: 15px;
-            font-size: 1.3em;
         }
 
         .wuxing-chart {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             gap: 10px;
-            margin: 15px 0;
+            margin: 12px 0;
         }
 
         .wuxing-item {
             text-align: center;
-            padding: 15px;
+            padding: 12px;
             border-radius: 8px;
             color: white;
             font-weight: bold;
         }
 
-        .wuxing-wood { background: #4caf50; }
-        .wuxing-fire { background: #f44336; }
-        .wuxing-earth { background: #ff9800; }
-        .wuxing-metal { background: #9e9e9e; }
-        .wuxing-water { background: #2196f3; }
-
-        .analysis-box {
-            background: #fff3cd;
-            border-left: 4px solid #ffc107;
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 5px;
+        .wuxing-item .count {
+            font-size: 23px;
+            margin-top: 4px;
         }
+
+        .wuxing-wood { background: #3d8653; }
+        .wuxing-fire { background: #b95040; }
+        .wuxing-earth { background: #c7913a; }
+        .wuxing-metal { background: #65788a; }
+        .wuxing-water { background: #2f76a1; }
 
         .dayun-list {
             display: grid;
@@ -170,46 +75,65 @@
         }
 
         .dayun-item {
-            background: #e3f2fd;
-            padding: 15px;
+            background: #f9fcff;
+            padding: 12px;
             border-radius: 8px;
             text-align: center;
-            border: 2px solid #2196f3;
+            border: 1px solid #d4e4f0;
         }
 
-        .loading {
+        .dayun-ganzhi {
+            font-size: 19px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: #1f5f8b;
+        }
+
+        .dayun-age {
+            color: #4b6074;
+            font-size: 13px;
+        }
+
+        .shishen-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 8px;
+        }
+
+        .shishen-item {
+            background: #fff;
+            border: 1px solid #d7e1ea;
+            border-radius: 8px;
+            padding: 10px 12px;
+        }
+
+        .ai-status-inline {
+            justify-content: space-between;
             display: none;
-            text-align: center;
-            padding: 20px;
+            align-items: center;
         }
 
-        .loading.show {
-            display: block;
+        .ai-status-main {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
         }
 
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
+        .ai-analysis-content {
+            line-height: 1.8;
+            white-space: pre-wrap;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .light-note {
+            margin-top: 10px;
         }
 
-        .disclaimer {
-            background: #fff3e0;
-            border-left: 4px solid #ff9800;
-            padding: 15px;
-            margin-top: 20px;
-            border-radius: 5px;
-            font-size: 14px;
-            color: #666;
+        @media (max-width: 768px) {
+            .bazi-display,
+            .wuxing-chart {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
     </style>
 </head>
@@ -234,18 +158,16 @@
 
     <div class="container">
 
-        <div id="aiStatusBanner" style="background: white; border-radius: 10px; padding: 12px 20px; margin-bottom: 20px; display: none; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
-            <div style="display: flex; align-items: center; justify-content: space-between;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <span id="aiStatusDot" style="width: 10px; height: 10px; border-radius: 50%; display: inline-block;"></span>
-                    <span id="aiStatusText" style="font-size: 14px;"></span>
-                </div>
-                <a href="AI配置指南.md" target="_blank" style="font-size: 12px; color: #667eea; text-decoration: none;">配置指南</a>
+        <div id="aiStatusBanner" class="ai-status-inline">
+            <div class="ai-status-main">
+                <span id="aiStatusDot" class="ai-status-dot"></span>
+                <span id="aiStatusText"></span>
             </div>
+            <a href="AI配置指南.md" target="_blank" class="inline-help">配置指南</a>
         </div>
 
         <div class="card">
-            <h2 style="margin-bottom: 20px; color: #667eea;">📅 输入出生信息</h2>
+            <h2 class="page-title">📅 输入出生信息</h2>
             <form id="baziForm">
                 <div class="form-row">
                     <div class="form-group">
@@ -280,21 +202,21 @@
                     </div>
                 </div>
 
-                <div style="display: flex; gap: 10px;">
-                    <button type="submit" class="btn" style="flex: 1;">🔍 开始排盘</button>
-                    <button type="button" class="btn" onclick="calculateWithAI()" style="flex: 1; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">🤖 AI深度分析</button>
+                <div class="btn-row">
+                    <button type="submit" class="btn">🔍 开始排盘</button>
+                    <button type="button" class="btn btn-ai" onclick="calculateWithAI()">🤖 AI深度分析</button>
                 </div>
             </form>
         </div>
 
         <div class="loading" id="loading">
             <div class="spinner"></div>
-            <p style="margin-top: 10px; color: white;">正在计算中...</p>
+            <p class="loading-text">正在计算中...</p>
         </div>
 
         <div class="result" id="result">
             <div class="card">
-                <h2 style="margin-bottom: 20px; color: #667eea;">📊 八字命盘</h2>
+                <h2 class="page-title">📊 八字命盘</h2>
                 
                 <div id="birthInfo" class="info-section">
                     <h3>出生信息</h3>
@@ -324,6 +246,11 @@
                 </div>
 
                 <div class="info-section">
+                    <h3>📌 基础解读补充</h3>
+                    <div id="baseInsightContent"></div>
+                </div>
+
+                <div class="info-section">
                     <h3>🎯 格局分析（高级）</h3>
                     <div id="gejuContent"></div>
                 </div>
@@ -340,7 +267,7 @@
 
                 <div class="info-section" id="aiAnalysisSection" style="display: none;">
                     <h3>🤖 AI深度分析</h3>
-                    <div id="aiAnalysisContent" style="background: linear-gradient(135deg, #f093fb15 0%, #f5576c15 100%); padding: 20px; border-radius: 10px; border-left: 4px solid #f5576c; line-height: 1.8; white-space: pre-wrap;"></div>
+                    <div id="aiAnalysisContent" class="analysis-box ai ai-analysis-content"></div>
                 </div>
 
                 <div class="disclaimer">
@@ -357,7 +284,34 @@
     <script src="ai-status.js"></script>
     <script>
         const esc = (value) => (window.escapeHtml ? window.escapeHtml(value ?? '') : String(value ?? ''));
-        const renderMarkdown = (text) => window.renderMarkdownSimple(text, '#667eea');
+        const renderMarkdown = (text) => window.renderMarkdownSimple(text, '#1f5f8b');
+
+        const DAY_GAN_TO_WUXING = {
+            '甲': '木', '乙': '木', '丙': '火', '丁': '火', '戊': '土',
+            '己': '土', '庚': '金', '辛': '金', '壬': '水', '癸': '水'
+        };
+        const WUXING_ADJUSTMENTS = {
+            '木': '可通过阅读、学习、植物环境来扶木。',
+            '火': '可通过运动、社交、作息规律来扶火。',
+            '土': '可通过稳定节奏、饮食调理与执行计划来扶土。',
+            '金': '可通过纪律、结构化工作与技能打磨来扶金。',
+            '水': '可通过深度思考、复盘和睡眠管理来扶水。'
+        };
+
+        function getBalanceLevel(diff) {
+            if (diff < 2) return '平衡';
+            if (diff < 4) return '轻度偏颇';
+            return '明显偏颇';
+        }
+
+        function getDominantElement(wuxingCount) {
+            const entries = Object.entries(wuxingCount || {});
+            if (!entries.length) {
+                return ['未知', 0];
+            }
+            entries.sort((a, b) => b[1] - a[1]);
+            return entries[0];
+        }
         const indexAIMonitor = window.createAIStatusMonitor({
             bannerId: 'aiStatusBanner',
             dotId: 'aiStatusDot',
@@ -366,21 +320,25 @@
             renderStatus: function (state, data, _prev, elements) {
                 elements.banner.style.display = 'block';
                 if (state === 'available') {
-                    elements.dot.style.background = '#4caf50';
+                    elements.banner.classList.add('available');
+                    elements.dot.style.background = '#2d8f57';
                     elements.text.textContent = `✓ AI服务正常 (${data.model || '模型信息不可用'})`;
-                    elements.text.style.color = '#4caf50';
+                    elements.text.style.color = '#2d8f57';
                 } else if (state === 'degraded') {
-                    elements.dot.style.background = '#ff9800';
+                    elements.banner.classList.remove('available');
+                    elements.dot.style.background = '#c27c1a';
                     elements.text.textContent = '⚠️ AI服务波动中 - 将自动回退基础分析';
-                    elements.text.style.color = '#ff9800';
+                    elements.text.style.color = '#9c6719';
                 } else if (state === 'unconfigured') {
-                    elements.dot.style.background = '#ff9800';
+                    elements.banner.classList.remove('available');
+                    elements.dot.style.background = '#c27c1a';
                     elements.text.textContent = '⚠️ AI服务未配置 - 点击右侧查看配置指南';
-                    elements.text.style.color = '#ff9800';
+                    elements.text.style.color = '#9c6719';
                 } else {
-                    elements.dot.style.background = '#ff9800';
+                    elements.banner.classList.remove('available');
+                    elements.dot.style.background = '#b94939';
                     elements.text.textContent = '⚠️ 后端连接异常 - 请检查服务状态';
-                    elements.text.style.color = '#ff9800';
+                    elements.text.style.color = '#b94939';
                 }
             }
         });
@@ -459,7 +417,7 @@
                 wuxingChart.innerHTML += `
                     <div class="wuxing-item ${wuxingColors[element]}">
                         <div>${esc(element)}</div>
-                        <div style="font-size: 24px; margin-top: 5px;">${count.toFixed(1)}</div>
+                        <div class="count">${count.toFixed(1)}</div>
                     </div>
                 `;
             });
@@ -467,10 +425,12 @@
             // 显示十神
             const shishenInfo = document.getElementById('shishenInfo');
             shishenInfo.innerHTML = `
-                <p><strong>年干：</strong>${esc(data.shishen.year_gan)}</p>
-                <p><strong>月干：</strong>${esc(data.shishen.month_gan)}</p>
-                <p><strong>日干：</strong>${esc(data.shishen.day_gan)}（命主）</p>
-                <p><strong>时干：</strong>${esc(data.shishen.hour_gan)}</p>
+                <div class="shishen-grid">
+                    <div class="shishen-item"><strong>年干：</strong>${esc(data.shishen.year_gan)}</div>
+                    <div class="shishen-item"><strong>月干：</strong>${esc(data.shishen.month_gan)}</div>
+                    <div class="shishen-item"><strong>日干：</strong>${esc(data.shishen.day_gan)}（命主）</div>
+                    <div class="shishen-item"><strong>时干：</strong>${esc(data.shishen.hour_gan)}</div>
+                </div>
             `;
 
             // 显示大运
@@ -479,8 +439,8 @@
             data.dayun.forEach(dayun => {
                 dayunList.innerHTML += `
                     <div class="dayun-item">
-                        <div style="font-size: 20px; font-weight: bold; margin-bottom: 5px;">${esc(dayun.ganzhi)}</div>
-                        <div style="font-size: 14px;">${esc(dayun.start_age)}-${esc(dayun.end_age)}岁</div>
+                        <div class="dayun-ganzhi">${esc(dayun.ganzhi)}</div>
+                        <div class="dayun-age">${esc(dayun.start_age)}-${esc(dayun.end_age)}岁</div>
                     </div>
                 `;
             });
@@ -489,27 +449,73 @@
             const analysis = data.analysis;
             const analysisContent = document.getElementById('analysisContent');
             analysisContent.innerHTML = `
-                <div class="analysis-box">
-                    <h4 style="margin-bottom: 10px;">五行概况</h4>
+                <div class="analysis-box info">
+                    <h4>五行概况</h4>
                     <p>${esc(analysis.wuxing_summary)}</p>
                 </div>
                 
-                <div class="analysis-box">
-                    <h4 style="margin-bottom: 10px;">最旺五行：${esc(analysis.strong_element.element)}</h4>
+                <div class="analysis-box success">
+                    <h4>最旺五行：${esc(analysis.strong_element.element)}</h4>
                     <p>${esc(analysis.strong_element.advice)}</p>
                 </div>
                 
-                <div class="analysis-box">
-                    <h4 style="margin-bottom: 10px;">最弱五行：${esc(analysis.weak_element.element)}</h4>
+                <div class="analysis-box warn">
+                    <h4>最弱五行：${esc(analysis.weak_element.element)}</h4>
                     <p>${esc(analysis.weak_element.advice)}</p>
                 </div>
                 
                 <div class="analysis-box">
-                    <h4 style="margin-bottom: 10px;">平衡建议</h4>
+                    <h4>平衡建议</h4>
                     <p>${esc(analysis.balance_advice)}</p>
                 </div>
                 
-                <p style="margin-top: 15px; color: #666; font-size: 14px;">${esc(analysis.disclaimer)}</p>
+                <p class="text-muted light-note">${esc(analysis.disclaimer)}</p>
+            `;
+
+            // 显示基础补充解读（非AI）
+            const wuxingEntries = Object.entries(data.wuxing_count || {}).sort((a, b) => b[1] - a[1]);
+            const topElement = wuxingEntries[0] || ['未知', 0];
+            const weakElement = wuxingEntries[wuxingEntries.length - 1] || ['未知', 0];
+            const totalWuxing = wuxingEntries.reduce((sum, item) => sum + Number(item[1] || 0), 0);
+            const avgWuxing = wuxingEntries.length ? totalWuxing / wuxingEntries.length : 0;
+            const gap = Number((topElement[1] - weakElement[1]).toFixed(2));
+            const dayMasterGan = (data.bazi && data.bazi.day ? String(data.bazi.day).charAt(0) : '');
+            const dayMasterElement = DAY_GAN_TO_WUXING[dayMasterGan] || '未知';
+            const dominantNayin = getDominantElement(data.wuxing_count || {})[0];
+            const baseInsight = document.getElementById('baseInsightContent');
+
+            baseInsight.innerHTML = `
+                <div class="metric-grid">
+                    <div class="metric-item">
+                        <div class="metric-label">平衡等级</div>
+                        <div class="metric-value">${esc(getBalanceLevel(gap))}</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">五行最大差值</div>
+                        <div class="metric-value">${esc(gap.toFixed(2))}</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">日主五行</div>
+                        <div class="metric-value">${esc(dayMasterGan)} · ${esc(dayMasterElement)}</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">命局主导元素</div>
+                        <div class="metric-value">${esc(dominantNayin)}</div>
+                    </div>
+                </div>
+                <div class="analysis-box info">
+                    <h4>调衡优先级</h4>
+                    <p>${wuxingEntries.map(([element, count], idx) => `${idx + 1}. ${esc(element)}(${Number(count).toFixed(1)})`).join(' ｜ ')}</p>
+                </div>
+                <div class="analysis-box warn">
+                    <h4>传统补益方向</h4>
+                    <p><strong>${esc(weakElement[0])}</strong>偏弱，${esc(WUXING_ADJUSTMENTS[weakElement[0]] || '建议以作息和节奏管理为先。')}</p>
+                    <p class="text-muted">均衡参考值约为 ${avgWuxing.toFixed(1)}，当前最大偏差为 ${gap.toFixed(2)}。</p>
+                </div>
+                <div class="analysis-box success">
+                    <h4>纳音提示</h4>
+                    <p>年柱：${esc(data.nayin.year)} ｜ 月柱：${esc(data.nayin.month)} ｜ 日柱：${esc(data.nayin.day)} ｜ 时柱：${esc(data.nayin.hour)}</p>
+                </div>
             `;
 
             // 显示高级分析
@@ -519,36 +525,40 @@
                 // 格局分析
                 const geju = adv.geju;
                 document.getElementById('gejuContent').innerHTML = `
-                    <div class="analysis-box" style="background: #e8f5e9; border-color: #4caf50;">
-                        <h4 style="margin-bottom: 10px;">命局强弱：${esc(geju.strength_level)} (${esc(geju.strength.toFixed(2))})</h4>
+                    <div class="analysis-box success">
+                        <h4>命局强弱：${esc(geju.strength_level)} (${esc(geju.strength.toFixed(2))})</h4>
                         <p><strong>格局类型：</strong>${esc(geju.pattern_type)}</p>
-                        <p style="margin-top: 10px;">${esc(geju.pattern_description)}</p>
+                        <p class="light-note">${esc(geju.pattern_description)}</p>
                     </div>
-                    <div class="analysis-box" style="background: #fff3e0; border-color: #ff9800;">
-                        <h4 style="margin-bottom: 10px;">适合职业</h4>
+                    <div class="analysis-box warn">
+                        <h4>适合职业</h4>
                         <p>${(geju.suitable_career || []).map(item => esc(item)).join('、')}</p>
                     </div>
-                    <div class="analysis-box" style="background: #e3f2fd; border-color: #2196f3;">
-                        <h4 style="margin-bottom: 10px;">人生建议</h4>
+                    <div class="analysis-box info">
+                        <h4>人生建议</h4>
                         <p>${esc(geju.life_advice)}</p>
                     </div>
                 `;
                 
                 // 神煞分析
                 const shensha = adv.shensha;
-                let shenshaHTML = `<p style="margin-bottom: 15px;"><strong>${esc(shensha.summary)}</strong></p>`;
+                let shenshaHTML = `<p><strong>${esc(shensha.summary)}</strong></p>`;
                 if (shensha.shensha_list && shensha.shensha_list.length > 0) {
                     shensha.shensha_list.forEach(item => {
-                        const color = item.type === '大吉' ? '#4caf50' : item.type === '吉' ? '#2196f3' : '#ff9800';
+                        const statusClass = item.type === '大吉'
+                            ? 'success'
+                            : item.type === '吉'
+                                ? 'info'
+                                : 'warn';
                         shenshaHTML += `
-                            <div class="analysis-box" style="background: ${color}15; border-color: ${color};">
-                                <h4 style="margin-bottom: 10px; color: ${color};">${esc(item.name)} (${esc(item.type)})</h4>
+                            <div class="analysis-box ${statusClass}">
+                                <h4>${esc(item.name)} <span class="tag">${esc(item.type)}</span></h4>
                                 <p>${esc(item.description)}</p>
                             </div>
                         `;
                     });
                 } else {
-                    shenshaHTML += '<p style="color: #666;">命局中暂无明显神煞，属于平和之象。</p>';
+                    shenshaHTML += '<p class="text-muted">命局中暂无明显神煞，属于平和之象。</p>';
                 }
                 document.getElementById('shenshaContent').innerHTML = shenshaHTML;
                 
@@ -556,23 +566,23 @@
                 const liuqin = adv.liuqin;
                 document.getElementById('liuqinContent').innerHTML = `
                     <div class="analysis-box">
-                        <h4 style="margin-bottom: 10px;">👨 父亲</h4>
+                        <h4>👨 父亲</h4>
                         <p>${esc(liuqin.father)}</p>
                     </div>
                     <div class="analysis-box">
-                        <h4 style="margin-bottom: 10px;">👩 母亲</h4>
+                        <h4>👩 母亲</h4>
                         <p>${esc(liuqin.mother)}</p>
                     </div>
                     <div class="analysis-box">
-                        <h4 style="margin-bottom: 10px;">👫 兄弟姐妹</h4>
+                        <h4>👫 兄弟姐妹</h4>
                         <p>${esc(liuqin.siblings)}</p>
                     </div>
                     <div class="analysis-box">
-                        <h4 style="margin-bottom: 10px;">💑 配偶</h4>
+                        <h4>💑 配偶</h4>
                         <p>${esc(liuqin.spouse)}</p>
                     </div>
                     <div class="analysis-box">
-                        <h4 style="margin-bottom: 10px;">👶 子女</h4>
+                        <h4>👶 子女</h4>
                         <p>${esc(liuqin.children)}</p>
                     </div>
                 `;
