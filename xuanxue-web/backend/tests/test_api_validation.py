@@ -19,6 +19,31 @@ class TestApiValidation(unittest.TestCase):
                 return await client.request(method, url, **kwargs)
         return asyncio.run(_run())
 
+    def assert_success_envelope(self, response: httpx.Response) -> dict:
+        payload = response.json()
+        self.assertTrue(payload.get("success"))
+        self.assertIn("data", payload)
+        meta = payload.get("meta", {})
+        self.assertTrue(meta.get("schema_version"))
+        self.assertTrue(meta.get("generated_at"))
+        self.assertTrue(meta.get("request_id"))
+        return payload
+
+    def assert_error_envelope(self, response: httpx.Response, code: str = None) -> dict:
+        payload = response.json()
+        self.assertFalse(payload.get("success"))
+        error = payload.get("error", {})
+        self.assertTrue(error.get("code"))
+        self.assertTrue(error.get("message"))
+        self.assertIn("retryable", error)
+        meta = payload.get("meta", {})
+        self.assertTrue(meta.get("schema_version"))
+        self.assertTrue(meta.get("generated_at"))
+        self.assertTrue(meta.get("request_id"))
+        if code is not None:
+            self.assertEqual(error.get("code"), code)
+        return payload
+
     def test_bazi_invalid_gender_returns_422(self):
         resp = self.request(
             "POST",
@@ -33,6 +58,7 @@ class TestApiValidation(unittest.TestCase):
             },
         )
         self.assertEqual(resp.status_code, 422)
+        self.assert_error_envelope(resp, "validation_error")
 
     def test_bazi_invalid_month_returns_422(self):
         resp = self.request(
@@ -48,6 +74,7 @@ class TestApiValidation(unittest.TestCase):
             },
         )
         self.assertEqual(resp.status_code, 422)
+        self.assert_error_envelope(resp, "validation_error")
 
     def test_bazi_valid_payload_returns_200(self):
         resp = self.request(
@@ -63,7 +90,7 @@ class TestApiValidation(unittest.TestCase):
             },
         )
         self.assertEqual(resp.status_code, 200)
-        self.assertTrue(resp.json().get("success"))
+        self.assert_success_envelope(resp)
 
     def test_calendar_invalid_day_returns_422(self):
         resp = self.request(
@@ -72,6 +99,7 @@ class TestApiValidation(unittest.TestCase):
             json={"year": 2026, "month": 2, "day": 32},
         )
         self.assertEqual(resp.status_code, 422)
+        self.assert_error_envelope(resp, "validation_error")
 
     def test_calendar_invalid_year_returns_422(self):
         resp = self.request(
@@ -88,6 +116,7 @@ class TestApiValidation(unittest.TestCase):
             json={"year": 2026, "month": 2, "day": 31},
         )
         self.assertEqual(resp.status_code, 400)
+        self.assert_error_envelope(resp, "bad_request")
 
     def test_qimen_invalid_real_date_returns_400(self):
         resp = self.request(
@@ -111,11 +140,13 @@ class TestApiValidation(unittest.TestCase):
     def test_ai_chat_missing_question_returns_422(self):
         resp = self.request("POST", "/api/ai/chat")
         self.assertEqual(resp.status_code, 422)
+        self.assert_error_envelope(resp, "missing_question")
 
     def test_ai_chat_unavailable_returns_503(self):
         with patch("main.llm_helper.is_available", return_value=False):
             resp = self.request("POST", "/api/ai/chat?question=你好")
         self.assertEqual(resp.status_code, 503)
+        self.assert_error_envelope(resp, "ai_unconfigured")
 
     def test_ai_chat_upstream_empty_returns_502(self):
         with patch("main.llm_helper.is_available", return_value=True), patch(
@@ -123,6 +154,7 @@ class TestApiValidation(unittest.TestCase):
         ):
             resp = self.request("POST", "/api/ai/chat?question=你好")
         self.assertEqual(resp.status_code, 502)
+        self.assert_error_envelope(resp, "ai_upstream_empty")
 
     def test_ai_chat_success_returns_200(self):
         with patch("main.llm_helper.is_available", return_value=True), patch(
@@ -130,9 +162,23 @@ class TestApiValidation(unittest.TestCase):
         ):
             resp = self.request("POST", "/api/ai/chat?question=你好")
         self.assertEqual(resp.status_code, 200)
-        payload = resp.json()
-        self.assertTrue(payload.get("success"))
+        payload = self.assert_success_envelope(resp)
         self.assertEqual(payload.get("data", {}).get("answer"), "测试回复")
+
+    def test_ai_chat_accepts_json_body(self):
+        with patch("main.llm_helper.is_available", return_value=True), patch(
+            "main.llm_helper.chat", return_value="Body回复"
+        ):
+            resp = self.request(
+                "POST",
+                "/api/ai/chat",
+                json={"question": "使用Body提问", "context": "上下文"},
+            )
+        self.assertEqual(resp.status_code, 200)
+        payload = self.assert_success_envelope(resp)
+        self.assertEqual(payload.get("data", {}).get("question"), "使用Body提问")
+        self.assertEqual(payload.get("data", {}).get("context"), "上下文")
+        self.assertEqual(payload.get("data", {}).get("answer"), "Body回复")
 
     def test_ai_status_available_enum(self):
         main.AI_RUNTIME_STATE["last_error"] = None
@@ -140,7 +186,7 @@ class TestApiValidation(unittest.TestCase):
         with patch("main.llm_helper.is_available", return_value=True):
             resp = self.request("GET", "/api/ai/status")
         self.assertEqual(resp.status_code, 200)
-        payload = resp.json().get("data", {})
+        payload = self.assert_success_envelope(resp).get("data", {})
         self.assertEqual(payload.get("status"), "available")
         self.assertTrue(payload.get("available"))
 
@@ -148,7 +194,7 @@ class TestApiValidation(unittest.TestCase):
         with patch("main.llm_helper.is_available", return_value=False):
             resp = self.request("GET", "/api/ai/status")
         self.assertEqual(resp.status_code, 200)
-        payload = resp.json().get("data", {})
+        payload = self.assert_success_envelope(resp).get("data", {})
         self.assertEqual(payload.get("status"), "unconfigured")
         self.assertFalse(payload.get("available"))
 
@@ -158,7 +204,7 @@ class TestApiValidation(unittest.TestCase):
         with patch("main.llm_helper.is_available", return_value=True):
             resp = self.request("GET", "/api/ai/status")
         self.assertEqual(resp.status_code, 200)
-        payload = resp.json().get("data", {})
+        payload = self.assert_success_envelope(resp).get("data", {})
         self.assertEqual(payload.get("status"), "degraded")
         self.assertTrue(payload.get("available"))
         self.assertEqual(payload.get("last_error"), "chat_empty_response")
@@ -180,10 +226,11 @@ class TestApiValidation(unittest.TestCase):
                 },
             )
         self.assertEqual(resp.status_code, 200)
-        payload = resp.json()
+        payload = self.assert_success_envelope(resp)
         self.assertFalse(payload.get("ai_enabled"))
         self.assertFalse(payload.get("ai_enhanced"))
         self.assertTrue(payload.get("ai_message"))
+        self.assertIn("ai", payload.get("data", {}))
 
     def test_ai_enhance_bazi_upstream_empty_has_warning(self):
         with patch("main.llm_helper.is_available", return_value=True), patch(
@@ -202,7 +249,7 @@ class TestApiValidation(unittest.TestCase):
                 },
             )
         self.assertEqual(resp.status_code, 200)
-        payload = resp.json()
+        payload = self.assert_success_envelope(resp)
         self.assertTrue(payload.get("ai_enabled"))
         self.assertFalse(payload.get("ai_enhanced"))
         self.assertTrue(payload.get("ai_message"))
@@ -214,7 +261,7 @@ class TestApiValidation(unittest.TestCase):
         ):
             resp = self.request("POST", "/api/ai/enhance-liuyao?question=测试")
         self.assertEqual(resp.status_code, 200)
-        payload = resp.json()
+        payload = self.assert_success_envelope(resp)
         self.assertTrue(payload.get("ai_enabled"))
         self.assertTrue(payload.get("ai_enhanced"))
         self.assertEqual(payload.get("data", {}).get("ai_interpretation"), "AI解读")
@@ -228,7 +275,7 @@ class TestApiValidation(unittest.TestCase):
                 "/api/ai/enhance-qimen?year=2026&month=2&day=28&hour=9&minute=0&matter_type=通用",
             )
         self.assertEqual(resp.status_code, 200)
-        payload = resp.json()
+        payload = self.assert_success_envelope(resp)
         self.assertTrue(payload.get("ai_enabled"))
         self.assertFalse(payload.get("ai_enhanced"))
         self.assertTrue(payload.get("ai_message"))

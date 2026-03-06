@@ -48,8 +48,15 @@
         }
 
         if (!response.ok) {
-            var detail = payload && (payload.detail || payload.message);
-            throw new Error(detail || ('API请求失败 (' + response.status + ')'));
+            var structured = payload && payload.error ? payload.error : null;
+            var detail = structured
+                ? (structured.message || structured.detail)
+                : (payload && (payload.detail || payload.message));
+            var err = new Error(detail || ('API请求失败 (' + response.status + ')'));
+            if (structured && structured.code) {
+                err.code = structured.code;
+            }
+            throw err;
         }
 
         return payload;

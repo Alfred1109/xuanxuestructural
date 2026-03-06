@@ -635,11 +635,17 @@
                     : '当前节奏宜先守后动，先小规模验证再投入。';
 
             const topHtml = top.length
-                ? top.map((item) => `<div class="analysis-box success"><h4>${esc(item.宫位)} · ${esc(item.综合吉凶)}</h4><p>门：${esc(item.详情.八门)} ｜ 星：${esc(item.详情.九星)} ｜ 分数：${esc(item.吉凶分数)}</p></div>`).join('')
+                ? top.map((item) => {
+                    const d = item.详情 || {};
+                    return `<div class="analysis-box success"><h4>${esc(item.宫位)} · ${esc(item.综合吉凶)}</h4><p>门：${esc(d.八门 || '-')} ｜ 星：${esc(d.九星 || '-')} ｜ 分数：${esc(item.吉凶分数)}</p></div>`;
+                }).join('')
                 : '<p class="text-muted">暂无可用方位数据。</p>';
 
             const riskHtml = risk.length
-                ? risk.map((item) => `<div class="analysis-box danger"><h4>${esc(item.宫位)} · ${esc(item.综合吉凶)}</h4><p>门：${esc(item.详情.八门)} ｜ 星：${esc(item.详情.九星)} ｜ 分数：${esc(item.吉凶分数)}</p></div>`).join('')
+                ? risk.map((item) => {
+                    const d = item.详情 || {};
+                    return `<div class="analysis-box danger"><h4>${esc(item.宫位)} · ${esc(item.综合吉凶)}</h4><p>门：${esc(d.八门 || '-')} ｜ 星：${esc(d.九星 || '-')} ｜ 分数：${esc(item.吉凶分数)}</p></div>`;
+                }).join('')
                 : '<p class="text-muted">暂无需要回避的方位。</p>';
 
             return `
@@ -771,30 +777,42 @@
         }
 
         function displayResult(data, hasAI = false) {
+            const safeData = data || {};
             // 显示时间信息
-            const timeInfo = data.时间信息;
+            const timeInfo = safeData.时间信息 || {};
             document.getElementById('timeInfo').innerHTML = `
-                <strong>时间：</strong>${esc(timeInfo.阳历)}<br>
-                <strong>四柱：</strong>${esc(timeInfo.年柱)} ${esc(timeInfo.月柱)} ${esc(timeInfo.日柱)} ${esc(timeInfo.时柱)}
+                <strong>时间：</strong>${esc(timeInfo.阳历 || '未知')}<br>
+                <strong>四柱：</strong>${esc(timeInfo.年柱 || '-')} ${esc(timeInfo.月柱 || '-')} ${esc(timeInfo.日柱 || '-')} ${esc(timeInfo.时柱 || '-')}
             `;
 
             // 显示遁甲信息
-            const dunInfo = data.遁甲信息;
+            const dunInfo = safeData.遁甲信息 || {};
             document.getElementById('dunInfo').innerHTML = `
-                <span>${esc(dunInfo.阴阳遁)}</span>
-                <span>${esc(dunInfo.局数)}</span>
+                <span>${esc(dunInfo.阴阳遁 || '未知')}</span>
+                <span>${esc(dunInfo.局数 || '未知')}</span>
             `;
 
             // 显示九宫格（按洛书顺序：4 9 2 / 3 5 7 / 8 1 6）
-            const palaces = data.九宫盘;
+            const palaces = safeData.九宫盘 || {};
             const palaceOrder = ['巽宫', '离宫', '坤宫', '震宫', '中宫', '兑宫', '艮宫', '坎宫', '乾宫'];
             const jiugongGrid = document.getElementById('jiugongGrid');
             jiugongGrid.innerHTML = '';
 
             palaceOrder.forEach(palaceName => {
-                const palace = palaces[palaceName];
-                const gateType = sanitizeFortuneType(palace.门吉凶.type);
-                const starType = sanitizeFortuneType(palace.星吉凶.type);
+                const palace = palaces[palaceName] || {
+                    宫位: palaceName,
+                    地盘: '-',
+                    天盘: '-',
+                    八门: '-',
+                    九星: '-',
+                    八神: '-',
+                    门吉凶: { type: '中平', desc: '暂无数据' },
+                    星吉凶: { type: '中平', desc: '暂无数据' }
+                };
+                const gateInfo = palace.门吉凶 || { type: '中平', desc: '暂无数据' };
+                const starInfo = palace.星吉凶 || { type: '中平', desc: '暂无数据' };
+                const gateType = sanitizeFortuneType(gateInfo.type);
+                const starType = sanitizeFortuneType(starInfo.type);
                 
                 jiugongGrid.innerHTML += `
                     <div class="palace">
@@ -802,8 +820,8 @@
                         <div class="palace-content">
                             <div><strong>地盘：</strong>${esc(palace.地盘)}</div>
                             <div><strong>天盘：</strong>${esc(palace.天盘)}</div>
-                            <div><strong>八门：</strong>${esc(palace.八门)} <span class="fortune-badge fortune-${gateType}">${esc(palace.门吉凶.type)}</span></div>
-                            <div><strong>九星：</strong>${esc(palace.九星)} <span class="fortune-badge fortune-${starType}">${esc(palace.星吉凶.type)}</span></div>
+                            <div><strong>八门：</strong>${esc(palace.八门)} <span class="fortune-badge fortune-${gateType}">${esc(gateInfo.type)}</span></div>
+                            <div><strong>九星：</strong>${esc(palace.九星)} <span class="fortune-badge fortune-${starType}">${esc(starInfo.type)}</span></div>
                             <div><strong>八神：</strong>${esc(palace.八神)}</div>
                         </div>
                     </div>
@@ -811,41 +829,44 @@
             });
 
             // 显示最佳方位
-            const bestDir = data.最佳方位;
+            const bestDir = safeData.最佳方位 || {};
+            const bestDirDetail = bestDir.详情 || {};
+            const bestDirGate = bestDirDetail.门吉凶 || {};
+            const bestDirStar = bestDirDetail.星吉凶 || {};
             document.getElementById('bestDirection').innerHTML = `
                 <div class="prediction-box">
-                    <h4>最佳方位：${esc(bestDir.最佳方位)} (${esc(bestDir.吉凶)})</h4>
-                    <p><strong>八门：</strong>${esc(bestDir.详情.八门)} - ${esc(bestDir.详情.门吉凶.desc)}</p>
-                    <p><strong>九星：</strong>${esc(bestDir.详情.九星)} - ${esc(bestDir.详情.星吉凶.desc)}</p>
+                    <h4>最佳方位：${esc(bestDir.最佳方位 || '未知')} (${esc(bestDir.吉凶 || '未知')})</h4>
+                    <p><strong>八门：</strong>${esc(bestDirDetail.八门 || '-')} - ${esc(bestDirGate.desc || '暂无数据')}</p>
+                    <p><strong>九星：</strong>${esc(bestDirDetail.九星 || '-')} - ${esc(bestDirStar.desc || '暂无数据')}</p>
                     <p><strong>建议：</strong>此方位最为有利，可作为出行、办事的首选方向。</p>
                 </div>
             `;
 
             // 显示事项预测
-            const prediction = data.事项预测;
+            const prediction = safeData.事项预测 || {};
             const predictionDetail = prediction.详情 || {};
             const gateDetail = predictionDetail.门吉凶 || {};
             const starDetail = predictionDetail.星吉凶 || {};
             let predictionHTML = `
                 <div class="prediction-box">
-                    <h4>${esc(prediction.事项)} - ${esc(prediction.综合吉凶)}</h4>
-                    <p><strong>最佳宫位：</strong>${esc(prediction.最佳宫位)}</p>
-                    <p><strong>八门：</strong>${esc(predictionDetail.八门)} - ${esc(gateDetail.desc)}</p>
-                    <p><strong>九星：</strong>${esc(predictionDetail.九星)} - ${esc(starDetail.desc)}</p>
-                    <p style="margin-top: 10px; font-size: 16px;"><strong>${esc(prediction.建议)}</strong></p>
+                    <h4>${esc(prediction.事项 || '通用')} - ${esc(prediction.综合吉凶 || '中平')}</h4>
+                    <p><strong>最佳宫位：</strong>${esc(prediction.最佳宫位 || '未知')}</p>
+                    <p><strong>八门：</strong>${esc(predictionDetail.八门 || '-')} - ${esc(gateDetail.desc || '暂无数据')}</p>
+                    <p><strong>九星：</strong>${esc(predictionDetail.九星 || '-')} - ${esc(starDetail.desc || '暂无数据')}</p>
+                    <p style="margin-top: 10px; font-size: 16px;"><strong>${esc(prediction.建议 || '建议结合实际情况谨慎决策')}</strong></p>
                 </div>
                 <div class="analysis-box info">
                     <h4>传统说明</h4>
-                    <p>${esc(data.说明 || '此盘以奇门传统规则推演，适合做方向和节奏参考。')}</p>
+                    <p>${esc(safeData.说明 || '此盘以奇门传统规则推演，适合做方向和节奏参考。')}</p>
                 </div>
             `;
 
             // 如果有AI解读，添加AI解读部分
-            if (hasAI && data.ai_interpretation) {
+            if (hasAI && safeData.ai_interpretation) {
                 predictionHTML += `
                     <div class="analysis-box ai">
                         <h4>🤖 AI深度解读</h4>
-                        <div>${renderMarkdown(data.ai_interpretation)}</div>
+                        <div>${renderMarkdown(safeData.ai_interpretation)}</div>
                     </div>
                 `;
             }
@@ -853,19 +874,22 @@
             document.getElementById('matterPrediction').innerHTML = predictionHTML;
 
             // 显示八方分析
-            const directions = data.八方分析;
+            const directions = safeData.八方分析 || {};
             const directionAnalysis = document.getElementById('directionAnalysis');
             directionAnalysis.innerHTML = '';
 
             Object.values(directions).forEach(dir => {
                 const fortuneClass = sanitizeFortuneType(dir.综合吉凶);
+                const dirDetail = dir.详情 || {};
+                const dirGate = dirDetail.门吉凶 || {};
+                const dirStar = dirDetail.星吉凶 || {};
                 directionAnalysis.innerHTML += `
                     <div class="direction-item">
                         <h4>${esc(dir.宫位)} <span class="fortune-badge fortune-${fortuneClass}">${esc(dir.综合吉凶)}</span></h4>
-                        <p><strong>八门：</strong>${esc(dir.详情.八门)} (${esc(dir.详情.门吉凶.type)})</p>
-                        <p><strong>九星：</strong>${esc(dir.详情.九星)} (${esc(dir.详情.星吉凶.type)})</p>
-                        <p><strong>八神：</strong>${esc(dir.详情.八神)}</p>
-                        <p class="text-muted" style="margin-top: 6px;">${esc(dir.详情.门吉凶.desc)}</p>
+                        <p><strong>八门：</strong>${esc(dirDetail.八门 || '-')} (${esc(dirGate.type || '中平')})</p>
+                        <p><strong>九星：</strong>${esc(dirDetail.九星 || '-')} (${esc(dirStar.type || '中平')})</p>
+                        <p><strong>八神：</strong>${esc(dirDetail.八神 || '-')}</p>
+                        <p class="text-muted" style="margin-top: 6px;">${esc(dirGate.desc || '暂无数据')}</p>
                     </div>
                 `;
             });

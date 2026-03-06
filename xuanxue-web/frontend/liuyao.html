@@ -374,11 +374,21 @@
         }
 
         function displayResult(data, hasAI = false) {
+            const safeData = data || {};
             // 显示问题和时间
-            document.getElementById('questionText').textContent = data.question || '未指定问题';
-            document.getElementById('timeText').textContent = data.timestamp;
+            document.getElementById('questionText').textContent = safeData.question || '未指定问题';
+            document.getElementById('timeText').textContent = safeData.timestamp || '未知时间';
 
-            const guaInfo = data.gua_info;
+            const guaInfo = safeData.gua_info || {
+                bengua: {
+                    name: '未知卦',
+                    shang_gua: { name: '-', symbol: '', nature: '-' },
+                    xia_gua: { name: '-', symbol: '', nature: '-' }
+                },
+                biangua: { name: '无变卦' },
+                dongyao: [],
+                yao_details: []
+            };
             
             // 显示本卦
             document.getElementById('benguaName').textContent = guaInfo.bengua.name;
@@ -400,7 +410,7 @@
             const yaoDisplay = document.getElementById('yaoDisplay');
             yaoDisplay.innerHTML = '';
             
-            guaInfo.yao_details.forEach(yao => {
+            (guaInfo.yao_details || []).forEach(yao => {
                 const isDong = yao.is_dong;
                 const symbol = yao.type === '阳爻' ? '━━━━━' : '━━  ━━';
                 
@@ -416,35 +426,35 @@
             });
 
             // 显示解释
-            const interp = data.interpretation;
+            const interp = safeData.interpretation || {};
             let interpretationHTML = `
                 <div class="analysis-box success">
                     <h4>卦象总结</h4>
-                    <p>${esc(interp.summary)}</p>
+                    <p>${esc(interp.summary || '暂无')}</p>
                 </div>
                 
                 <div class="analysis-box info">
                     <h4>详细分析</h4>
-                    <p>${esc(interp.detailed)}</p>
+                    <p>${esc(interp.detailed || '暂无')}</p>
                 </div>
                 
                 <div class="analysis-box warn">
                     <h4>建议</h4>
-                    <p>${esc(interp.advice)}</p>
+                    <p>${esc(interp.advice || '暂无')}</p>
                 </div>
                 
                 <div class="analysis-box">
                     <h4>时间预测</h4>
-                    <p>${esc(interp.timing)}</p>
+                    <p>${esc(interp.timing || '暂无')}</p>
                 </div>
             `;
 
             // 如果有AI解读，添加AI解读部分
-            if (hasAI && data.ai_interpretation) {
+            if (hasAI && safeData.ai_interpretation) {
                 interpretationHTML += `
                     <div class="analysis-box ai">
                         <h4>🤖 AI深度解读</h4>
-                        <div>${renderMarkdown(data.ai_interpretation)}</div>
+                        <div>${renderMarkdown(safeData.ai_interpretation)}</div>
                     </div>
                 `;
             }

@@ -2,12 +2,16 @@
 玄学预测系统 - FastAPI后端主程序
 """
 
-from fastapi import FastAPI, HTTPException, Query, Path
+from fastapi import FastAPI, HTTPException, Query, Path, Request, Body
+from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, field_validator
-from typing import Optional
-from datetime import datetime
+from typing import Optional, Any, Dict
+from datetime import datetime, timezone
 from os import getenv
+from uuid import uuid4
 
 # 导入核心模块
 import sys
@@ -29,11 +33,98 @@ app = FastAPI(
     version="1.0.0"
 )
 
+SCHEMA_VERSION = "1.1"
+
 # 运行时AI状态（用于对外暴露可观测状态）
 AI_RUNTIME_STATE = {
     "last_error": None,
     "last_error_at": None
 }
+
+
+def build_meta(request: Optional[Request] = None) -> Dict[str, Any]:
+    """统一返回元信息，便于追踪与解析。"""
+    request_id = None
+    if request is not None:
+        request_id = getattr(request.state, "request_id", None)
+    if not request_id:
+        request_id = str(uuid4())
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "request_id": request_id,
+    }
+
+
+def success_response(data: Any, request: Optional[Request] = None, **extra_fields: Any) -> Dict[str, Any]:
+    """统一成功响应外壳。"""
+    payload: Dict[str, Any] = {
+        "success": True,
+        "data": data,
+        "meta": build_meta(request),
+    }
+    payload.update(extra_fields)
+    return payload
+
+
+def default_error_code(status_code: int) -> str:
+    mapping = {
+        400: "bad_request",
+        401: "unauthorized",
+        403: "forbidden",
+        404: "not_found",
+        409: "conflict",
+        422: "validation_error",
+        429: "rate_limited",
+        500: "internal_error",
+        502: "upstream_error",
+        503: "service_unavailable",
+        504: "gateway_timeout",
+    }
+    return mapping.get(status_code, "server_error" if status_code >= 500 else "client_error")
+
+
+def normalize_error_detail(detail: Any, status_code: int) -> Dict[str, Any]:
+    if isinstance(detail, dict):
+        code = str(detail.get("code") or default_error_code(status_code))
+        message = str(detail.get("message") or detail.get("detail") or "请求失败")
+        retryable = bool(detail.get("retryable")) if "retryable" in detail else status_code >= 500
+        details = detail.get("details")
+    else:
+        code = default_error_code(status_code)
+        message = str(detail) if detail else "请求失败"
+        retryable = status_code >= 500
+        details = None
+    return {
+        "code": code,
+        "message": message,
+        "retryable": retryable,
+        "details": details,
+    }
+
+
+def error_response(
+    request: Request,
+    status_code: int,
+    code: str,
+    message: str,
+    retryable: bool,
+    details: Any = None,
+) -> JSONResponse:
+    safe_details = jsonable_encoder(details) if details is not None else None
+    return JSONResponse(
+        status_code=status_code,
+        content={
+            "success": False,
+            "error": {
+                "code": code,
+                "message": message,
+                "retryable": retryable,
+                "details": safe_details,
+            },
+            "meta": build_meta(request),
+        },
+    )
 
 
 def mark_ai_failure(error_message: str) -> None:
@@ -64,6 +155,51 @@ app.add_middleware(
 )
 
 
+@app.middleware("http")
+async def request_id_middleware(request: Request, call_next):
+    request.state.request_id = request.headers.get("x-request-id") or str(uuid4())
+    response = await call_next(request)
+    response.headers["x-request-id"] = request.state.request_id
+    return response
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    return error_response(
+        request=request,
+        status_code=422,
+        code="validation_error",
+        message="请求参数校验失败",
+        retryable=False,
+        details=exc.errors(),
+    )
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    normalized = normalize_error_detail(exc.detail, exc.status_code)
+    return error_response(
+        request=request,
+        status_code=exc.status_code,
+        code=normalized["code"],
+        message=normalized["message"],
+        retryable=normalized["retryable"],
+        details=normalized["details"],
+    )
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    return error_response(
+        request=request,
+        status_code=500,
+        code="internal_error",
+        message="服务内部错误",
+        retryable=True,
+        details={"type": exc.__class__.__name__},
+    )
+
+
 # 请求模型
 class BaZiRequest(BaseModel):
     year: int = Field(..., ge=1900, le=2100)
@@ -87,23 +223,31 @@ class CalendarRequest(BaseModel):
     day: int = Field(..., ge=1, le=31)
 
 
+class AIChatRequest(BaseModel):
+    question: Optional[str] = Field(None, min_length=1, max_length=500)
+    context: Optional[str] = Field("", max_length=2000)
+
+
 @app.get("/")
-async def root():
+async def root(request: Request):
     """API根路径"""
-    return {
-        "message": "欢迎使用玄学预测系统API",
-        "version": "1.0.0",
-        "endpoints": {
-            "八字排盘": "/api/bazi",
-            "阳历转农历": "/api/calendar/solar-to-lunar",
-            "农历转阳历": "/api/calendar/lunar-to-solar",
-            "年份干支": "/api/ganzhi/year"
-        }
-    }
+    return success_response(
+        {
+            "message": "欢迎使用玄学预测系统API",
+            "version": "1.0.0",
+            "endpoints": {
+                "八字排盘": "/api/bazi",
+                "阳历转农历": "/api/calendar/solar-to-lunar",
+                "农历转阳历": "/api/calendar/lunar-to-solar",
+                "年份干支": "/api/ganzhi/year",
+            },
+        },
+        request=request,
+    )
 
 
 @app.post("/api/bazi")
-async def calculate_bazi(request: BaZiRequest):
+async def calculate_bazi(payload: BaZiRequest, request: Request):
     """
     八字排盘API（增强版）
     
@@ -119,16 +263,16 @@ async def calculate_bazi(request: BaZiRequest):
     """
     try:
         # 验证日期
-        datetime(request.year, request.month, request.day, request.hour, request.minute)
+        datetime(payload.year, payload.month, payload.day, payload.hour, payload.minute)
         
         # 创建八字命盘
         chart = BaZiChart(
-            request.year,
-            request.month,
-            request.day,
-            request.hour,
-            request.minute,
-            request.gender
+            payload.year,
+            payload.month,
+            payload.day,
+            payload.hour,
+            payload.minute,
+            payload.gender
         )
         
         # 返回完整信息
@@ -140,10 +284,7 @@ async def calculate_bazi(request: BaZiRequest):
         # 添加高级分析
         result['advanced_analysis'] = get_advanced_analysis(chart)
         
-        return {
-            "success": True,
-            "data": result
-        }
+        return success_response(result, request=request)
         
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"日期格式错误: {str(e)}")
@@ -152,7 +293,7 @@ async def calculate_bazi(request: BaZiRequest):
 
 
 @app.post("/api/divination/liuyao")
-async def liuyao_divination(question: str = Query("", max_length=500)):
+async def liuyao_divination(request: Request, question: str = Query("", max_length=500)):
     """
     六爻占卜API
     
@@ -163,16 +304,13 @@ async def liuyao_divination(question: str = Query("", max_length=500)):
     """
     try:
         result = divine(question)
-        return {
-            "success": True,
-            "data": result
-        }
+        return success_response(result, request=request)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"占卜错误: {str(e)}")
 
 
 @app.post("/api/ai/enhance-liuyao")
-async def ai_enhance_liuyao(question: str = Query("", max_length=500)):
+async def ai_enhance_liuyao(request: Request, question: str = Query("", max_length=500)):
     """
     AI增强六爻占卜
     
@@ -198,19 +336,25 @@ async def ai_enhance_liuyao(question: str = Query("", max_length=500)):
                 ai_message = "AI服务暂时不可用，已返回基础解读"
                 mark_ai_failure("enhance_liuyao_empty")
 
-        return {
-            "success": True,
-            "data": result,
-            "ai_enabled": ai_enabled,
-            "ai_enhanced": ai_enhanced,
-            "ai_message": ai_message
+        result["ai"] = {
+            "enabled": ai_enabled,
+            "enhanced": ai_enhanced,
+            "message": ai_message,
         }
+        return success_response(
+            result,
+            request=request,
+            ai_enabled=ai_enabled,
+            ai_enhanced=ai_enhanced,
+            ai_message=ai_message,
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"占卜错误: {str(e)}")
 
 
 @app.post("/api/divination/qimen")
 async def qimen_divination(
+    request: Request,
     year: int = Query(..., ge=1900, le=2100),
     month: int = Query(..., ge=1, le=12),
     day: int = Query(..., ge=1, le=31),
@@ -230,10 +374,7 @@ async def qimen_divination(
     try:
         datetime(year, month, day, hour, minute)
         result = divine_qimen(year, month, day, hour, minute, matter_type)
-        return {
-            "success": True,
-            "data": result
-        }
+        return success_response(result, request=request)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"日期格式错误: {str(e)}")
     except Exception as e:
@@ -241,7 +382,7 @@ async def qimen_divination(
 
 
 @app.get("/api/divination/qimen/current")
-async def get_current_qimen_api(matter_type: str = Query("通用", min_length=1, max_length=20)):
+async def get_current_qimen_api(request: Request, matter_type: str = Query("通用", min_length=1, max_length=20)):
     """
     获取当前时刻的奇门遁甲盘
     
@@ -252,16 +393,14 @@ async def get_current_qimen_api(matter_type: str = Query("通用", min_length=1,
     """
     try:
         result = get_current_qimen(matter_type)
-        return {
-            "success": True,
-            "data": result
-        }
+        return success_response(result, request=request)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"占卜错误: {str(e)}")
 
 
 @app.post("/api/ai/enhance-qimen")
 async def ai_enhance_qimen(
+    request: Request,
     year: int = Query(..., ge=1900, le=2100),
     month: int = Query(..., ge=1, le=12),
     day: int = Query(..., ge=1, le=31),
@@ -296,13 +435,18 @@ async def ai_enhance_qimen(
                 ai_message = "AI服务暂时不可用，已返回基础解读"
                 mark_ai_failure("enhance_qimen_empty")
 
-        return {
-            "success": True,
-            "data": result,
-            "ai_enabled": ai_enabled,
-            "ai_enhanced": ai_enhanced,
-            "ai_message": ai_message
+        result["ai"] = {
+            "enabled": ai_enabled,
+            "enhanced": ai_enhanced,
+            "message": ai_message,
         }
+        return success_response(
+            result,
+            request=request,
+            ai_enabled=ai_enabled,
+            ai_enhanced=ai_enhanced,
+            ai_message=ai_message,
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"日期格式错误: {str(e)}")
     except Exception as e:
@@ -310,17 +454,16 @@ async def ai_enhance_qimen(
 
 
 @app.post("/api/calendar/solar-to-lunar")
-async def convert_solar_to_lunar(request: CalendarRequest):
+async def convert_solar_to_lunar(payload: CalendarRequest, request: Request):
     """阳历转农历"""
     try:
-        lunar = solar_to_lunar(request.year, request.month, request.day)
-        return {
-            "success": True,
-            "data": {
+        lunar = solar_to_lunar(payload.year, payload.month, payload.day)
+        return success_response(
+            {
                 "solar": {
-                    "year": request.year,
-                    "month": request.month,
-                    "day": request.day
+                    "year": payload.year,
+                    "month": payload.month,
+                    "day": payload.day
                 },
                 "lunar": {
                     "year": lunar[0],
@@ -328,8 +471,9 @@ async def convert_solar_to_lunar(request: CalendarRequest):
                     "day": lunar[2],
                     "is_leap": lunar[3]
                 }
-            }
-        }
+            },
+            request=request,
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"日期格式错误: {str(e)}")
     except Exception as e:
@@ -337,17 +481,17 @@ async def convert_solar_to_lunar(request: CalendarRequest):
 
 
 @app.get("/api/ganzhi/year/{year}")
-async def get_year_ganzhi_api(year: int = Path(..., ge=1900, le=2100)):
+async def get_year_ganzhi_api(request: Request, year: int = Path(..., ge=1900, le=2100)):
     """获取年份干支"""
     try:
         ganzhi = get_year_ganzhi(year)
-        return {
-            "success": True,
-            "data": {
+        return success_response(
+            {
                 "year": year,
                 "ganzhi": ganzhi
-            }
-        }
+            },
+            request=request,
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"年份错误: {str(e)}")
     except Exception as e:
@@ -355,21 +499,19 @@ async def get_year_ganzhi_api(year: int = Path(..., ge=1900, le=2100)):
 
 
 @app.get("/api/zeri/today")
-async def get_today_fortune_api():
+async def get_today_fortune_api(request: Request):
     """获取今日运势"""
     try:
         today = datetime.now()
         fortune = get_today_fortune(today.year, today.month, today.day)
-        return {
-            "success": True,
-            "data": fortune
-        }
+        return success_response(fortune, request=request)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"计算错误: {str(e)}")
 
 
 @app.get("/api/zeri/date/{year}/{month}/{day}")
 async def get_date_fortune_api(
+    request: Request,
     year: int = Path(..., ge=1900, le=2100),
     month: int = Path(..., ge=1, le=12),
     day: int = Path(..., ge=1, le=31)
@@ -377,10 +519,7 @@ async def get_date_fortune_api(
     """获取指定日期运势"""
     try:
         fortune = get_today_fortune(year, month, day)
-        return {
-            "success": True,
-            "data": fortune
-        }
+        return success_response(fortune, request=request)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"日期格式错误: {str(e)}")
     except Exception as e:
@@ -389,6 +528,7 @@ async def get_date_fortune_api(
 
 @app.get("/api/ai/enhance-zeri/{year}/{month}/{day}")
 async def ai_enhance_zeri(
+    request: Request,
     year: int = Path(..., ge=1900, le=2100),
     month: int = Path(..., ge=1, le=12),
     day: int = Path(..., ge=1, le=31),
@@ -420,13 +560,18 @@ async def ai_enhance_zeri(
                 ai_message = "AI服务暂时不可用，已返回基础解读"
                 mark_ai_failure("enhance_zeri_empty")
 
-        return {
-            "success": True,
-            "data": fortune,
-            "ai_enabled": ai_enabled,
-            "ai_enhanced": ai_enhanced,
-            "ai_message": ai_message
+        fortune["ai"] = {
+            "enabled": ai_enabled,
+            "enhanced": ai_enhanced,
+            "message": ai_message,
         }
+        return success_response(
+            fortune,
+            request=request,
+            ai_enabled=ai_enabled,
+            ai_enhanced=ai_enhanced,
+            ai_message=ai_message,
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"日期格式错误: {str(e)}")
     except Exception as e:
@@ -435,6 +580,7 @@ async def ai_enhance_zeri(
 
 @app.get("/api/zeri/auspicious")
 async def find_auspicious_days_api(
+    request: Request,
     year: int = Query(..., ge=1900, le=2100),
     month: int = Query(..., ge=1, le=12),
     purpose: str = Query("通用", min_length=1, max_length=20),
@@ -453,14 +599,14 @@ async def find_auspicious_days_api(
     """
     try:
         auspicious_days = find_auspicious_days(year, month, purpose, days)
-        return {
-            "success": True,
-            "data": {
+        return success_response(
+            {
                 "purpose": purpose,
                 "total_count": len(auspicious_days),
                 "days": auspicious_days
-            }
-        }
+            },
+            request=request,
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"日期格式错误: {str(e)}")
     except Exception as e:
@@ -469,8 +615,10 @@ async def find_auspicious_days_api(
 
 @app.post("/api/ai/chat")
 async def ai_chat(
-    question: str = Query(..., min_length=1, max_length=500),
-    context: str = Query("", max_length=2000)
+    request: Request,
+    question: Optional[str] = Query(None, min_length=1, max_length=500),
+    context: Optional[str] = Query(None, max_length=2000),
+    payload: Optional[AIChatRequest] = Body(default=None),
 ):
     """
     AI对话接口
@@ -482,29 +630,53 @@ async def ai_chat(
     返回: AI回复
     """
     try:
+        body_question = payload.question.strip() if payload and payload.question else ""
+        body_context = payload.context if payload else ""
+        final_question = (question or body_question).strip()
+        final_context = context if context is not None else body_context
+
+        if not final_question:
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "code": "missing_question",
+                    "message": "question 不能为空",
+                    "retryable": False,
+                },
+            )
+
         if not llm_helper.is_available():
             raise HTTPException(
                 status_code=503,
-                detail="AI服务未配置，请设置ARK_API_KEY环境变量"
+                detail={
+                    "code": "ai_unconfigured",
+                    "message": "AI服务未配置，请设置ARK_API_KEY环境变量",
+                    "retryable": False,
+                }
             )
         
-        response = llm_helper.chat(question, context if context else None)
+        response = llm_helper.chat(final_question, final_context if final_context else None)
         
         if not response:
             mark_ai_failure("chat_empty_response")
             raise HTTPException(
                 status_code=502,
-                detail="AI服务暂时不可用"
+                detail={
+                    "code": "ai_upstream_empty",
+                    "message": "AI服务暂时不可用",
+                    "retryable": True,
+                }
             )
 
         mark_ai_success()
-        return {
-            "success": True,
-            "data": {
-                "question": question,
-                "answer": response
-            }
-        }
+        return success_response(
+            {
+                "question": final_question,
+                "answer": response,
+                "context": final_context or "",
+            },
+            request=request,
+        )
     except HTTPException:
         raise
     except Exception as e:
@@ -513,7 +685,7 @@ async def ai_chat(
 
 
 @app.post("/api/ai/enhance-bazi")
-async def ai_enhance_bazi(request: BaZiRequest):
+async def ai_enhance_bazi(payload: BaZiRequest, request: Request):
     """
     AI增强八字分析
     
@@ -522,15 +694,15 @@ async def ai_enhance_bazi(request: BaZiRequest):
     """
     try:
         # 先获取基础八字信息
-        datetime(request.year, request.month, request.day, request.hour, request.minute)
+        datetime(payload.year, payload.month, payload.day, payload.hour, payload.minute)
         
         chart = BaZiChart(
-            request.year,
-            request.month,
-            request.day,
-            request.hour,
-            request.minute,
-            request.gender
+            payload.year,
+            payload.month,
+            payload.day,
+            payload.hour,
+            payload.minute,
+            payload.gender
         )
         
         result = chart.to_dict()
@@ -551,13 +723,18 @@ async def ai_enhance_bazi(request: BaZiRequest):
                 ai_message = "AI服务暂时不可用，已返回基础解读"
                 mark_ai_failure("enhance_bazi_empty")
 
-        return {
-            "success": True,
-            "data": result,
-            "ai_enabled": ai_enabled,
-            "ai_enhanced": ai_enhanced,
-            "ai_message": ai_message
+        result["ai"] = {
+            "enabled": ai_enabled,
+            "enhanced": ai_enhanced,
+            "message": ai_message,
         }
+        return success_response(
+            result,
+            request=request,
+            ai_enabled=ai_enabled,
+            ai_enhanced=ai_enhanced,
+            ai_message=ai_message,
+        )
         
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"日期格式错误: {str(e)}")
@@ -566,7 +743,7 @@ async def ai_enhance_bazi(request: BaZiRequest):
 
 
 @app.get("/api/ai/status")
-async def ai_status():
+async def ai_status(request: Request):
     """检查AI服务状态"""
     available = llm_helper.is_available()
     if not available:
@@ -579,17 +756,17 @@ async def ai_status():
         status = "available"
         message = "AI服务正常"
 
-    return {
-        "success": True,
-        "data": {
+    return success_response(
+        {
             "status": status,
             "available": available,
             "model": llm_helper.model if available else None,
             "message": message,
             "last_error": AI_RUNTIME_STATE["last_error"],
             "last_error_at": AI_RUNTIME_STATE["last_error_at"]
-        }
-    }
+        },
+        request=request,
+    )
 
 
 def generate_simple_analysis(chart: BaZiChart) -> dict:

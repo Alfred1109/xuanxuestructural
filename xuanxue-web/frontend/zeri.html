@@ -410,34 +410,37 @@
         }
 
         function displayTodayFortune(data, hasAI = false) {
-            document.getElementById('fortuneDate').textContent = `${data.date} ${data.weekday}`;
-            document.getElementById('fortuneLevel').textContent = data.level;
-            document.getElementById('fortuneLevel').style.color = sanitizeColor(data.color);
-            document.getElementById('fortuneGanzhi').textContent = data.ganzhi;
-            document.getElementById('fortuneJianxing').textContent = data.jianxing;
-            document.getElementById('fortuneShen').textContent = `${data.shier_shen} (${data.huangdao_type})`;
-            document.getElementById('fortuneXingxiu').textContent = data.xingxiu;
-            document.getElementById('fortuneSuitable').textContent = data.suitable.join('、');
-            document.getElementById('fortuneAvoid').textContent = data.avoid.join('、');
+            const safeData = data || {};
+            const suitable = Array.isArray(safeData.suitable) ? safeData.suitable : [];
+            const avoid = Array.isArray(safeData.avoid) ? safeData.avoid : [];
+            document.getElementById('fortuneDate').textContent = `${safeData.date || '未知日期'} ${safeData.weekday || ''}`;
+            document.getElementById('fortuneLevel').textContent = safeData.level || '未知';
+            document.getElementById('fortuneLevel').style.color = sanitizeColor(safeData.color);
+            document.getElementById('fortuneGanzhi').textContent = safeData.ganzhi || '未知';
+            document.getElementById('fortuneJianxing').textContent = safeData.jianxing || '未知';
+            document.getElementById('fortuneShen').textContent = `${safeData.shier_shen || '未知'} (${safeData.huangdao_type || '未知'})`;
+            document.getElementById('fortuneXingxiu').textContent = safeData.xingxiu || '未知';
+            document.getElementById('fortuneSuitable').textContent = suitable.join('、') || '无';
+            document.getElementById('fortuneAvoid').textContent = avoid.join('、') || '无';
             
             // 显示建议
-            let adviceHTML = esc(data.fortune_advice);
+            let adviceHTML = esc(safeData.fortune_advice || '');
             
             // 如果有AI解读，添加AI解读部分
-            if (hasAI && data.ai_advice) {
-                adviceHTML += `<br><br><strong>🤖 AI深度解读：</strong><br><div style="line-height: 1.8;">${renderMarkdown(data.ai_advice)}</div>`;
+            if (hasAI && safeData.ai_advice) {
+                adviceHTML += `<br><br><strong>🤖 AI深度解读：</strong><br><div style="line-height: 1.8;">${renderMarkdown(safeData.ai_advice)}</div>`;
             }
             
             document.getElementById('fortuneAdvice').innerHTML = adviceHTML;
-            document.getElementById('traditionalInsight').innerHTML = buildTraditionalInsight(data);
+            document.getElementById('traditionalInsight').innerHTML = buildTraditionalInsight(safeData);
 
             // 设置卡片颜色
             const card = document.getElementById('fortuneCard');
-            if (data.level === '大吉') {
+            if (safeData.level === '大吉') {
                 card.style.background = 'linear-gradient(135deg, #2d8f57 0%, #4ca66b 100%)';
-            } else if (data.level === '吉') {
+            } else if (safeData.level === '吉') {
                 card.style.background = 'linear-gradient(135deg, #2f76a1 0%, #3c88b7 100%)';
-            } else if (data.level === '平') {
+            } else if (safeData.level === '平') {
                 card.style.background = 'linear-gradient(135deg, #c27c1a 0%, #d39a42 100%)';
             } else {
                 card.style.background = 'linear-gradient(135deg, #b94939 0%, #c76a5f 100%)';
