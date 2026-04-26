@@ -103,6 +103,7 @@ curl http://localhost:8002/api/ai/status
 {
   "success": true,
   "data": {
+    "status": "available",
     "available": true,
     "model": "deepseek-v3-2-251201",
     "message": "AI服务正常"
@@ -150,9 +151,13 @@ curl -X POST "http://localhost:8002/api/ai/chat" \
 
 **接口**: `GET /api/ai/enhance-zeri/{year}/{month}/{day}`
 
+也支持直接获取服务端“今天”的接口：
+
+**接口**: `GET /api/ai/enhance-zeri/today`
+
 根据日期和用途，提供更个性化的择日建议。
 
-**前端使用**: 在择日页面，点击"AI增强建议"按钮
+**前端使用**: 在择日页面，点击"AI增强建议"按钮。前端默认走 `today` 路由，以服务端日期为准，避免浏览器和服务器时区不一致。
 
 ### 5. AI智能对话
 
@@ -213,7 +218,7 @@ echo $ARK_API_KEY
 tail -f /tmp/xuanxue-backend.log
 
 # 测试API连接
-curl -X POST "http://localhost:8002/api/ai/status"
+curl "http://localhost:8002/api/ai/status"
 ```
 
 ### 3. API调用失败
@@ -260,7 +265,38 @@ curl -X POST "http://localhost:8002/api/ai/chat" \
   }'
 ```
 
-### 示例3：检查AI状态
+### 示例3：AI增强六爻
+
+```bash
+curl -X POST "http://localhost:8002/api/ai/enhance-liuyao" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "最近工作推进是否顺利？"
+  }'
+```
+
+### 示例4：AI增强奇门遁甲
+
+```bash
+curl -X POST "http://localhost:8002/api/ai/enhance-qimen" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "year": 2026,
+    "month": 2,
+    "day": 28,
+    "hour": 9,
+    "minute": 0,
+    "matter_type": "通用"
+  }'
+```
+
+### 示例5：AI增强今日择日
+
+```bash
+curl "http://localhost:8002/api/ai/enhance-zeri/today?purpose=通用"
+```
+
+### 示例6：检查AI状态
 
 ```bash
 curl http://localhost:8002/api/ai/status

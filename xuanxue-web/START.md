@@ -44,7 +44,14 @@ INFO:     Uvicorn running on http://0.0.0.0:8002
 
 ### 3. 打开前端页面
 
-用浏览器打开：
+前端是静态页面，需要通过本地 HTTP 服务访问。最简单的方式是：
+
+```bash
+cd frontend
+python -m http.server 8003
+```
+
+然后在浏览器打开：
 
 ```
 http://localhost:8003/index.html
@@ -110,15 +117,23 @@ pip install -r requirements.txt
 **解决**：
 - 确保后端服务已启动（http://localhost:8002）
 - 检查浏览器控制台是否有CORS错误
+- 确保前端不是直接用 `file://` 打开，而是通过 `http://localhost:8003`
 - 确认防火墙没有阻止8002端口
 
 ### 3. 端口被占用
 
 **问题**：提示 `Address already in use`
 
-**解决**：修改 `backend/main.py` 最后一行的端口号：
+**解决**：`./start.sh` 现在会在启动前检查 8002 / 8003 / 8004 端口并直接报错。你可以先运行：
+
+```bash
+./stop.sh
+```
+
+如果仍然冲突，再修改 `backend/main.py` 最后一行的端口号：
+
 ```python
-uvicorn.run(app, host="0.0.0.0", port=8005)  # 改为8005或其他端口
+uvicorn.run(app, host="0.0.0.0", port=8005)
 ```
 
 同时修改 `frontend/config.js` 中的API地址：
@@ -171,6 +186,43 @@ window.APP_CONFIG = { API_BASE_URL: 'http://localhost:8005' };
 **接口**：`GET /api/ganzhi/year/{year}`
 
 **示例**：`GET /api/ganzhi/year/2024`
+
+### 4. 六爻占卜
+
+**接口**：`POST /api/divination/liuyao`
+
+**请求参数**（推荐使用 JSON body）：
+
+```json
+{
+  "question": "今天运势如何？"
+}
+```
+
+### 5. 奇门遁甲
+
+**接口**：`POST /api/divination/qimen`
+
+**请求参数**（推荐使用 JSON body）：
+
+```json
+{
+  "year": 2026,
+  "month": 2,
+  "day": 28,
+  "hour": 9,
+  "minute": 0,
+  "matter_type": "通用"
+}
+```
+
+### 6. AI增强择日
+
+**接口**：
+- `GET /api/ai/enhance-zeri/today`
+- `GET /api/ai/enhance-zeri/{year}/{month}/{day}`
+
+前端“AI深度解读”按钮默认使用 `today` 路由，以服务端日期为准，避免浏览器和服务器时区不一致导致结果不同。
 
 ## 🎨 自定义配置
 
