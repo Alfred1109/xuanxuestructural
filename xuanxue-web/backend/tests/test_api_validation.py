@@ -125,6 +125,32 @@ class TestApiValidation(unittest.TestCase):
         )
         self.assertEqual(resp.status_code, 400)
 
+    def test_liuyao_accepts_json_body(self):
+        resp = self.request(
+            "POST",
+            "/api/divination/liuyao",
+            json={"question": "这周项目推进如何？"},
+        )
+        self.assertEqual(resp.status_code, 200)
+        payload = self.assert_success_envelope(resp)
+        self.assertEqual(payload.get("data", {}).get("question"), "这周项目推进如何？")
+
+    def test_qimen_accepts_json_body(self):
+        resp = self.request(
+            "POST",
+            "/api/divination/qimen",
+            json={
+                "year": 2026,
+                "month": 2,
+                "day": 28,
+                "hour": 9,
+                "minute": 0,
+                "matter_type": "通用",
+            },
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assert_success_envelope(resp)
+
     def test_zeri_auspicious_days_out_of_range_returns_422(self):
         resp = self.request("GET", "/api/zeri/auspicious?year=2026&month=2&days=1000")
         self.assertEqual(resp.status_code, 422)
@@ -266,6 +292,20 @@ class TestApiValidation(unittest.TestCase):
         self.assertTrue(payload.get("ai_enhanced"))
         self.assertEqual(payload.get("data", {}).get("ai_interpretation"), "AI解读")
 
+    def test_ai_enhance_liuyao_accepts_json_body(self):
+        with patch("main.llm_helper.is_available", return_value=True), patch(
+            "main.llm_helper.enhance_liuyao_interpretation", return_value="AI解读"
+        ):
+            resp = self.request(
+                "POST",
+                "/api/ai/enhance-liuyao",
+                json={"question": "Body提问"},
+            )
+        self.assertEqual(resp.status_code, 200)
+        payload = self.assert_success_envelope(resp)
+        self.assertEqual(payload.get("data", {}).get("question"), "Body提问")
+        self.assertTrue(payload.get("ai_enhanced"))
+
     def test_ai_enhance_qimen_upstream_empty_has_warning(self):
         with patch("main.llm_helper.is_available", return_value=True), patch(
             "main.llm_helper.enhance_qimen_interpretation", return_value=None
@@ -279,6 +319,35 @@ class TestApiValidation(unittest.TestCase):
         self.assertTrue(payload.get("ai_enabled"))
         self.assertFalse(payload.get("ai_enhanced"))
         self.assertTrue(payload.get("ai_message"))
+
+    def test_ai_enhance_qimen_accepts_json_body(self):
+        with patch("main.llm_helper.is_available", return_value=True), patch(
+            "main.llm_helper.enhance_qimen_interpretation", return_value="AI奇门解读"
+        ):
+            resp = self.request(
+                "POST",
+                "/api/ai/enhance-qimen",
+                json={
+                    "year": 2026,
+                    "month": 2,
+                    "day": 28,
+                    "hour": 9,
+                    "minute": 0,
+                    "matter_type": "学业",
+                },
+            )
+        self.assertEqual(resp.status_code, 200)
+        payload = self.assert_success_envelope(resp)
+        self.assertTrue(payload.get("ai_enhanced"))
+        self.assertEqual(payload.get("data", {}).get("ai_interpretation"), "AI奇门解读")
+
+    def test_ai_enhance_zeri_today_returns_200(self):
+        with patch("main.llm_helper.is_available", return_value=False):
+            resp = self.request("GET", "/api/ai/enhance-zeri/today?purpose=通用")
+        self.assertEqual(resp.status_code, 200)
+        payload = self.assert_success_envelope(resp)
+        self.assertFalse(payload.get("ai_enabled"))
+        self.assertIn("date", payload.get("data", {}))
 
 
 if __name__ == "__main__":

@@ -12,6 +12,43 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 BACKEND_DIR="$SCRIPT_DIR/xuanxue-web/backend"
 FRONTEND_DIR="$SCRIPT_DIR/xuanxue-web/frontend"
 
+is_port_in_use() {
+    local port="$1"
+    if command -v lsof > /dev/null 2>&1; then
+        lsof -ti:"$port" >/dev/null 2>&1
+        return $?
+    fi
+    if command -v ss > /dev/null 2>&1; then
+        ss -ltn "( sport = :$port )" | tail -n +2 | grep -q .
+        return $?
+    fi
+    return 1
+}
+
+wait_for_http() {
+    local url="$1"
+    local attempts="${2:-20}"
+    local delay="${3:-1}"
+    local i
+
+    for ((i=1; i<=attempts; i++)); do
+        if curl -fsS "$url" >/dev/null 2>&1; then
+            return 0
+        fi
+        sleep "$delay"
+    done
+    return 1
+}
+
+show_recent_log() {
+    local file="$1"
+    if [ -f "$file" ]; then
+        echo "---- 最近日志 ($file) ----"
+        tail -n 20 "$file"
+        echo "-------------------------"
+    fi
+}
+
 # 加载环境变量
 if [ -f "$HOME/.bashrc" ]; then
     source "$HOME/.bashrc" 2>/dev/null || true
@@ -38,12 +75,24 @@ if [ ! -d "$BACKEND_DIR/venv" ]; then
 fi
 
 # 检查依赖是否安装
-if [ ! -f "$BACKEND_DIR/venv/lib/python3.12/site-packages/fastapi/__init__.py" ]; then
+if ! "$BACKEND_DIR/venv/bin/python" -c "import fastapi, uvicorn, pydantic" >/dev/null 2>&1; then
     echo "📦 正在安装依赖..."
     cd "$BACKEND_DIR"
     venv/bin/pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
     echo "✓ 依赖安装完成"
     echo ""
+fi
+
+if is_port_in_use 8002; then
+    echo "❌ 端口 8002 已被占用，无法启动后端服务"
+    echo "   请先运行 ./stop.sh 或释放该端口后重试"
+    exit 1
+fi
+
+if is_port_in_use 8003; then
+    echo "❌ 端口 8003 已被占用，无法启动前端服务"
+    echo "   请先运行 ./stop.sh 或释放该端口后重试"
+    exit 1
 fi
 
 # 启动后端服务器（后台运行）
@@ -65,13 +114,14 @@ echo ""
 
 # 等待后端启动
 echo "⏳ 等待后端服务启动..."
-sleep 3
-
-# 检查后端是否成功启动
-if curl -s http://localhost:8002/ > /dev/null 2>&1; then
+if wait_for_http "http://localhost:8002/" 20 1; then
     echo "✓ 后端服务启动成功"
 else
-    echo "⚠️  后端服务可能未完全启动，请稍等片刻"
+    echo "❌ 后端服务启动失败"
+    show_recent_log /tmp/xuanxue-backend.log
+    kill "$BACKEND_PID" >/dev/null 2>&1 || true
+    rm -f /tmp/xuanxue-backend.pid
+    exit 1
 fi
 echo ""
 
@@ -79,12 +129,17 @@ echo ""
 echo "📚 启动知识库服务..."
 cd "$SCRIPT_DIR"
 if command -v mkdocs > /dev/null; then
+    if is_port_in_use 8004; then
+        echo "⚠️  端口 8004 已被占用，跳过知识库服务启动"
+        echo "   如需启动知识库，请先释放该端口"
+    else
     mkdocs serve -a localhost:8004 > /tmp/xuanxue-mkdocs.log 2>&1 &
     MKDOCS_PID=$!
     echo "✓ 知识库服务已启动 (PID: $MKDOCS_PID)"
     echo "   访问地址: http://localhost:8004"
     echo "   日志文件: /tmp/xuanxue-mkdocs.log"
     echo $MKDOCS_PID > /tmp/xuanxue-mkdocs.pid
+    fi
 else
     echo "⚠️  未安装MkDocs，知识库服务未启动"
     echo "   安装方法: pip install mkdocs mkdocs-material"
@@ -103,7 +158,16 @@ echo $FRONTEND_PID > /tmp/xuanxue-frontend.pid
 echo ""
 
 # 等待前端服务启动
-sleep 2
+if wait_for_http "http://localhost:8003/index.html" 10 1; then
+    echo "✓ 前端服务启动成功"
+else
+    echo "❌ 前端服务启动失败"
+    show_recent_log /tmp/xuanxue-frontend.log
+    kill "$FRONTEND_PID" >/dev/null 2>&1 || true
+    kill "$BACKEND_PID" >/dev/null 2>&1 || true
+    rm -f /tmp/xuanxue-frontend.pid /tmp/xuanxue-backend.pid
+    exit 1
+fi
 
 # 打开浏览器
 if command -v xdg-open > /dev/null; then

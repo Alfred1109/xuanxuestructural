@@ -8,7 +8,7 @@ from core.liuyao import divine
 from core.qimen import QiMenChart
 from core.zeri import DateSelection
 from core.ganzhi import get_month_ganzhi, get_hour_ganzhi
-from core.calendar import solar_to_lunar, lunar_to_solar
+from core.calendar import solar_to_lunar, lunar_to_solar, get_solar_term_date
 
 
 class TestCoreLogic(unittest.TestCase):
@@ -96,6 +96,11 @@ class TestCoreLogic(unittest.TestCase):
 
         solar = lunar_to_solar(2024, 1, 1, False)
         self.assertEqual(solar, (2024, 2, 10))
+
+    def test_solar_term_dates_use_year_specific_adjustments(self):
+        self.assertEqual(get_solar_term_date(2026, 3).date().isoformat(), "2026-02-18")
+        self.assertEqual(get_solar_term_date(2021, 23).date().isoformat(), "2021-12-21")
+        self.assertEqual(get_solar_term_date(2024, 6).date().isoformat(), "2024-04-04")
 
 
 if __name__ == '__main__':

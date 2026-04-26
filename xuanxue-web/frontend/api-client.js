@@ -67,8 +67,11 @@
         get: function (path, query) {
             return request(path, { method: 'GET', query: query });
         },
-        post: function (path, query) {
-            return request(path, { method: 'POST', query: query });
+        post: function (path, data) {
+            if (data !== undefined) {
+                return request(path, { method: 'POST', json: data });
+            }
+            return request(path, { method: 'POST' });
         },
         postJson: function (path, json) {
             return request(path, { method: 'POST', json: json });

@@ -41,6 +41,49 @@ SOLAR_TERMS = [
     "寒露", "霜降", "立冬", "小雪", "大雪", "冬至"
 ]
 
+SOLAR_TERM_MONTHS = [
+    1, 1, 2, 2, 3, 3,
+    4, 4, 5, 5, 6, 6,
+    7, 7, 8, 8, 9, 9,
+    10, 10, 11, 11, 12, 12,
+]
+
+SOLAR_TERM_CENTURY_COEFFICIENTS = {
+    20: [
+        6.11, 20.84, 4.6295, 19.4599, 6.3826, 21.4155,
+        5.59, 20.888, 6.318, 21.86, 6.5, 22.2,
+        7.928, 23.65, 8.35, 23.95, 8.44, 23.822,
+        9.098, 24.218, 8.218, 23.08, 7.9, 22.6,
+    ],
+    21: [
+        5.4055, 20.12, 3.87, 18.73, 5.63, 20.646,
+        4.81, 20.1, 5.52, 21.04, 5.678, 21.37,
+        7.108, 22.83, 7.5, 23.13, 7.646, 23.042,
+        8.318, 23.438, 7.438, 22.36, 7.18, 21.94,
+    ],
+}
+
+SOLAR_TERM_YEAR_ADJUSTMENTS = {
+    0: {1982: 1, 2019: -1},   # 小寒
+    1: {2000: 1, 2082: 1},    # 大寒
+    3: {2026: -1},            # 雨水
+    5: {2084: 1},             # 春分
+    8: {1911: 1},             # 立夏
+    9: {2008: 1},             # 小满
+    10: {1902: 1},            # 芒种
+    11: {1928: 1},            # 夏至
+    12: {1925: 1, 2016: 1},   # 小暑
+    13: {1922: 1},            # 大暑
+    14: {2002: 1},            # 立秋
+    16: {1927: 1},            # 白露
+    17: {1942: 1},            # 秋分
+    19: {2089: 1},            # 霜降
+    20: {2089: 1},            # 立冬
+    21: {1978: 1},            # 小雪
+    22: {1954: 1},            # 大雪
+    23: {1918: -1, 2021: -1}, # 冬至
+}
+
 
 def lunar_year_days(year: int) -> int:
     """计算农历年的总天数"""
@@ -196,19 +239,22 @@ def lunar_to_solar(year: int, month: int, day: int, is_leap: bool = False) -> Tu
 
 def get_solar_term_date(year: int, term_index: int) -> datetime:
     """
-    获取节气日期（简化算法）
+    获取节气日期（寿星公式近似法）
     term_index: 0-23 (小寒到冬至)
     """
-    # 这是一个简化的算法，实际应该使用更精确的天文算法
-    # 节气大约每15天一个
-    base_dates = [
-        (1, 5), (1, 20), (2, 4), (2, 19), (3, 5), (3, 20),
-        (4, 4), (4, 20), (5, 5), (5, 21), (6, 5), (6, 21),
-        (7, 7), (7, 22), (8, 7), (8, 23), (9, 7), (9, 23),
-        (10, 8), (10, 23), (11, 7), (11, 22), (12, 7), (12, 21)
-    ]
-    
-    month, day = base_dates[term_index]
+    if year < 1900 or year > 2100:
+        raise ValueError("节气日期仅支持 1900-2100")
+    if term_index < 0 or term_index >= len(SOLAR_TERMS):
+        raise ValueError("term_index must be between 0 and 23")
+
+    century = 20 if year <= 1999 else 21
+    coefficient = SOLAR_TERM_CENTURY_COEFFICIENTS[century][term_index]
+    year_offset = year % 100
+    leap_adjustment = (year_offset - 1) // 4 if term_index <= 3 else year_offset // 4
+    day = int(year_offset * 0.2422 + coefficient) - leap_adjustment
+    day += SOLAR_TERM_YEAR_ADJUSTMENTS.get(term_index, {}).get(year, 0)
+
+    month = SOLAR_TERM_MONTHS[term_index]
     return datetime(year, month, day)
 
 

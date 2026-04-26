@@ -375,12 +375,7 @@
             document.getElementById('today-result').classList.remove('show');
 
             try {
-                const now = new Date();
-                const year = now.getFullYear();
-                const month = now.getMonth() + 1;
-                const day = now.getDate();
-                
-                const result = await window.apiClient.get(`/api/ai/enhance-zeri/${year}/${month}/${day}`, { purpose: '通用' });
+                const result = await window.apiClient.get('/api/ai/enhance-zeri/today', { purpose: '通用' });
 
                 if (!result.ai_enhanced && result.ai_message) {
                     if (result.ai_enabled) {

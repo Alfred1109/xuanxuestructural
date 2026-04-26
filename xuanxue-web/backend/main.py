@@ -228,6 +228,80 @@ class AIChatRequest(BaseModel):
     context: Optional[str] = Field("", max_length=2000)
 
 
+class LiuYaoRequest(BaseModel):
+    question: Optional[str] = Field("", max_length=500)
+
+
+class QiMenRequest(BaseModel):
+    year: int = Field(..., ge=1900, le=2100)
+    month: int = Field(..., ge=1, le=12)
+    day: int = Field(..., ge=1, le=31)
+    hour: int = Field(..., ge=0, le=23)
+    minute: int = Field(0, ge=0, le=59)
+    matter_type: str = Field("通用", min_length=1, max_length=20)
+
+
+def get_liuyao_question(question: Optional[str], payload: Optional[LiuYaoRequest]) -> str:
+    if question is not None:
+        return question.strip()
+    if payload and payload.question:
+        return payload.question.strip()
+    return ""
+
+
+def get_qimen_payload(
+    year: Optional[int],
+    month: Optional[int],
+    day: Optional[int],
+    hour: Optional[int],
+    minute: Optional[int],
+    matter_type: Optional[str],
+    payload: Optional[QiMenRequest],
+) -> QiMenRequest:
+    if payload is not None:
+        return QiMenRequest(
+            year=year if year is not None else payload.year,
+            month=month if month is not None else payload.month,
+            day=day if day is not None else payload.day,
+            hour=hour if hour is not None else payload.hour,
+            minute=minute if minute is not None else payload.minute,
+            matter_type=matter_type if matter_type is not None else payload.matter_type,
+        )
+
+    missing_fields = [
+        field_name
+        for field_name, value in (
+            ("year", year),
+            ("month", month),
+            ("day", day),
+            ("hour", hour),
+        )
+        if value is None
+    ]
+    if missing_fields:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "code": "validation_error",
+                "message": "请求参数校验失败",
+                "retryable": False,
+                "details": [
+                    {"field": field_name, "message": "Field required"}
+                    for field_name in missing_fields
+                ],
+            },
+        )
+
+    return QiMenRequest(
+        year=year,
+        month=month,
+        day=day,
+        hour=hour,
+        minute=0 if minute is None else minute,
+        matter_type="通用" if matter_type is None else matter_type,
+    )
+
+
 @app.get("/")
 async def root(request: Request):
     """API根路径"""
@@ -293,7 +367,11 @@ async def calculate_bazi(payload: BaZiRequest, request: Request):
 
 
 @app.post("/api/divination/liuyao")
-async def liuyao_divination(request: Request, question: str = Query("", max_length=500)):
+async def liuyao_divination(
+    request: Request,
+    question: Optional[str] = Query(None, max_length=500),
+    payload: Optional[LiuYaoRequest] = Body(default=None),
+):
     """
     六爻占卜API
     
@@ -303,14 +381,18 @@ async def liuyao_divination(request: Request, question: str = Query("", max_leng
     返回: 卦象和解释
     """
     try:
-        result = divine(question)
+        result = divine(get_liuyao_question(question, payload))
         return success_response(result, request=request)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"占卜错误: {str(e)}")
 
 
 @app.post("/api/ai/enhance-liuyao")
-async def ai_enhance_liuyao(request: Request, question: str = Query("", max_length=500)):
+async def ai_enhance_liuyao(
+    request: Request,
+    question: Optional[str] = Query(None, max_length=500),
+    payload: Optional[LiuYaoRequest] = Body(default=None),
+):
     """
     AI增强六爻占卜
     
@@ -320,7 +402,7 @@ async def ai_enhance_liuyao(request: Request, question: str = Query("", max_leng
     返回: 卦象 + AI深度解读
     """
     try:
-        result = divine(question)
+        result = divine(get_liuyao_question(question, payload))
         ai_enabled = llm_helper.is_available()
         ai_enhanced = False
         ai_message = "AI服务未配置，已返回基础解读"
@@ -355,12 +437,13 @@ async def ai_enhance_liuyao(request: Request, question: str = Query("", max_leng
 @app.post("/api/divination/qimen")
 async def qimen_divination(
     request: Request,
-    year: int = Query(..., ge=1900, le=2100),
-    month: int = Query(..., ge=1, le=12),
-    day: int = Query(..., ge=1, le=31),
-    hour: int = Query(..., ge=0, le=23),
-    minute: int = Query(0, ge=0, le=59),
-    matter_type: str = Query("通用", min_length=1, max_length=20)
+    year: Optional[int] = Query(None, ge=1900, le=2100),
+    month: Optional[int] = Query(None, ge=1, le=12),
+    day: Optional[int] = Query(None, ge=1, le=31),
+    hour: Optional[int] = Query(None, ge=0, le=23),
+    minute: Optional[int] = Query(None, ge=0, le=59),
+    matter_type: Optional[str] = Query(None, min_length=1, max_length=20),
+    payload: Optional[QiMenRequest] = Body(default=None),
 ):
     """
     奇门遁甲占卜API
@@ -372,8 +455,22 @@ async def qimen_divination(
     返回: 奇门遁甲盘和分析
     """
     try:
-        datetime(year, month, day, hour, minute)
-        result = divine_qimen(year, month, day, hour, minute, matter_type)
+        final_payload = get_qimen_payload(year, month, day, hour, minute, matter_type, payload)
+        datetime(
+            final_payload.year,
+            final_payload.month,
+            final_payload.day,
+            final_payload.hour,
+            final_payload.minute,
+        )
+        result = divine_qimen(
+            final_payload.year,
+            final_payload.month,
+            final_payload.day,
+            final_payload.hour,
+            final_payload.minute,
+            final_payload.matter_type,
+        )
         return success_response(result, request=request)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"日期格式错误: {str(e)}")
@@ -401,12 +498,13 @@ async def get_current_qimen_api(request: Request, matter_type: str = Query("通�
 @app.post("/api/ai/enhance-qimen")
 async def ai_enhance_qimen(
     request: Request,
-    year: int = Query(..., ge=1900, le=2100),
-    month: int = Query(..., ge=1, le=12),
-    day: int = Query(..., ge=1, le=31),
-    hour: int = Query(..., ge=0, le=23),
-    minute: int = Query(0, ge=0, le=59),
-    matter_type: str = Query("通用", min_length=1, max_length=20)
+    year: Optional[int] = Query(None, ge=1900, le=2100),
+    month: Optional[int] = Query(None, ge=1, le=12),
+    day: Optional[int] = Query(None, ge=1, le=31),
+    hour: Optional[int] = Query(None, ge=0, le=23),
+    minute: Optional[int] = Query(None, ge=0, le=59),
+    matter_type: Optional[str] = Query(None, min_length=1, max_length=20),
+    payload: Optional[QiMenRequest] = Body(default=None),
 ):
     """
     AI增强奇门遁甲占卜
@@ -418,14 +516,31 @@ async def ai_enhance_qimen(
     返回: 奇门遁甲盘 + AI深度解读
     """
     try:
-        datetime(year, month, day, hour, minute)
-        result = divine_qimen(year, month, day, hour, minute, matter_type)
+        final_payload = get_qimen_payload(year, month, day, hour, minute, matter_type, payload)
+        datetime(
+            final_payload.year,
+            final_payload.month,
+            final_payload.day,
+            final_payload.hour,
+            final_payload.minute,
+        )
+        result = divine_qimen(
+            final_payload.year,
+            final_payload.month,
+            final_payload.day,
+            final_payload.hour,
+            final_payload.minute,
+            final_payload.matter_type,
+        )
         ai_enabled = llm_helper.is_available()
         ai_enhanced = False
         ai_message = "AI服务未配置，已返回基础解读"
 
         if ai_enabled:
-            ai_interpretation = llm_helper.enhance_qimen_interpretation(result, matter_type)
+            ai_interpretation = llm_helper.enhance_qimen_interpretation(
+                result,
+                final_payload.matter_type,
+            )
             if ai_interpretation:
                 result['ai_interpretation'] = ai_interpretation
                 ai_enhanced = True
@@ -524,6 +639,16 @@ async def get_date_fortune_api(
         raise HTTPException(status_code=400, detail=f"日期格式错误: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"计算错误: {str(e)}")
+
+
+@app.get("/api/ai/enhance-zeri/today")
+async def ai_enhance_zeri_today(
+    request: Request,
+    purpose: str = Query("通用", min_length=1, max_length=20),
+):
+    """获取服务端今日日期的AI增强择日分析"""
+    today = datetime.now()
+    return await ai_enhance_zeri(request, today.year, today.month, today.day, purpose)
 
 
 @app.get("/api/ai/enhance-zeri/{year}/{month}/{day}")
