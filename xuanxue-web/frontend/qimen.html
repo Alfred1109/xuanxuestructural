@@ -502,7 +502,7 @@
                 <a href="qimen.html" class="active">奇门遁甲</a>
                 <a href="zeri.html">择日学</a>
                 <a href="ai-chat.html">🤖 AI助手</a>
-                <a href="http://localhost:8004" target="_blank">📚 知识库</a>
+                <a href="http://localhost:8004" target="_blank" data-docs-link>📚 知识库</a>
             </nav>
         </div>
     </div>
@@ -606,12 +606,16 @@
     </div>
 
     <script src="config.js"></script>
+    <script src="common-links.js"></script>
     <script src="common-ui.js"></script>
     <script src="markdown.js"></script>
     <script src="api-client.js"></script>
     <script src="ai-status.js"></script>
     <script>
         const esc = (value) => (window.escapeHtml ? window.escapeHtml(value ?? '') : String(value ?? ''));
+        if (window.applyCommonLinks) {
+            window.applyCommonLinks();
+        }
         function sanitizeFortuneType(value) {
             const normalized = String(value || '').replace(/[大]/g, '');
             return ['吉', '凶', '平'].includes(normalized) ? normalized : '平';

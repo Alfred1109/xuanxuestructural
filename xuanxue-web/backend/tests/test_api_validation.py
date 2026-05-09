@@ -118,12 +118,43 @@ class TestApiValidation(unittest.TestCase):
         self.assertEqual(resp.status_code, 400)
         self.assert_error_envelope(resp, "bad_request")
 
+    def test_lunar_to_solar_valid_payload_returns_200(self):
+        resp = self.request(
+            "POST",
+            "/api/calendar/lunar-to-solar",
+            json={"year": 2024, "month": 1, "day": 1, "is_leap": False},
+        )
+        self.assertEqual(resp.status_code, 200)
+        payload = self.assert_success_envelope(resp)
+        self.assertEqual(payload.get("data", {}).get("solar"), {"year": 2024, "month": 2, "day": 10})
+
+    def test_lunar_to_solar_invalid_lunar_date_returns_400(self):
+        resp = self.request(
+            "POST",
+            "/api/calendar/lunar-to-solar",
+            json={"year": 2024, "month": 1, "day": 31, "is_leap": False},
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assert_error_envelope(resp, "bad_request")
+
     def test_qimen_invalid_real_date_returns_400(self):
         resp = self.request(
             "POST",
             "/api/divination/qimen?year=2026&month=2&day=31&hour=9&minute=0&matter_type=通用",
         )
         self.assertEqual(resp.status_code, 400)
+
+    def test_qimen_missing_query_params_returns_422(self):
+        resp = self.request(
+            "POST",
+            "/api/divination/qimen?year=2026&month=2",
+        )
+        self.assertEqual(resp.status_code, 422)
+        payload = self.assert_error_envelope(resp, "validation_error")
+        self.assertEqual(payload.get("error", {}).get("details"), [
+            {"field": "day", "message": "Field required"},
+            {"field": "hour", "message": "Field required"},
+        ])
 
     def test_liuyao_accepts_json_body(self):
         resp = self.request(
@@ -150,6 +181,18 @@ class TestApiValidation(unittest.TestCase):
         )
         self.assertEqual(resp.status_code, 200)
         self.assert_success_envelope(resp)
+
+    def test_ai_enhance_qimen_missing_query_params_returns_422(self):
+        resp = self.request(
+            "POST",
+            "/api/ai/enhance-qimen?year=2026&month=2",
+        )
+        self.assertEqual(resp.status_code, 422)
+        payload = self.assert_error_envelope(resp, "validation_error")
+        self.assertEqual(payload.get("error", {}).get("details"), [
+            {"field": "day", "message": "Field required"},
+            {"field": "hour", "message": "Field required"},
+        ])
 
     def test_zeri_auspicious_days_out_of_range_returns_422(self):
         resp = self.request("GET", "/api/zeri/auspicious?year=2026&month=2&days=1000")

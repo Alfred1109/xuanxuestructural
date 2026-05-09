@@ -223,6 +223,10 @@ class CalendarRequest(BaseModel):
     day: int = Field(..., ge=1, le=31)
 
 
+class LunarCalendarRequest(CalendarRequest):
+    is_leap: bool = False
+
+
 class AIChatRequest(BaseModel):
     question: Optional[str] = Field(None, min_length=1, max_length=500)
     context: Optional[str] = Field("", max_length=2000)
@@ -472,6 +476,8 @@ async def qimen_divination(
             final_payload.matter_type,
         )
         return success_response(result, request=request)
+    except HTTPException:
+        raise
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"日期格式错误: {str(e)}")
     except Exception as e:
@@ -562,6 +568,8 @@ async def ai_enhance_qimen(
             ai_enhanced=ai_enhanced,
             ai_message=ai_message,
         )
+    except HTTPException:
+        raise
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"日期格式错误: {str(e)}")
     except Exception as e:
@@ -586,6 +594,33 @@ async def convert_solar_to_lunar(payload: CalendarRequest, request: Request):
                     "day": lunar[2],
                     "is_leap": lunar[3]
                 }
+            },
+            request=request,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"日期格式错误: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"转换错误: {str(e)}")
+
+
+@app.post("/api/calendar/lunar-to-solar")
+async def convert_lunar_to_solar(payload: LunarCalendarRequest, request: Request):
+    """农历转阳历"""
+    try:
+        solar = lunar_to_solar(payload.year, payload.month, payload.day, payload.is_leap)
+        return success_response(
+            {
+                "lunar": {
+                    "year": payload.year,
+                    "month": payload.month,
+                    "day": payload.day,
+                    "is_leap": payload.is_leap,
+                },
+                "solar": {
+                    "year": solar[0],
+                    "month": solar[1],
+                    "day": solar[2],
+                },
             },
             request=request,
         )

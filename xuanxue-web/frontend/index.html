@@ -151,7 +151,7 @@
                 <a href="qimen.html">奇门遁甲</a>
                 <a href="zeri.html">择日学</a>
                 <a href="ai-chat.html">🤖 AI助手</a>
-                <a href="http://localhost:8004" target="_blank">📚 知识库</a>
+                <a href="http://localhost:8004" target="_blank" data-docs-link>📚 知识库</a>
             </nav>
         </div>
     </div>
@@ -163,7 +163,7 @@
                 <span id="aiStatusDot" class="ai-status-dot"></span>
                 <span id="aiStatusText"></span>
             </div>
-            <a href="AI配置指南.md" target="_blank" class="inline-help">配置指南</a>
+            <a href="../../AI配置指南.md" target="_blank" class="inline-help" data-ai-guide-link>配置指南</a>
         </div>
 
         <div class="card">
@@ -278,12 +278,16 @@
     </div>
 
     <script src="config.js"></script>
+    <script src="common-links.js"></script>
     <script src="common-ui.js"></script>
     <script src="markdown.js"></script>
     <script src="api-client.js"></script>
     <script src="ai-status.js"></script>
     <script>
         const esc = (value) => (window.escapeHtml ? window.escapeHtml(value ?? '') : String(value ?? ''));
+        if (window.applyCommonLinks) {
+            window.applyCommonLinks();
+        }
         const renderMarkdown = (text) => window.renderMarkdownSimple(text, '#1f5f8b');
 
         const DAY_GAN_TO_WUXING = {
@@ -640,7 +644,7 @@
                 if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
                     errorMsg += '\n\n❌ 无法连接到后端服务\n\n解决方法：\n1. 确保后端已启动：./start.sh\n2. 检查端口8002是否被占用';
                 } else {
-                    errorMsg += '\n\n请确保：\n1. 后端服务已启动\n2. 已配置ARK_API_KEY环境变量\n\n配置方法见《AI配置指南.md》';
+                    errorMsg += '\n\n请确保：\n1. 后端服务已启动\n2. 已配置ARK_API_KEY环境变量\n\n配置方法见页面顶部“配置指南”链接。';
                 }
                 
                 showToast(errorMsg, 'error');

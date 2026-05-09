@@ -58,6 +58,7 @@ xuanxue-web/
 
 - `POST` 接口优先使用 JSON body
 - 前端统一通过 `frontend/config.js` 中的 `API_BASE_URL` 访问后端
+- 知识库与 AI 配置说明链接也通过 `frontend/config.js` 统一配置
 - AI 择日页面默认调用 `GET /api/ai/enhance-zeri/today`，以服务端日期为准
 
 ## 技术栈
@@ -65,18 +66,16 @@ xuanxue-web/
 ### 后端
 - **框架**: FastAPI (高性能、现代化)
 - **语言**: Python 3.10+
-- **数据库**: SQLite (开发) / PostgreSQL (生产)
-- **缓存**: Redis (可选)
+- **形态**: 无状态计算型 API，当前版本未引入数据库或缓存
 
 ### 前端
 - **形态**: 多页静态页面（原生 HTML/CSS/JS）
 - **样式**: 页面内样式 + 公共头部样式 (`common-header.css`)
-- **配置**: `config.js` 统一管理 `API_BASE_URL`
+- **配置**: `config.js` 统一管理 `API_BASE_URL`、知识库地址和 AI 配置指南地址
 
 ### 部署
-- **容器化**: Docker
-- **Web服务器**: Nginx
-- **云平台**: 阿里云 / 腾讯云
+- **本地开发**: `./start.sh` 启动 FastAPI、静态前端和 MkDocs
+- **生产部署**: Docker / Nginx / 云平台尚未在本仓库内提供现成配置
 
 ## 核心特性
 
@@ -103,7 +102,14 @@ xuanxue-web/
 - 简洁直观的界面
 - 详细的解释说明
 - 可视化图表展示
-- 报告导出功能
+- AI 状态感知与基础结果回退
+
+## 当前未包含
+
+- 用户账号系统
+- 历史记录持久化
+- 报告导出（PDF）
+- Docker / Nginx / 数据库 / Redis 的仓库内实现
 
 ## 开发原则
 
