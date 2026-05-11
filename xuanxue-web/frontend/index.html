@@ -3,13 +3,598 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>玄学预测系统 - 八字排盘</title>
-    <link rel="stylesheet" href="common-header.css">
-    <link rel="stylesheet" href="common-theme.css">
+    <title>Hermes 玄学系统 - 统一问事入口</title>
+    <link rel="stylesheet" href="common-header.css?v=20260511-flat">
+    <link rel="stylesheet" href="common-theme.css?v=20260511-flat">
     <style>
         .page-title {
             margin-bottom: 18px;
             color: #1f5f8b;
+        }
+
+        .hermes-entry {
+            padding: 24px;
+        }
+
+        .entry-top {
+            display: grid;
+            grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.7fr);
+            gap: 18px;
+            align-items: start;
+            margin-bottom: 18px;
+        }
+
+        .entry-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 12px;
+            border-radius: 999px;
+            background: #edf6fc;
+            color: var(--color-primary-strong);
+            font-size: 0.82rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .entry-title {
+            margin: 0 0 10px;
+            color: var(--color-primary-strong);
+            font-size: clamp(1.5rem, 2.8vw, 2.1rem);
+        }
+
+        .entry-copy p {
+            margin: 0;
+            color: var(--color-text-soft);
+        }
+
+        .entry-stats {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .entry-stat {
+            background: #f8fbfe;
+            border: 1px solid #dbe6ef;
+            border-radius: 14px;
+            padding: 12px 14px;
+        }
+
+        .entry-stat .label {
+            font-size: 0.78rem;
+            color: var(--color-text-soft);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .entry-stat .value {
+            margin-top: 4px;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--color-primary-strong);
+        }
+
+        .consult-form {
+            margin-top: 4px;
+        }
+
+        .consult-question {
+            min-height: 120px;
+        }
+
+        .consult-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .consult-actions .btn {
+            width: auto;
+            min-width: 160px;
+        }
+
+        .consult-result {
+            display: none;
+        }
+
+        .consult-result.show {
+            display: block;
+        }
+
+        .consult-answer {
+            line-height: 1.9;
+            white-space: pre-wrap;
+            color: var(--color-text);
+        }
+
+        .module-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .module-summary-card {
+            background: #fff;
+            border: 1px solid #dbe6ef;
+            border-radius: 14px;
+            padding: 14px;
+        }
+
+        .module-summary-card .title {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--color-primary-strong);
+            margin-bottom: 8px;
+        }
+
+        .module-summary-card .body {
+            font-size: 0.92rem;
+            color: var(--color-text-soft);
+            line-height: 1.7;
+            white-space: pre-wrap;
+        }
+
+        .trace-diagram {
+            min-height: 240px;
+            overflow-x: auto;
+            padding: 14px;
+            border: 1px solid #dbe6ef;
+            border-radius: 14px;
+            background: #fbfdff;
+        }
+
+        .trace-diagram svg {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .trace-fallback {
+            margin: 0;
+            color: var(--color-text-soft);
+            white-space: pre-wrap;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+            font-size: 0.86rem;
+        }
+
+        .trace-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .trace-step {
+            border: 1px solid #dbe6ef;
+            border-radius: 14px;
+            background: #fff;
+            padding: 12px 14px;
+        }
+
+        .trace-step summary {
+            list-style: none;
+            cursor: pointer;
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+        }
+
+        .trace-step summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .trace-step .label {
+            color: var(--color-primary-strong);
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .trace-step .summary {
+            color: var(--color-text-soft);
+            font-size: 0.9rem;
+        }
+
+        .trace-step-body {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #edf2f7;
+            display: grid;
+            gap: 10px;
+        }
+
+        .trace-field .field-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--color-accent);
+            margin-bottom: 4px;
+        }
+
+        .trace-field pre {
+            margin: 0;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: #f8fbfe;
+            border: 1px solid #e3ebf2;
+            color: var(--color-text);
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+            font-size: 0.85rem;
+        }
+
+        .trace-step .detail {
+            color: var(--color-text-soft);
+            font-size: 0.9rem;
+            line-height: 1.65;
+        }
+
+        .result-meta {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .result-chip {
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: #edf6fc;
+            color: var(--color-primary-strong);
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+        .shell-container {
+            max-width: 1440px;
+        }
+
+        .workbench {
+            display: none;
+            grid-template-columns: 280px minmax(0, 1fr);
+            gap: 18px;
+            align-items: start;
+        }
+
+        .sidebar {
+            position: sticky;
+            top: 16px;
+            padding: 18px;
+        }
+
+        .sidebar-brand {
+            padding-bottom: 14px;
+            border-bottom: 1px solid #e6edf4;
+            margin-bottom: 14px;
+        }
+
+        .sidebar-brand .kicker {
+            font-size: 0.78rem;
+            color: var(--color-accent);
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+        }
+
+        .sidebar-brand h2 {
+            margin: 6px 0 6px;
+            color: var(--color-primary-strong);
+            font-size: 1.4rem;
+        }
+
+        .sidebar-brand p {
+            margin: 0;
+            color: var(--color-text-soft);
+            font-size: 0.92rem;
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .sidebar-item {
+            appearance: none;
+            border: 1px solid #dbe6ef;
+            background: #fbfdff;
+            color: var(--color-text);
+            padding: 12px 14px;
+            border-radius: 14px;
+            text-align: left;
+            cursor: pointer;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+        }
+
+        .sidebar-item:hover {
+            transform: translateY(-1px);
+            border-color: rgba(31, 95, 139, 0.28);
+            box-shadow: 0 10px 20px rgba(23, 45, 62, 0.06);
+        }
+
+        .sidebar-item.active {
+            background: var(--color-primary);
+            color: #fff;
+            border-color: transparent;
+            box-shadow: 0 12px 24px rgba(31, 95, 139, 0.22);
+        }
+
+        .sidebar-item .title {
+            display: block;
+            font-weight: 700;
+        }
+
+        .sidebar-item .desc {
+            display: block;
+            margin-top: 4px;
+            font-size: 0.84rem;
+            opacity: 0.85;
+            line-height: 1.45;
+        }
+
+        .sidebar-link {
+            display: block;
+            margin-top: 12px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            border: 1px solid #dbe6ef;
+            text-decoration: none;
+            color: var(--color-text);
+            background: #fffdf8;
+            font-weight: 600;
+        }
+
+        .sidebar-link small {
+            display: block;
+            margin-top: 4px;
+            font-weight: 400;
+            color: var(--color-text-soft);
+        }
+
+        .sidebar-note {
+            margin-top: 14px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: #edf6fc;
+            color: var(--color-primary-strong);
+            font-size: 0.9rem;
+        }
+
+        .workspace {
+            min-width: 0;
+        }
+
+        .workspace-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+
+        .workspace-kicker {
+            font-size: 0.8rem;
+            color: var(--color-accent);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .workspace-head h2 {
+            margin: 6px 0 6px;
+            font-size: clamp(1.4rem, 2.6vw, 2rem);
+            color: var(--color-primary-strong);
+        }
+
+        .workspace-head p {
+            margin: 0;
+            color: var(--color-text-soft);
+        }
+
+        .workspace-pill {
+            align-self: center;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: #edf6fc;
+            color: var(--color-primary-strong);
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .overview-panel {
+            display: block;
+        }
+
+        .overview-panel .module-grid {
+            display: none;
+        }
+
+        .module-frame {
+            display: none;
+            width: 100%;
+            min-height: 78vh;
+            border: none;
+            border-radius: 18px;
+            background: #ffffff;
+            box-shadow: 0 14px 34px rgba(23, 45, 62, 0.08);
+        }
+
+        .module-frame.show {
+            display: block;
+        }
+
+        .overview-panel.hide {
+            display: none;
+        }
+
+        .hero-panel {
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 20px;
+            padding: 22px;
+            border-radius: 20px;
+            background: var(--color-primary);
+            color: #fff;
+            box-shadow: 0 18px 38px rgba(20, 46, 64, 0.18);
+        }
+
+        .hero-panel-inner {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.9fr);
+            gap: 18px;
+            align-items: start;
+        }
+
+        .hero-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 12px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            font-size: 0.82rem;
+            letter-spacing: 0.4px;
+        }
+
+        .hero-panel h2 {
+            margin: 12px 0 10px;
+            color: #fff;
+            font-size: clamp(1.55rem, 3vw, 2.2rem);
+        }
+
+        .hero-panel p {
+            color: rgba(255, 255, 255, 0.88);
+            margin-bottom: 0;
+        }
+
+        .hero-summary {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .hero-summary-card {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 14px;
+            padding: 12px 13px;
+            backdrop-filter: blur(8px);
+        }
+
+        .hero-summary-card .label {
+            font-size: 0.8rem;
+            opacity: 0.82;
+        }
+
+        .hero-summary-card .value {
+            display: block;
+            margin-top: 4px;
+            font-size: 1.02rem;
+            font-weight: 700;
+        }
+
+        .module-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .module-card {
+            display: block;
+            text-decoration: none;
+            color: var(--color-text);
+            background: rgba(255, 255, 255, 0.96);
+            border: 1px solid rgba(215, 225, 234, 0.95);
+            border-radius: 18px;
+            padding: 16px;
+            box-shadow: 0 10px 22px rgba(23, 45, 62, 0.06);
+            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+        }
+
+        .module-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 28px rgba(23, 45, 62, 0.1);
+            border-color: rgba(31, 95, 139, 0.28);
+        }
+
+        .module-card.primary {
+            border-top: 4px solid var(--color-primary);
+        }
+
+        .module-card.accent {
+            border-top: 4px solid var(--color-accent);
+        }
+
+        .module-card.info {
+            border-top: 4px solid var(--color-info);
+        }
+
+        .module-card.success {
+            border-top: 4px solid var(--color-success);
+        }
+
+        .module-card .kicker {
+            font-size: 0.8rem;
+            color: var(--color-text-soft);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .module-card .title {
+            font-size: 1.08rem;
+            font-weight: 700;
+            color: var(--color-primary-strong);
+            margin-bottom: 8px;
+        }
+
+        .module-card .desc {
+            color: var(--color-text-soft);
+            font-size: 0.94rem;
+        }
+
+        .module-card .meta {
+            margin-top: 10px;
+            font-size: 0.82rem;
+            color: var(--color-accent);
+            font-weight: 600;
+        }
+
+        .system-flow {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .flow-item {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 14px;
+            padding: 12px 13px;
+            backdrop-filter: blur(8px);
+        }
+
+        .flow-item .step {
+            font-size: 0.8rem;
+            opacity: 0.82;
+            letter-spacing: 0.4px;
+        }
+
+        .flow-item .name {
+            font-size: 1rem;
+            font-weight: 700;
+            margin: 4px 0 5px;
+        }
+
+        .flow-item .note {
+            font-size: 0.9rem;
+            opacity: 0.86;
         }
 
         .btn-row .btn {
@@ -129,7 +714,60 @@
             margin-top: 10px;
         }
 
+        @media (max-width: 900px) {
+            .entry-top {
+                grid-template-columns: 1fr;
+            }
+
+            .workbench {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: static;
+            }
+
+            .hero-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         @media (max-width: 768px) {
+            .hermes-entry {
+                padding: 18px;
+            }
+
+            .entry-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .workspace-head {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .consult-actions {
+                flex-direction: column;
+            }
+
+            .consult-actions .btn {
+                width: 100%;
+            }
+
+            .sidebar-nav {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .hero-panel {
+                padding: 18px;
+            }
+
+            .hero-summary,
+            .system-flow {
+                grid-template-columns: 1fr;
+            }
+
             .bazi-display,
             .wuxing-chart {
                 grid-template-columns: repeat(2, 1fr);
@@ -145,18 +783,243 @@
                 <h1>🔮 玄学预测系统</h1>
                 <p>传统命理学 · 现代科技 · 智能分析</p>
             </div>
-            <nav class="unified-nav">
-                <a href="index.html" class="active">八字排盘</a>
-                <a href="liuyao.html">六爻占卜</a>
-                <a href="qimen.html">奇门遁甲</a>
-                <a href="zeri.html">择日学</a>
-                <a href="ai-chat.html">🤖 AI助手</a>
-                <a href="http://localhost:8004" target="_blank" data-docs-link>📚 知识库</a>
-            </nav>
         </div>
     </div>
 
-    <div class="container">
+    <div class="container shell-container">
+        <section class="card hermes-entry">
+            <div class="entry-top">
+                <div class="entry-copy">
+                    <div class="entry-kicker">Hermes · 统一问事入口</div>
+                    <h2 class="entry-title">一个入口，系统自动调度八字、六爻、奇门与择日</h2>
+                    <p>你只要说清楚「我是谁」和「我想问什么」，系统会自己决定调用哪些术数，并把答案合成一份统一结论。</p>
+                </div>
+                <div class="entry-stats">
+                    <div class="entry-stat">
+                        <div class="label">入口数量</div>
+                        <div class="value">1</div>
+                    </div>
+                    <div class="entry-stat">
+                        <div class="label">自动编排</div>
+                        <div class="value">多模块联判</div>
+                    </div>
+                    <div class="entry-stat">
+                        <div class="label">输出方式</div>
+                        <div class="value">统一答案</div>
+                    </div>
+                    <div class="entry-stat">
+                        <div class="label">解释层</div>
+                        <div class="value">AI 复核</div>
+                    </div>
+                </div>
+            </div>
+
+            <form id="consultForm" class="consult-form">
+                <div class="form-group">
+                    <label for="consultQuestion">你想问什么</label>
+                    <textarea id="consultQuestion" class="consult-question" placeholder="例如：我现在适合换工作吗？这段感情还能继续吗？今年开业合不合适？"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="consultYear">出生年份</label>
+                        <input type="number" id="consultYear" min="1900" max="2100" placeholder="可选">
+                    </div>
+                    <div class="form-group">
+                        <label for="consultMonth">出生月份</label>
+                        <input type="number" id="consultMonth" min="1" max="12" placeholder="可选">
+                    </div>
+                    <div class="form-group">
+                        <label for="consultDay">出生日期</label>
+                        <input type="number" id="consultDay" min="1" max="31" placeholder="可选">
+                    </div>
+                    <div class="form-group">
+                        <label for="consultHour">出生时辰</label>
+                        <input type="number" id="consultHour" min="0" max="23" placeholder="可选">
+                    </div>
+                    <div class="form-group">
+                        <label for="consultMinute">出生分钟</label>
+                        <input type="number" id="consultMinute" min="0" max="59" placeholder="可选">
+                    </div>
+                    <div class="form-group">
+                        <label for="consultGender">性别</label>
+                        <select id="consultGender">
+                            <option value="">可选</option>
+                            <option value="男">男</option>
+                            <option value="女">女</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="consult-actions">
+                    <button type="submit" class="btn">🔮 开始系统分析</button>
+                    <button type="button" class="btn btn-ai" id="fillDemoBtn">✨ 填入示例</button>
+                    <button type="button" class="btn btn-accent" id="clearConsultBtn">清空</button>
+                </div>
+            </form>
+        </section>
+
+        <div class="loading" id="consultLoading">
+            <div class="spinner"></div>
+            <p class="loading-text">正在汇总命理信息...</p>
+        </div>
+
+        <div class="consult-result" id="consultResult">
+            <div class="card">
+                <h2 class="page-title">系统结论</h2>
+                <div id="consultAnswer" class="consult-answer"></div>
+                <div id="consultMeta" class="result-meta"></div>
+            </div>
+
+            <div class="card">
+                <h2 class="page-title">各模块依据</h2>
+                <div id="consultModuleGrid" class="module-summary-grid"></div>
+            </div>
+
+            <div class="card" id="consultTraceCard">
+                <h2 class="page-title">计算流程</h2>
+                <div id="consultTraceDiagram" class="trace-diagram"></div>
+                <div id="consultTraceSteps" class="trace-steps"></div>
+            </div>
+        </div>
+
+        <div class="workbench">
+            <aside class="card sidebar">
+                <div class="sidebar-brand">
+                    <div class="kicker">统一工作台</div>
+                    <h2>左侧边栏</h2>
+                    <p>点选模块，右侧展示对应内容。</p>
+                </div>
+
+                <nav class="sidebar-nav" id="sidebarNav">
+                    <button class="sidebar-item active" type="button" data-view="overview">
+                        <span class="title">总览</span>
+                        <span class="desc">整体入口与八字基础分析</span>
+                    </button>
+                    <button class="sidebar-item" type="button" data-view="bazi">
+                        <span class="title">八字排盘</span>
+                        <span class="desc">直接跳到出生信息与命盘结果</span>
+                    </button>
+                    <button class="sidebar-item" type="button" data-view="liuyao">
+                        <span class="title">六爻占卜</span>
+                        <span class="desc">围绕具体问题做即时判断</span>
+                    </button>
+                    <button class="sidebar-item" type="button" data-view="qimen">
+                        <span class="title">奇门遁甲</span>
+                        <span class="desc">从时空格局看局势与方向</span>
+                    </button>
+                    <button class="sidebar-item" type="button" data-view="zeri">
+                        <span class="title">择日学</span>
+                        <span class="desc">查看运势并寻找合适时机</span>
+                    </button>
+                    <button class="sidebar-item" type="button" data-view="ai-chat">
+                        <span class="title">AI助手</span>
+                        <span class="desc">统一问答与辅助解释</span>
+                    </button>
+                </nav>
+
+                <div class="sidebar-note">
+                    右侧内容会保留原页面逻辑，适合一边切换、一边查看结果。
+                </div>
+            </aside>
+
+            <main class="workspace">
+                <div class="workspace-head">
+                    <div>
+                        <div class="workspace-kicker">玄学一体化工作台</div>
+                        <h2 id="viewTitle">总览</h2>
+                        <p id="viewDesc">先在左侧选模块，右侧会显示对应页面信息。</p>
+                    </div>
+                    <div class="workspace-pill" id="viewPill">总览</div>
+                </div>
+
+                <section id="overviewPanel" class="overview-panel">
+                    <div class="hero-panel">
+            <div class="hero-panel-inner">
+                <div class="hero-grid">
+                    <div>
+                        <span class="hero-kicker">玄学一体化工作台</span>
+                        <h2>把八字、六爻、奇门、择日和 AI 统一到同一张命理图谱里</h2>
+                        <p>先定命理根基，再看具体问题与时机，让每个模块都成为同一体系中的不同视角，而不是彼此割裂的菜单。</p>
+
+                        <div class="system-flow">
+                            <div class="flow-item">
+                                <div class="step">01</div>
+                                <div class="name">八字排盘</div>
+                                <div class="note">看本命结构与五行根基</div>
+                            </div>
+                            <div class="flow-item">
+                                <div class="step">02</div>
+                                <div class="name">六爻占卜</div>
+                                <div class="note">聚焦单一问题做即时判断</div>
+                            </div>
+                            <div class="flow-item">
+                                <div class="step">03</div>
+                                <div class="name">奇门遁甲</div>
+                                <div class="note">从时空格局看局势走向</div>
+                            </div>
+                            <div class="flow-item">
+                                <div class="step">04</div>
+                                <div class="name">择日学</div>
+                                <div class="note">把关键动作落到合适时间</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="hero-summary">
+                        <div class="hero-summary-card">
+                            <span class="label">核心主轴</span>
+                            <span class="value">命理合一</span>
+                        </div>
+                        <div class="hero-summary-card">
+                            <span class="label">辅助判断</span>
+                            <span class="value">AI 复核</span>
+                        </div>
+                        <div class="hero-summary-card">
+                            <span class="label">适用场景</span>
+                            <span class="value">问事 · 看局 · 择时</span>
+                        </div>
+                        <div class="hero-summary-card">
+                            <span class="label">知识补充</span>
+                            <span class="value">文档与配置指南</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="module-grid">
+                    <a class="module-card primary" href="#baziForm">
+                        <div class="kicker">命理基底</div>
+                        <div class="title">八字排盘</div>
+                        <div class="desc">出生盘、五行、十神、大运与综合分析。</div>
+                        <div class="meta">进入本命分析</div>
+                    </a>
+                    <a class="module-card accent" href="liuyao.html">
+                        <div class="kicker">即时问事</div>
+                        <div class="title">六爻占卜</div>
+                        <div class="desc">围绕具体问题做快速、清晰的卦象解读。</div>
+                        <div class="meta">打开占卜页面</div>
+                    </a>
+                    <a class="module-card info" href="qimen.html">
+                        <div class="kicker">时空布局</div>
+                        <div class="title">奇门遁甲</div>
+                        <div class="desc">观察局势、宫位与出入方向的综合关系。</div>
+                        <div class="meta">查看奇门盘</div>
+                    </a>
+                    <a class="module-card success" href="zeri.html">
+                        <div class="kicker">择时落地</div>
+                        <div class="title">择日学</div>
+                        <div class="desc">选吉日、看当日运势，把动作放到合适时间。</div>
+                        <div class="meta">进入择日工具</div>
+                    </a>
+                    <a class="module-card primary" href="ai-chat.html">
+                        <div class="kicker">统一问答</div>
+                        <div class="title">AI 助手</div>
+                        <div class="desc">把各模块结果串起来，补充解释和交叉验证。</div>
+                        <div class="meta">开始对话</div>
+                    </a>
+                </div>
+            </div>
+        </div>
 
         <div id="aiStatusBanner" class="ai-status-inline">
             <div class="ai-status-main">
@@ -167,7 +1030,7 @@
         </div>
 
         <div class="card">
-            <h2 class="page-title">📅 输入出生信息</h2>
+            <h2 class="page-title">📅 八字入口 · 输入出生信息</h2>
             <form id="baziForm">
                 <div class="form-row">
                     <div class="form-group">
@@ -275,6 +1138,11 @@
                 </div>
             </div>
         </div>
+                </section>
+
+                <iframe id="moduleFrame" class="module-frame" title="模块页面"></iframe>
+            </main>
+        </div>
     </div>
 
     <script src="config.js"></script>
@@ -283,12 +1151,587 @@
     <script src="markdown.js"></script>
     <script src="api-client.js"></script>
     <script src="ai-status.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script>
         const esc = (value) => (window.escapeHtml ? window.escapeHtml(value ?? '') : String(value ?? ''));
         if (window.applyCommonLinks) {
             window.applyCommonLinks();
         }
         const renderMarkdown = (text) => window.renderMarkdownSimple(text, '#1f5f8b');
+        const consultForm = document.getElementById('consultForm');
+        const consultLoading = document.getElementById('consultLoading');
+        const consultResult = document.getElementById('consultResult');
+        const consultAnswer = document.getElementById('consultAnswer');
+        const consultMeta = document.getElementById('consultMeta');
+        const consultModuleGrid = document.getElementById('consultModuleGrid');
+        const consultTraceDiagram = document.getElementById('consultTraceDiagram');
+        const consultTraceSteps = document.getElementById('consultTraceSteps');
+        let mermaidInitialized = false;
+        const readOptionalInt = (id) => {
+            const value = document.getElementById(id).value;
+            return value === '' ? null : parseInt(value, 10);
+        };
+
+        function moduleNameLabel(moduleName) {
+            const labels = {
+                bazi: '八字底盘',
+                liuyao: '六爻问事',
+                qimen: '奇门时空',
+                zeri: '择日择时'
+            };
+            return labels[moduleName] || moduleName;
+        }
+
+        function formatModuleSummary(moduleName, summary) {
+            if (!summary) {
+                return '暂无摘要';
+            }
+            if (moduleName === 'bazi') {
+                return [
+                    summary.summary,
+                    summary.pattern_type ? `格局：${summary.pattern_type}` : '',
+                    summary.strength_level ? `日主：${summary.strength_level}` : '',
+                    summary.strong_element || summary.weak_element ? `强弱：旺${summary.strong_element || '未知'}，弱${summary.weak_element || '未知'}` : '',
+                    summary.balance_advice ? `建议：${summary.balance_advice}` : ''
+                ].filter(Boolean).join('\n');
+            }
+            if (moduleName === 'liuyao') {
+                return [
+                    `本卦：${summary.bengua || '未知'}`,
+                    summary.biangua ? `变卦：${summary.biangua}` : '',
+                    Array.isArray(summary.dongyao) && summary.dongyao.length ? `动爻：${summary.dongyao.join('、')}` : '动爻：无',
+                    summary.summary,
+                    summary.advice,
+                    summary.timing
+                ].filter(Boolean).join('\n');
+            }
+            if (moduleName === 'qimen') {
+                return [
+                    `事项：${summary.matter_type || '通用'}`,
+                    summary.matter_fortune ? `局势：${summary.matter_fortune}` : '',
+                    summary.best_direction ? `方位：${summary.best_direction}（${summary.best_fortune || '未知'}）` : '',
+                    summary.matter_advice
+                ].filter(Boolean).join('\n');
+            }
+            if (moduleName === 'zeri') {
+                const candidates = Array.isArray(summary.candidate_days) && summary.candidate_days.length
+                    ? `候选日：${summary.candidate_days.map((item) => `${item.date}${item.weekday || ''}`).join('、')}`
+                    : '';
+                return [
+                    `用途：${summary.purpose || '通用'}`,
+                    `${summary.date || ''}${summary.weekday ? ' ' + summary.weekday : ''}`,
+                    summary.level ? `吉凶：${summary.level}（${summary.score || 0}分）` : '',
+                    summary.fortune_advice,
+                    candidates
+                ].filter(Boolean).join('\n');
+            }
+            return JSON.stringify(summary, null, 2);
+        }
+
+        function buildConsultFallbackContext(payload) {
+            const birthParts = [];
+            if (payload.year !== null && payload.year !== undefined) birthParts.push(`年：${payload.year}`);
+            if (payload.month !== null && payload.month !== undefined) birthParts.push(`月：${payload.month}`);
+            if (payload.day !== null && payload.day !== undefined) birthParts.push(`日：${payload.day}`);
+            if (payload.hour !== null && payload.hour !== undefined) birthParts.push(`时：${payload.hour}`);
+            if (payload.minute !== null && payload.minute !== undefined) birthParts.push(`分：${payload.minute}`);
+            if (payload.gender) birthParts.push(`性别：${payload.gender}`);
+
+            return [
+                '你是一个审慎的玄学辅助顾问。',
+                '请只基于用户输入给出简洁、可执行的建议，避免绝对化表述。',
+                `问题：${payload.question}`,
+                birthParts.length ? `出生信息：${birthParts.join('，')}` : '出生信息：未提供',
+                payload.matter_type ? `事项类型：${payload.matter_type}` : '',
+                payload.purpose ? `用途：${payload.purpose}` : '',
+                '输出格式：先给总判断，再给建议。'
+            ].filter(Boolean).join('\n');
+        }
+
+        function buildFallbackConsultation(payload, answer) {
+            const hasBirth = payload.year !== null && payload.year !== undefined
+                && payload.month !== null && payload.month !== undefined
+                && payload.day !== null && payload.day !== undefined
+                && payload.hour !== null && payload.hour !== undefined
+                && payload.gender;
+
+            return {
+                question: payload.question,
+                profile: {
+                    has_birth: hasBirth,
+                    gender: payload.gender || null,
+                    birth: hasBirth ? {
+                        year: payload.year,
+                        month: payload.month,
+                        day: payload.day,
+                        hour: payload.hour,
+                        minute: payload.minute
+                    } : null,
+                    purpose: payload.purpose || '通用',
+                    matter_type: payload.matter_type || '通用',
+                    location: ''
+                },
+                intent: {
+                    modules: hasBirth ? ['bazi', 'liuyao', 'qimen'] : ['liuyao', 'qimen'],
+                    matter_type: payload.matter_type || '通用',
+                    purpose: payload.purpose || '通用'
+                },
+                modules: {},
+                module_summaries: {},
+                answer: answer,
+                trace: {
+                    mermaid: [
+                        'flowchart TD',
+                        '  input["输入问题"] --> ai["AI 对话兼容模式"]',
+                        '  ai --> answer["结果输出"]'
+                    ].join('\n'),
+                    steps: [
+                        {
+                            id: 'input',
+                            label: '输入问题',
+                            detail: payload.question,
+                            inputs: {
+                                question: payload.question,
+                                birth: hasBirth ? {
+                                    year: payload.year,
+                                    month: payload.month,
+                                    day: payload.day,
+                                    hour: payload.hour,
+                                    minute: payload.minute
+                                } : null
+                            },
+                            rule: '原始输入进入前端兼容流程',
+                            outputs: { question: payload.question }
+                        },
+                        {
+                            id: 'fallback',
+                            label: '兼容模式',
+                            detail: '当前后端尚未加载统一问事接口，使用 AI 对话完成分析。',
+                            inputs: { ai_enabled: true },
+                            rule: '调用旧版 AI 对话接口进行补位',
+                            outputs: { answer: answer }
+                        },
+                        {
+                            id: 'answer',
+                            label: '结果输出',
+                            detail: answer,
+                            inputs: { answer: answer },
+                            rule: '把兼容模式结果呈现给用户',
+                            outputs: { answer: answer },
+                            evidence: ['兼容模式回退输出']
+                        }
+                    ]
+                },
+                ai: {
+                    enabled: true,
+                    synthesized: true,
+                    fallback: true
+                }
+            };
+        }
+
+        function buildSyntheticTrace(payload) {
+            const modules = Array.isArray(payload && payload.intent && payload.intent.modules)
+                ? payload.intent.modules
+                : [];
+            const summaries = payload.module_summaries || {};
+            const answer = payload.answer || '';
+            const steps = [
+                {
+                    id: 'input',
+                    label: '输入问题',
+                    detail: payload.question || '用户问题',
+                    inputs: {
+                        question: payload.question || '',
+                        birth: payload.profile && payload.profile.birth ? payload.profile.birth : null,
+                        gender: payload.profile ? payload.profile.gender : null
+                    },
+                    rule: '原始输入进入统一引擎',
+                    outputs: { question: payload.question || '', profile: payload.profile || {} }
+                },
+                {
+                    id: 'intent',
+                    label: '意图识别',
+                    detail: [
+                        payload.intent && payload.intent.matter_type ? `事项：${payload.intent.matter_type}` : '',
+                        payload.intent && payload.intent.purpose ? `用途：${payload.intent.purpose}` : ''
+                    ].filter(Boolean).join('；') || '识别问题类型与用途',
+                    inputs: { question: payload.question || '', profile: payload.profile || {} },
+                    rule: '根据关键词和出生信息推断事项、用途与可用模块',
+                    outputs: {
+                        matter_type: payload.intent && payload.intent.matter_type ? payload.intent.matter_type : '通用',
+                        purpose: payload.intent && payload.intent.purpose ? payload.intent.purpose : '通用',
+                        modules: modules
+                    }
+                },
+                {
+                    id: 'router',
+                    label: '模块编排',
+                    detail: modules.length ? modules.map(moduleNameLabel).join(' → ') : '按问题特征选择模块',
+                    inputs: {
+                        matter_type: payload.intent && payload.intent.matter_type,
+                        purpose: payload.intent && payload.intent.purpose
+                    },
+                    rule: '按问题类型路由到对应模块',
+                    outputs: { modules: modules },
+                    evidence: modules.map((moduleName) => `命中模块：${moduleNameLabel(moduleName)}`)
+                }
+            ];
+
+            modules.forEach((moduleName) => {
+                const summary = summaries[moduleName] || {};
+                steps.push({
+                    id: moduleName,
+                    label: moduleNameLabel(moduleName),
+                    detail: `${moduleNameLabel(moduleName)} 模块完成推演并生成摘要。`,
+                    inputs: { summary: summary },
+                    rule: `${moduleNameLabel(moduleName)} 结果由对应模块解析后汇总`,
+                    outputs: { summary: summary },
+                    evidence: Object.values(summary).filter((item) => typeof item === 'string' && item)
+                });
+            });
+
+            steps.push({
+                id: 'synthesis',
+                label: '统一综合',
+                detail: payload.ai && payload.ai.synthesized ? 'AI 综合输出' : '规则化回退输出',
+                inputs: { module_summaries: summaries, question: payload.question || '' },
+                rule: '将模块摘要整合成最终建议',
+                outputs: { answer: answer, ai: payload.ai || {} },
+                evidence: ['模块摘要已汇总', '综合层完成']
+            });
+
+            steps.push({
+                id: 'answer',
+                label: '结果输出',
+                detail: answer,
+                inputs: { answer: answer },
+                rule: '把最终答案返回给前端',
+                outputs: { answer: answer },
+                evidence: ['结果可回看']
+            });
+
+            const mermaidLines = [
+                'flowchart TD',
+                '  input["输入问题"] --> intent["意图识别"]',
+                '  intent --> router["模块编排"]'
+            ];
+            modules.forEach((moduleName) => {
+                mermaidLines.push(`  router --> ${moduleName}["${esc(moduleNameLabel(moduleName))}"]`);
+                mermaidLines.push(`  ${moduleName} --> synthesis["统一综合"]`);
+            });
+            if (!modules.length) {
+                mermaidLines.push('  router --> synthesis["统一综合"]');
+            }
+            mermaidLines.push('  synthesis --> answer["结果输出"]');
+
+            return {
+                steps: steps,
+                mermaid: mermaidLines.join('\n')
+            };
+        }
+
+        async function requestConsultation(payload) {
+            try {
+                return await window.apiClient.postJson('/api/system/consult', payload);
+            } catch (error) {
+                if (error && (error.status === 404 || error.message === 'Not Found')) {
+                    const context = buildConsultFallbackContext(payload);
+                    const legacyResponse = await window.apiClient.postJson('/api/ai/chat', {
+                        question: payload.question,
+                        context: context
+                    });
+                    return {
+                        data: buildFallbackConsultation(payload, legacyResponse.data && legacyResponse.data.answer ? legacyResponse.data.answer : '系统暂未生成结论。')
+                    };
+                }
+                throw error;
+            }
+        }
+
+        function ensureMermaid() {
+            if (!window.mermaid) {
+                return false;
+            }
+            if (!mermaidInitialized) {
+                window.mermaid.initialize({
+                    startOnLoad: false,
+                    securityLevel: 'strict',
+                    theme: 'base',
+                    themeVariables: {
+                        primaryColor: '#edf6fc',
+                        primaryTextColor: '#174c70',
+                        primaryBorderColor: '#9bbbd0',
+                        lineColor: '#7d95a8',
+                        secondaryColor: '#fff8ed',
+                        tertiaryColor: '#ffffff',
+                        fontFamily: 'PingFang SC, Microsoft YaHei, sans-serif'
+                    }
+                });
+                mermaidInitialized = true;
+            }
+            return true;
+        }
+
+        async function renderTraceDiagram(trace) {
+            const source = trace && trace.mermaid ? String(trace.mermaid) : '';
+            consultTraceDiagram.innerHTML = '';
+            if (!source) {
+                consultTraceDiagram.innerHTML = '<p class="trace-fallback">暂无计算流程。</p>';
+                return;
+            }
+
+            if (!ensureMermaid()) {
+                consultTraceDiagram.innerHTML = `<pre class="trace-fallback">${esc(source)}</pre>`;
+                return;
+            }
+
+            try {
+                const diagramId = 'consult-trace-' + Date.now();
+                const rendered = await window.mermaid.render(diagramId, source);
+                consultTraceDiagram.innerHTML = rendered.svg;
+            } catch (_error) {
+                consultTraceDiagram.innerHTML = `<pre class="trace-fallback">${esc(source)}</pre>`;
+            }
+        }
+
+        function renderTraceSteps(trace) {
+            const steps = Array.isArray(trace && trace.steps) ? trace.steps : [];
+            consultTraceSteps.innerHTML = steps.map((step, index) => {
+                const fields = [];
+                if (step.inputs && Object.keys(step.inputs).length) {
+                    fields.push(`
+                        <div class="trace-field">
+                            <div class="field-title">输入</div>
+                            <pre>${esc(JSON.stringify(step.inputs, null, 2))}</pre>
+                        </div>
+                    `);
+                }
+                if (step.rule) {
+                    fields.push(`
+                        <div class="trace-field">
+                            <div class="field-title">规则</div>
+                            <pre>${esc(step.rule)}</pre>
+                        </div>
+                    `);
+                }
+                if (step.outputs && Object.keys(step.outputs).length) {
+                    fields.push(`
+                        <div class="trace-field">
+                            <div class="field-title">输出</div>
+                            <pre>${esc(JSON.stringify(step.outputs, null, 2))}</pre>
+                        </div>
+                    `);
+                }
+                if (Array.isArray(step.evidence) && step.evidence.length) {
+                    fields.push(`
+                        <div class="trace-field">
+                            <div class="field-title">证据</div>
+                            <pre>${esc(step.evidence.join('\n'))}</pre>
+                        </div>
+                    `);
+                }
+                return `
+                    <details class="trace-step" ${index === 0 ? 'open' : ''}>
+                        <summary>
+                            <span class="label">${index + 1}. ${esc(step.label || step.id || '步骤')}</span>
+                            <span class="summary">${esc(step.detail || '')}</span>
+                        </summary>
+                        <div class="trace-step-body">
+                            ${fields.join('')}
+                        </div>
+                    </details>
+                `;
+            }).join('');
+        }
+
+        function renderConsultation(data) {
+            const payload = data || {};
+            const summaries = payload.module_summaries || {};
+            const intent = payload.intent || {};
+            const trace = payload.trace && payload.trace.mermaid ? payload.trace : buildSyntheticTrace(payload);
+
+            consultAnswer.innerHTML = renderMarkdown(payload.answer || '系统暂未生成结论。');
+            consultMeta.innerHTML = [
+                ...(intent.modules || []).map((moduleName) => `<span class="result-chip">${esc(moduleNameLabel(moduleName))}</span>`),
+                intent.matter_type ? `<span class="result-chip">事项：${esc(intent.matter_type)}</span>` : '',
+                intent.purpose ? `<span class="result-chip">用途：${esc(intent.purpose)}</span>` : '',
+                payload.ai && payload.ai.fallback ? '<span class="result-chip">兼容模式</span>' : '',
+                payload.ai && payload.ai.synthesized ? '<span class="result-chip">AI 已综合</span>' : '<span class="result-chip">基础综合</span>'
+            ].filter(Boolean).join('');
+
+            const summaryKeys = Object.keys(summaries);
+            consultModuleGrid.innerHTML = summaryKeys.length
+                ? summaryKeys.map((moduleName) => `
+                    <div class="module-summary-card">
+                        <div class="title">${esc(moduleNameLabel(moduleName))}</div>
+                        <div class="body">${esc(formatModuleSummary(moduleName, summaries[moduleName]))}</div>
+                    </div>
+                `).join('')
+                : `
+                    <div class="module-summary-card">
+                        <div class="title">兼容模式</div>
+                        <div class="body">${esc(payload.ai && payload.ai.fallback ? '当前后端尚未加载统一问事接口，已自动切换到 AI 对话兼容模式。' : '暂无模块摘要。')}</div>
+                    </div>
+                `;
+
+            renderTraceDiagram(trace);
+            renderTraceSteps(trace);
+            consultResult.classList.add('show');
+            consultResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        consultForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const question = document.getElementById('consultQuestion').value.trim();
+            if (!question) {
+                showToast('请先输入你想问的事情。', 'warn');
+                return;
+            }
+
+            const payload = {
+                question: question,
+                year: readOptionalInt('consultYear'),
+                month: readOptionalInt('consultMonth'),
+                day: readOptionalInt('consultDay'),
+                hour: readOptionalInt('consultHour'),
+                minute: readOptionalInt('consultMinute'),
+                gender: document.getElementById('consultGender').value || null
+            };
+
+            consultLoading.classList.add('show');
+            consultResult.classList.remove('show');
+
+            try {
+                const response = await requestConsultation(payload);
+                renderConsultation(response.data);
+            } catch (error) {
+                showToast('系统分析失败：' + error.message, 'error');
+            } finally {
+                consultLoading.classList.remove('show');
+            }
+        });
+
+        document.getElementById('fillDemoBtn').addEventListener('click', () => {
+            document.getElementById('consultQuestion').value = '我现在适合换工作吗？应该怎么做更稳？';
+            document.getElementById('consultYear').value = '1990';
+            document.getElementById('consultMonth').value = '1';
+            document.getElementById('consultDay').value = '1';
+            document.getElementById('consultHour').value = '12';
+            document.getElementById('consultMinute').value = '0';
+            document.getElementById('consultGender').value = '男';
+        });
+
+        document.getElementById('clearConsultBtn').addEventListener('click', () => {
+            consultForm.reset();
+            consultResult.classList.remove('show');
+        });
+
+        const WORKSPACE_VIEWS = {
+            overview: {
+                title: '总览',
+                desc: '在左侧切换模块，右侧统一查看对应页面与分析内容。',
+                pill: '总览',
+                mode: 'overview'
+            },
+            bazi: {
+                title: '八字排盘',
+                desc: '定位到出生信息录入区，继续查看命盘、五行、十神与大运分析。',
+                pill: '八字',
+                mode: 'overview',
+                scrollTarget: 'baziForm'
+            },
+            liuyao: {
+                title: '六爻占卜',
+                desc: '围绕单一问题做即时起卦与结构解读。',
+                pill: '六爻',
+                mode: 'frame',
+                url: 'liuyao.html?embed=1'
+            },
+            qimen: {
+                title: '奇门遁甲',
+                desc: '观察时空盘局、九宫信息与方向策略。',
+                pill: '奇门',
+                mode: 'frame',
+                url: 'qimen.html?embed=1'
+            },
+            zeri: {
+                title: '择日学',
+                desc: '查看今日运势并检索适合不同用途的时间。',
+                pill: '择日',
+                mode: 'frame',
+                url: 'zeri.html?embed=1'
+            },
+            'ai-chat': {
+                title: 'AI助手',
+                desc: '把各模块结果串起来，做统一问答与辅助解释。',
+                pill: 'AI',
+                mode: 'frame',
+                url: 'ai-chat.html?embed=1'
+            }
+        };
+        const overviewPanel = document.getElementById('overviewPanel');
+        const moduleFrame = document.getElementById('moduleFrame');
+        const viewTitleEl = document.getElementById('viewTitle');
+        const viewDescEl = document.getElementById('viewDesc');
+        const viewPillEl = document.getElementById('viewPill');
+        const sidebarButtons = Array.from(document.querySelectorAll('#sidebarNav .sidebar-item'));
+
+        function syncViewQuery(view) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('view', view);
+            window.history.replaceState({}, '', url.toString());
+        }
+
+        function markActiveView(view) {
+            sidebarButtons.forEach((button) => {
+                button.classList.toggle('active', button.dataset.view === view);
+            });
+        }
+
+        function openWorkspaceView(view, options = {}) {
+            const resolvedView = WORKSPACE_VIEWS[view] ? view : 'overview';
+            const config = WORKSPACE_VIEWS[resolvedView];
+            const shouldSync = options.syncHistory !== false;
+
+            markActiveView(resolvedView);
+            viewTitleEl.textContent = config.title;
+            viewDescEl.textContent = config.desc;
+            viewPillEl.textContent = config.pill;
+
+            if (config.mode === 'frame') {
+                overviewPanel.classList.add('hide');
+                moduleFrame.classList.add('show');
+                if (moduleFrame.getAttribute('src') !== config.url) {
+                    moduleFrame.setAttribute('src', config.url);
+                }
+            } else {
+                overviewPanel.classList.remove('hide');
+                moduleFrame.classList.remove('show');
+                if (config.scrollTarget) {
+                    window.setTimeout(() => {
+                        const target = document.getElementById(config.scrollTarget);
+                        if (target) {
+                            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                    }, 80);
+                }
+            }
+
+            if (shouldSync) {
+                syncViewQuery(resolvedView);
+            }
+        }
+
+        sidebarButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                openWorkspaceView(button.dataset.view);
+            });
+        });
+
+        openWorkspaceView(new URLSearchParams(window.location.search).get('view') || 'overview', {
+            syncHistory: false
+        });
 
         const DAY_GAN_TO_WUXING = {
             '甲': '木', '乙': '木', '丙': '火', '丁': '火', '戊': '土',

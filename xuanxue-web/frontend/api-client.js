@@ -53,6 +53,8 @@
                 ? (structured.message || structured.detail)
                 : (payload && (payload.detail || payload.message));
             var err = new Error(detail || ('API请求失败 (' + response.status + ')'));
+            err.status = response.status;
+            err.payload = payload;
             if (structured && structured.code) {
                 err.code = structured.code;
             }

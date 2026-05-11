@@ -26,6 +26,7 @@ from core.calendar import solar_to_lunar, lunar_to_solar, get_lichun_date
 from core.ganzhi import get_year_ganzhi
 from core.llm_helper import llm_helper
 from core.qimen import divine_qimen, get_current_qimen
+from core.system_engine import UnifiedConsultRequest, consultation_engine, generate_simple_analysis
 
 app = FastAPI(
     title="玄学预测系统API",
@@ -929,70 +930,16 @@ async def ai_status(request: Request):
     )
 
 
-def generate_simple_analysis(chart: BaZiChart) -> dict:
-    """生成简单的命理分析"""
-    wuxing_count = chart.get_wuxing_count()
-    
-    # 找出最强和最弱的五行
-    max_wuxing = max(wuxing_count, key=wuxing_count.get)
-    min_wuxing = min(wuxing_count, key=wuxing_count.get)
-    
-    # 五行建议
-    wuxing_advice = {
-        '木': {
-            'strong': '木旺，性格直爽，适合从事创造性工作。注意肝胆健康。',
-            'weak': '木弱，需要补木。适合多接触绿色，从事文化教育行业。'
-        },
-        '火': {
-            'strong': '火旺，热情积极，适合从事社交、表演类工作。注意心血管健康。',
-            'weak': '火弱，需要补火。适合多接触红色，从事热情洋溢的行业。'
-        },
-        '土': {
-            'strong': '土旺，稳重踏实，适合从事管理、房地产工作。注意脾胃健康。',
-            'weak': '土弱，需要补土。适合多接触黄色，从事稳定的行业。'
-        },
-        '金': {
-            'strong': '金旺，果断坚毅，适合从事金融、技术工作。注意呼吸系统健康。',
-            'weak': '金弱，需要补金。适合多接触白色，从事精密技术行业。'
-        },
-        '水': {
-            'strong': '水旺，聪明灵活，适合从事智慧、流动性工作。注意肾脏健康。',
-            'weak': '水弱，需要补水。适合多接触黑色，从事智慧型行业。'
-        }
-    }
-    
-    analysis = {
-        'wuxing_summary': f"五行中{max_wuxing}最旺（{wuxing_count[max_wuxing]:.1f}），{min_wuxing}最弱（{wuxing_count[min_wuxing]:.1f}）",
-        'strong_element': {
-            'element': max_wuxing,
-            'count': wuxing_count[max_wuxing],
-            'advice': wuxing_advice[max_wuxing]['strong']
-        },
-        'weak_element': {
-            'element': min_wuxing,
-            'count': wuxing_count[min_wuxing],
-            'advice': wuxing_advice[min_wuxing]['weak']
-        },
-        'balance_advice': get_balance_advice(wuxing_count),
-        'disclaimer': '以上分析仅供参考，具体情况需要结合完整命盘综合判断。'
-    }
-    
-    return analysis
-
-
-def get_balance_advice(wuxing_count: dict) -> str:
-    """根据五行平衡给出建议"""
-    # 计算五行差异
-    max_count = max(wuxing_count.values())
-    min_count = min(wuxing_count.values())
-    diff = max_count - min_count
-    
-    if diff < 2:
-        return "五行较为平衡，命局稳定，发展较为顺利。"
-    elif diff < 4:
-        return "五行有一定偏颇，建议在生活中注意平衡，补足弱项。"
-    else:
-        return "五行偏颇较大，建议通过方位、颜色、职业等方式调整平衡。"
+@app.post("/api/system/consult")
+async def system_consult(payload: UnifiedConsultRequest, request: Request):
+    """统一玄学问事入口。"""
+    try:
+        consultation = consultation_engine.consult(payload)
+        return success_response(consultation, request=request)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"请求参数错误: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"系统问事失败: {str(e)}")
 
 
 if __name__ == "__main__":
