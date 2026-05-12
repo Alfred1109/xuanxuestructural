@@ -38,3 +38,6 @@ Thumbs.db
 tmp/
 temp/
 *.tmp
+
+# 运行时数据
+xuanxue-web/backend/runtime/*.jsonl
