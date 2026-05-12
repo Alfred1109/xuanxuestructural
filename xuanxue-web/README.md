@@ -2,45 +2,84 @@
 
 一个综合性的玄学预测平台，包含六大分支的完整功能。
 
+开发者可先阅读：
+
+- [ARCHITECTURE.md](./ARCHITECTURE.md)
+
 ## 项目架构
 
 ```
 xuanxue-web/
 ├── backend/                   # Python 后端（FastAPI）
-│   ├── main.py                # API 入口（路由 + 服务编排）
+│   ├── main.py                # API 入口（创建 app / middleware / include_router）
+│   ├── api/                   # 路由分层
+│   │   ├── common.py          # 统一响应、异常处理、AI状态
+│   │   ├── bazi.py            # 八字 / 历法 / 干支接口
+│   │   ├── divination.py      # 六爻 / 梅花 / 奇门 / 择日接口
+│   │   ├── ai.py              # AI增强与 AI状态接口
+│   │   └── system.py          # 统一问事 / 反馈 / 日志 / 权重接口
 │   ├── requirements.txt       # Python 依赖
 │   └── core/                  # 核心算法模块
 │       ├── bazi_core.py       # 八字核心算法
 │       ├── bazi_advanced.py   # 八字高级分析
 │       ├── liuyao.py          # 六爻占卜
+│       ├── meihua.py          # 梅花易数
 │       ├── qimen.py           # 奇门遁甲
 │       ├── zeri.py            # 择日学
 │       ├── calendar.py        # 阴阳历转换
 │       ├── ganzhi.py          # 干支计算
-│       └── llm_helper.py      # AI增强能力封装
+│       ├── llm_helper.py      # AI增强能力封装
+│       ├── consult/           # 统一问事编排
+│       │   ├── models.py
+│       │   ├── router.py
+│       │   ├── summarizers.py
+│       │   ├── trace.py
+│       │   └── engine.py
+│       ├── decision/          # 决策内核
+│       │   ├── signal_schema.py
+│       │   ├── environment_modifiers.py
+│       │   ├── arbitration.py
+│       │   ├── kernel.py
+│       │   └── weight_tuning.py
+│       └── runtime/           # 运行时 JSONL 存储助手
+│           └── store.py
 │
 ├── frontend/                  # 多页静态前端（原生 HTML/CSS/JS）
-│   ├── index.html             # 八字排盘
+│   ├── index.html             # 统一问事中心 + 工作台总览
 │   ├── liuyao.html            # 六爻占卜
+│   ├── meihua.html            # 梅花易数
 │   ├── qimen.html             # 奇门遁甲
 │   ├── zeri.html              # 择日学
 │   ├── ai-chat.html           # AI助手
+│   ├── consult-panel.js       # 首页统一问事主流程
+│   ├── decision-panel.js      # 决策内核面板渲染
+│   ├── trace-panel.js         # Trace 图与步骤渲染
+│   ├── workspace-shell.js     # 左侧导航与工作台切换
+│   ├── common-renderers.js    # 公共渲染函数
+│   ├── index-bazi-panel.js    # 首页内嵌八字面板逻辑
 │   ├── common-header.css      # 公共顶部导航样式
 │   └── config.js              # 前端统一配置（API_BASE_URL）
 │
-└── ../docs + ../mkdocs.yml    # 知识库文档与站点配置
+└── ../AI配置指南.md          # AI 配置说明
 ```
+
+兼容说明：
+
+- `backend/core/system_engine.py` 现在是统一问事的兼容导出层，真实实现位于 `core/consult/`
+- `backend/core/decision_kernel.py`、`signal_schema.py`、`environment_modifiers.py`、`arbitration.py` 仍可继续导入，但真实实现已归档到 `core/decision/`
+- API 分层入口可从 `backend/api/common.py`、`backend/api/bazi.py`、`backend/api/divination.py`、`backend/api/ai.py`、`backend/api/system.py` 直接定位
 
 ## 当前状态
 
 当前仓库已经具备可运行的 Web 版本，包含：
 
+- 统一问事中心（自动编排八字、六爻、梅花、奇门、择日）
 - 八字排盘与基础/高级分析
 - 六爻占卜与 AI 增强解读
+- 梅花易数快速起卦与推演链展示
 - 奇门遁甲排盘与 AI 增强解读
 - 择日学查询、吉日检索与 AI 增强建议
 - AI 对话助手与运行状态检查
-- MkDocs 知识库站点
 
 推荐从仓库根目录使用：
 
@@ -52,13 +91,12 @@ xuanxue-web/
 
 - 后端 API：`http://localhost:8002`
 - 前端页面：`http://localhost:8003/index.html`
-- 知识库：`http://localhost:8004`（已安装 MkDocs 时）
 
 ## 接口约定
 
 - `POST` 接口优先使用 JSON body
 - 前端统一通过 `frontend/config.js` 中的 `API_BASE_URL` 访问后端
-- 知识库与 AI 配置说明链接也通过 `frontend/config.js` 统一配置
+- AI 配置说明链接也通过 `frontend/config.js` 统一配置
 - AI 择日页面默认调用 `GET /api/ai/enhance-zeri/today`，以服务端日期为准
 
 ## 技术栈
@@ -71,10 +109,10 @@ xuanxue-web/
 ### 前端
 - **形态**: 多页静态页面（原生 HTML/CSS/JS）
 - **样式**: 页面内样式 + 公共头部样式 (`common-header.css`)
-- **配置**: `config.js` 统一管理 `API_BASE_URL`、知识库地址和 AI 配置指南地址
+- **配置**: `config.js` 统一管理 `API_BASE_URL` 和 AI 配置指南地址
 
 ### 部署
-- **本地开发**: `./start.sh` 启动 FastAPI、静态前端和 MkDocs
+- **本地开发**: `./start.sh` 启动 FastAPI 和静态前端
 - **生产部署**: Docker / Nginx / 云平台尚未在本仓库内提供现成配置
 
 ## 核心特性
@@ -84,12 +122,14 @@ xuanxue-web/
 - 天干地支推算
 - 节气边界的年份差异修正
 - 多模块统一返回结构
+- 决策内核统一信号建模与权重仲裁
 
 ### 2. 智能分析
 - 自动格局识别
 - 用神喜忌判断
 - 五行平衡分析
 - 大运流年吉凶
+- 统一问事 trace 流程可回看
 
 ### 3. 实用建议
 - 职业方向建议
@@ -103,6 +143,7 @@ xuanxue-web/
 - 详细的解释说明
 - 可视化图表展示
 - AI 状态感知与基础结果回退
+- 首页统一工作台与模块切换
 
 ## 当前未包含
 

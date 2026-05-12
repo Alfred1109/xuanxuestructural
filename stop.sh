@@ -81,39 +81,6 @@ else
     fi
 fi
 
-# 停止MkDocs知识库服务
-if [ -f /tmp/xuanxue-mkdocs.pid ]; then
-    MKDOCS_PID=$(cat /tmp/xuanxue-mkdocs.pid)
-    
-    if ps -p $MKDOCS_PID > /dev/null 2>&1; then
-        echo "🛑 停止知识库服务 (PID: $MKDOCS_PID)..."
-        kill $MKDOCS_PID
-        sleep 1
-        
-        # 检查是否成功停止
-        if ps -p $MKDOCS_PID > /dev/null 2>&1; then
-            echo "⚠️  进程未响应，强制停止..."
-            kill -9 $MKDOCS_PID
-        fi
-        
-        echo "✓ 知识库服务已停止"
-    else
-        echo "⚠️  知识库服务未运行 (PID: $MKDOCS_PID)"
-    fi
-    
-    rm -f /tmp/xuanxue-mkdocs.pid
-else
-    # 尝试通过端口查找进程
-    PIDS=$(lsof -ti:8004 2>/dev/null)
-    
-    if [ -n "$PIDS" ]; then
-        echo "🛑 找到占用8004端口的进程: $PIDS"
-        kill $PIDS
-        sleep 1
-        echo "✓ 知识库进程已停止"
-    fi
-fi
-
 echo ""
 echo "======================================"
 echo "  服务已停止"

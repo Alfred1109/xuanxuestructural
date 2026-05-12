@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI玄学助手 - 统一问答</title>
-    <link rel="stylesheet" href="common-header.css?v=20260511-flat">
-    <link rel="stylesheet" href="common-theme.css?v=20260511-flat">
+    <link rel="stylesheet" href="common-header.css?v=20260511-zen">
+    <link rel="stylesheet" href="common-theme.css?v=20260511-zen">
     <style>
         * {
             box-sizing: border-box;
@@ -368,6 +368,7 @@
 
     <script src="config.js"></script>
     <script src="common-links.js"></script>
+    <script src="common-ui.js"></script>
     <script src="markdown.js"></script>
     <script src="api-client.js"></script>
     <script src="ai-status.js"></script>
@@ -375,11 +376,7 @@
         if (window.applyCommonLinks) {
             window.applyCommonLinks();
         }
-        const renderMarkdown = (text) => window.renderMarkdownSimple(text, '#1f5f8b');
-        function isConnectivityError(error) {
-            const msg = String((error && error.message) || '');
-            return msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('无法连接');
-        }
+        const renderMarkdown = (text) => window.renderMarkdownSimple(text, '#173a34');
 
         // 添加消息到聊天窗口
         function addMessage(content, isUser = false) {

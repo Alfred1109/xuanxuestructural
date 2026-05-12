@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>奇门遁甲 - 玄学预测系统</title>
-    <link rel="stylesheet" href="common-header.css?v=20260511-flat">
-    <link rel="stylesheet" href="common-theme.css?v=20260511-flat">
+    <link rel="stylesheet" href="common-header.css?v=20260511-zen">
+    <link rel="stylesheet" href="common-theme.css?v=20260511-zen">
     <style>
         :root {
-            --primary-color: #1f5f8b;
-            --secondary-color: #2a6c8a;
+            --primary-color: #2c5b4f;
+            --secondary-color: #3f7263;
             --spacing-xs: 0.5rem;
             --spacing-sm: 1rem;
             --spacing-md: 1.5rem;
@@ -34,7 +34,10 @@
 
         body {
             font-family: "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
-            background: linear-gradient(180deg, #f2f7fb 0%, #e7f0f7 100%);
+            background:
+                radial-gradient(circle at 12% 0%, rgba(255, 250, 244, 0.94) 0%, transparent 32%),
+                radial-gradient(circle at 84% 8%, rgba(168, 116, 60, 0.12) 0%, transparent 26%),
+                linear-gradient(180deg, #f6efe2 0%, #eef3ee 48%, #e3ebf1 100%);
             min-height: 100vh;
             padding: 20px;
             position: relative;
@@ -49,8 +52,8 @@
             right: 0;
             bottom: 0;
             background: 
-                radial-gradient(circle at 20% 50%, rgba(255,255,255,0.45) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(231,241,248,0.8) 0%, transparent 55%);
+                radial-gradient(circle at 20% 50%, rgba(255,255,255,0.4) 0%, transparent 48%),
+                radial-gradient(circle at 80% 80%, rgba(44,91,79,0.08) 0%, transparent 55%);
             pointer-events: none;
             z-index: 0;
         }
@@ -64,14 +67,14 @@
         }
 
         .card {
-            background: #ffffff;
+            background: rgba(255, 255, 255, 0.88);
             border-radius: var(--border-radius-lg);
             padding: clamp(1.25rem, 4vw, 2rem);
-            box-shadow: 0 10px 32px rgba(23, 45, 62, 0.1);
+            box-shadow: 0 10px 32px rgba(23, 45, 62, 0.08);
             margin-bottom: var(--spacing-md);
             animation: fadeInUp 0.6s ease-out 0.4s both;
-            backdrop-filter: blur(10px);
-            border: 1px solid #d7e1ea;
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(217, 226, 220, 0.92);
         }
 
         @keyframes fadeInUp {
@@ -93,32 +96,32 @@
             display: block;
             margin-bottom: 8px;
             font-weight: bold;
-            color: #333;
+            color: #2a3a34;
         }
 
         .form-group input,
         .form-group select {
             width: 100%;
             padding: 12px 15px;
-            border: 2px solid #e0e0e0;
+            border: 1px solid #d9e2dc;
             border-radius: 10px;
             font-size: 16px;
             transition: all 0.3s ease;
-            background: #fafafa;
+            background: rgba(255, 255, 255, 0.9);
         }
 
         .form-group input:hover,
         .form-group select:hover {
-            border-color: #c0c0c0;
-            background: white;
+            border-color: rgba(44, 91, 79, 0.28);
+            background: rgba(255, 255, 255, 0.98);
         }
 
         .form-group input:focus,
         .form-group select:focus {
             outline: none;
-            border-color: #667eea;
-            background: white;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: var(--primary-color);
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(44, 91, 79, 0.12);
             transform: translateY(-1px);
         }
 
@@ -129,7 +132,7 @@
         }
 
         .btn {
-            background: linear-gradient(135deg, #1f5f8b 0%, #2a6c8a 100%);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
             color: white;
             border: none;
             padding: 15px 40px;
@@ -160,12 +163,12 @@
 
         .btn:hover {
             transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(31, 95, 139, 0.35);
+            box-shadow: 0 8px 20px rgba(36, 59, 52, 0.24);
         }
 
         .btn:active {
             transform: translateY(-1px);
-            box-shadow: 0 4px 10px rgba(31, 95, 139, 0.3);
+            box-shadow: 0 4px 10px rgba(36, 59, 52, 0.18);
         }
 
         .result {
@@ -187,7 +190,7 @@
         }
 
         .palace {
-            background: linear-gradient(135deg, #2a6c8a 0%, #1f5f8b 100%);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 58%, #4f7b6f 100%);
             padding: 20px;
             border-radius: 10px;
             color: white;
@@ -203,7 +206,7 @@
             font-weight: bold;
             margin-bottom: 10px;
             text-align: center;
-            border-bottom: 2px solid rgba(255,255,255,0.5);
+            border-bottom: 2px solid rgba(255,255,255,0.45);
             padding-bottom: 5px;
         }
 
@@ -248,26 +251,28 @@
         .info-section {
             margin: 20px 0;
             padding: 20px;
-            background: #f8f9fa;
-            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.82);
+            border-radius: 12px;
+            border: 1px solid rgba(217, 226, 220, 0.92);
         }
 
         .info-section h3 {
-            color: #667eea;
+            color: var(--primary-color);
             margin-bottom: 15px;
             font-size: 1.3em;
         }
 
         .prediction-box {
             background: linear-gradient(135deg, #fff7eb 0%, #f8ecd9 100%);
-            border-left: 4px solid #c27c1a;
+            border-left: 4px solid #b5802f;
             padding: 20px;
             margin: 15px 0;
-            border-radius: 5px;
+            border-radius: 12px;
+            border: 1px solid rgba(168, 116, 60, 0.14);
         }
 
         .prediction-box h4 {
-            color: #8c5f1d;
+            color: #7d5a2a;
             margin-bottom: 10px;
         }
 
@@ -279,14 +284,14 @@
         }
 
         .direction-item {
-            background: white;
+            background: rgba(255, 255, 255, 0.88);
             padding: 15px;
-            border-radius: 8px;
-            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            border: 1px solid rgba(217, 226, 220, 0.92);
         }
 
         .direction-item h4 {
-            color: #667eea;
+            color: var(--primary-color);
             margin-bottom: 10px;
         }
 
@@ -301,8 +306,8 @@
         }
 
         .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
+            border: 4px solid #e0e8e2;
+            border-top: 4px solid var(--primary-color);
             border-radius: 50%;
             width: 40px;
             height: 40px;
@@ -316,10 +321,11 @@
         }
 
         .time-info {
-            background: #e3f2fd;
+            background: rgba(236, 243, 238, 0.92);
             padding: 15px;
-            border-radius: 8px;
+            border-radius: 12px;
             margin-bottom: 15px;
+            border: 1px solid rgba(217, 226, 220, 0.92);
         }
 
         .ai-status-banner {
@@ -329,27 +335,28 @@
             padding: 12px 14px;
             border-radius: 10px;
             margin-bottom: 16px;
-            border-left: 4px solid #ff9800;
-            background: #fff8e1;
-            color: #8a6d3b;
+            border-left: 4px solid #b5802f;
+            background: linear-gradient(180deg, #fff7eb 0%, #fffdf7 100%);
+            color: #6d552f;
+            border: 1px solid rgba(180, 128, 47, 0.16);
         }
 
         .ai-status-banner.available {
-            border-left-color: #4caf50;
-            background: #e8f5e9;
-            color: #1b5e20;
+            border-left-color: #3d7a59;
+            background: #edf8f1;
+            color: #285f43;
         }
 
         .ai-status-dot {
             width: 10px;
             height: 10px;
             border-radius: 50%;
-            background: #ff9800;
+            background: #b5802f;
             flex-shrink: 0;
         }
 
         .ai-status-banner.available .ai-status-dot {
-            background: #4caf50;
+            background: #3d7a59;
         }
 
         .ai-status-meta {
@@ -358,17 +365,18 @@
         }
 
         .dun-info {
-            background: #eef5fb;
+            background: rgba(238, 243, 238, 0.92);
             padding: 15px;
-            border-radius: 8px;
+            border-radius: 12px;
             margin-bottom: 15px;
             text-align: center;
+            border: 1px solid rgba(217, 226, 220, 0.92);
         }
 
         .dun-info span {
             font-size: clamp(1.125rem, 3vw, 1.25rem);
             font-weight: bold;
-            color: #1f5f8b;
+            color: var(--primary-color);
             margin: 0 var(--spacing-sm);
         }
 
@@ -508,7 +516,7 @@
                 <span class="ai-status-meta" id="aiStatusDetail"></span>
             </div>
 
-            <h2 style="margin-bottom: 20px; color: #1f5f8b;">⏰ 选择时间与事项</h2>
+            <h2 style="margin-bottom: 20px; color: var(--color-primary-strong);">⏰ 选择时间与事项</h2>
             <form id="qimenForm">
                 <div class="form-row">
                     <div class="form-group">
@@ -549,8 +557,8 @@
 
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                     <button type="submit" class="btn" style="flex: 1; min-width: 200px;">🔍 开始排盘</button>
-                    <button type="button" class="btn" onclick="divineWithAI()" style="flex: 1; min-width: 200px; background: linear-gradient(135deg, #2a6c8a 0%, #1f5f8b 100%);">🤖 AI深度解读</button>
-                    <button type="button" class="btn" onclick="useCurrentTime()" style="flex: 1; min-width: 200px; background: linear-gradient(135deg, #b97f2e 0%, #d6a354 100%);">⏱️ 使用当前时间</button>
+                    <button type="button" class="btn" onclick="divineWithAI()" style="flex: 1; min-width: 200px; background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);">🤖 AI深度解读</button>
+                    <button type="button" class="btn" onclick="useCurrentTime()" style="flex: 1; min-width: 200px; background: linear-gradient(135deg, #a8743c 0%, #c99a4d 100%);">⏱️ 使用当前时间</button>
                 </div>
             </form>
         </div>
@@ -562,12 +570,12 @@
 
         <div class="result" id="result">
             <div class="card">
-                <h2 style="margin-bottom: 20px; color: #1f5f8b;">📊 奇门遁甲盘</h2>
+                <h2 style="margin-bottom: 20px; color: var(--color-primary-strong);">📊 奇门遁甲盘</h2>
                 
                 <div class="time-info" id="timeInfo"></div>
                 <div class="dun-info" id="dunInfo"></div>
 
-                <h3 style="color: #1f5f8b; margin: 20px 0;">九宫格局</h3>
+                <h3 style="color: var(--color-primary-strong); margin: 20px 0;">九宫格局</h3>
                 <div class="jiugong-grid" id="jiugongGrid"></div>
 
                 <div class="info-section">
@@ -612,12 +620,8 @@
             const normalized = String(value || '').replace(/[大]/g, '');
             return ['吉', '凶', '平'].includes(normalized) ? normalized : '平';
         }
-        function isConnectivityError(error) {
-            const msg = String((error && error.message) || '');
-            return msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('无法连接');
-        }
 
-        const renderMarkdown = (text) => window.renderMarkdownSimple(text, '#1f5f8b');
+        const renderMarkdown = (text) => window.renderMarkdownSimple(text, '#173a34');
 
         function buildStrategyOverview(directions, prediction) {
             const sorted = Object.values(directions || {}).sort((a, b) => (b.吉凶分数 || 0) - (a.吉凶分数 || 0));

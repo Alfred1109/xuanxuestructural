@@ -4,20 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>六爻占卜 - 玄学预测系统</title>
-    <link rel="stylesheet" href="common-header.css?v=20260511-flat">
-    <link rel="stylesheet" href="common-theme.css?v=20260511-flat">
+    <link rel="stylesheet" href="common-header.css?v=20260511-zen">
+    <link rel="stylesheet" href="common-theme.css?v=20260511-zen">
     <style>
         .page-title {
             margin-bottom: 16px;
-            color: #1f5f8b;
+            color: var(--color-primary-strong);
         }
 
         .tips {
-            background: #edf6fc;
-            border-left: 4px solid #2474a7;
+            background: rgba(244, 236, 220, 0.9);
+            border-left: 4px solid var(--color-accent);
             padding: 12px;
             margin-bottom: 18px;
-            border-radius: 8px;
+            border-radius: 12px;
+            border: 1px solid rgba(168, 116, 60, 0.14);
         }
 
         .btn-row .btn {
@@ -33,7 +34,7 @@
         }
 
         .gua-card {
-            background: linear-gradient(135deg, #2a6c8a 0%, #1f5f8b 100%);
+            background: linear-gradient(135deg, var(--color-primary-strong) 0%, var(--color-primary) 58%, #4f7b6f 100%);
             padding: 20px;
             border-radius: 12px;
             color: #fff;
@@ -67,21 +68,21 @@
             display: flex;
             align-items: center;
             padding: 10px 12px;
-            background: #ffffff;
+            background: rgba(255, 255, 255, 0.88);
             border-radius: 8px;
-            border: 1px solid #d6e2ec;
+            border: 1px solid rgba(217, 226, 220, 0.92);
         }
 
         .yao-item.dong {
-            background: #fff8ed;
-            border-color: #e7c692;
+            background: rgba(247, 241, 228, 0.96);
+            border-color: rgba(168, 116, 60, 0.2);
         }
 
         .yao-symbol {
             font-size: 24px;
             margin-right: 15px;
             min-width: 40px;
-            color: #1f5f8b;
+            color: var(--color-primary-strong);
         }
 
         .yao-details {
@@ -89,7 +90,7 @@
         }
 
         .dong-mark {
-            color: #b97f2e;
+            color: var(--color-accent);
             font-weight: 600;
         }
 
@@ -209,14 +210,9 @@
             window.applyCommonLinks();
         }
 
-        const renderMarkdown = (text) => window.renderMarkdownSimple(text, '#1f5f8b');
+        const renderMarkdown = (text) => window.renderMarkdownSimple(text, '#173a34');
         const SHENG_MAP = { '木': '火', '火': '土', '土': '金', '金': '水', '水': '木' };
         const KE_MAP = { '木': '土', '土': '水', '水': '火', '火': '金', '金': '木' };
-
-        function isConnectivityError(error) {
-            const msg = String((error && error.message) || '');
-            return msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('无法连接');
-        }
 
         function getWuxingRelation(upper, lower) {
             if (upper === lower) {

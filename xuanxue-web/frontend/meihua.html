@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>梅花易数 - 玄学预测系统</title>
+    <link rel="stylesheet" href="common-header.css?v=20260511-zen">
+    <link rel="stylesheet" href="common-theme.css?v=20260511-zen">
+    <style>
+        .page-title {
+            margin-bottom: 16px;
+            color: var(--color-primary-strong);
+        }
+
+        .method-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .method-btn {
+            flex: 1;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(217, 226, 220, 0.92);
+            background: rgba(255, 255, 255, 0.84);
+            cursor: pointer;
+            color: var(--color-text);
+            font-weight: 600;
+        }
+
+        .method-btn.active {
+            background: linear-gradient(135deg, var(--color-primary) 0%, #3f7263 100%);
+            border-color: transparent;
+            color: #fff;
+        }
+
+        .number-row {
+            display: none;
+        }
+
+        .number-row.show {
+            display: grid;
+        }
+
+        .gua-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            margin: 16px 0;
+        }
+
+        .gua-card {
+            background: linear-gradient(135deg, var(--color-primary-strong) 0%, var(--color-primary) 58%, #4f7b6f 100%);
+            border-radius: 16px;
+            color: #fff;
+            padding: 18px;
+            box-shadow: 0 12px 24px rgba(23, 45, 62, 0.08);
+        }
+
+        .gua-card .kicker {
+            font-size: 0.8rem;
+            opacity: 0.82;
+        }
+
+        .gua-card .title {
+            font-size: 1.45rem;
+            font-weight: 700;
+            margin: 6px 0 8px;
+        }
+
+        .gua-card .meta {
+            font-size: 0.92rem;
+            color: rgba(255, 248, 236, 0.9);
+        }
+
+        .trace-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .trace-item {
+            background: rgba(255, 255, 255, 0.84);
+            border: 1px solid rgba(217, 226, 220, 0.92);
+            border-radius: 14px;
+            padding: 14px;
+        }
+
+        .trace-item h4 {
+            color: var(--color-primary-strong);
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="unified-header">
+        <div class="container">
+            <div class="site-title">
+                <h1>🔮 玄学预测系统</h1>
+                <p>传统命理学 · 现代科技 · 智能分析</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h2 class="page-title">🌸 梅花易数问事</h2>
+            <p class="text-muted">适合快速起卦。可以直接用当前时间起卦，也可以手动输入数字起卦。</p>
+
+            <div class="method-toggle">
+                <button type="button" class="method-btn active" data-method="time">时间起卦</button>
+                <button type="button" class="method-btn" data-method="number">数字起卦</button>
+            </div>
+
+            <form id="meihuaForm">
+                <div class="form-group">
+                    <label for="question">你想问什么</label>
+                    <textarea id="question" placeholder="例如：这次合作能顺利谈成吗？"></textarea>
+                </div>
+
+                <div class="form-row number-row" id="numberRow">
+                    <div class="form-group">
+                        <label for="num1">数字一</label>
+                        <input type="number" id="num1" min="1" max="9999" placeholder="例如 8">
+                    </div>
+                    <div class="form-group">
+                        <label for="num2">数字二</label>
+                        <input type="number" id="num2" min="1" max="9999" placeholder="例如 3">
+                    </div>
+                    <div class="form-group">
+                        <label for="num3">数字三（可选）</label>
+                        <input type="number" id="num3" min="1" max="9999" placeholder="例如 5">
+                    </div>
+                </div>
+
+                <div class="btn-row">
+                    <button type="submit" class="btn">🌿 开始起卦</button>
+                    <button type="button" class="btn btn-accent" id="fillDemoBtn">填入示例</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p class="loading-text">正在演算卦象...</p>
+        </div>
+
+        <div class="result" id="result">
+            <div class="card">
+                <h2 class="page-title">卦象结果</h2>
+                <div class="gua-grid" id="guaGrid"></div>
+            </div>
+
+            <div class="card">
+                <h2 class="page-title">解读</h2>
+                <div id="interpretation"></div>
+            </div>
+
+            <div class="card">
+                <h2 class="page-title">推演链</h2>
+                <div class="trace-grid" id="traceGrid"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="common-links.js"></script>
+    <script src="common-ui.js"></script>
+    <script src="markdown.js"></script>
+    <script src="api-client.js"></script>
+    <script>
+        const esc = (value) => (window.escapeHtml ? window.escapeHtml(value ?? '') : String(value ?? ''));
+        const renderMarkdown = (text) => window.renderMarkdownSimple(text || '', '#173a34');
+        let currentMethod = 'time';
+
+        if (window.applyCommonLinks) {
+            window.applyCommonLinks();
+        }
+
+        function switchMethod(method) {
+            currentMethod = method;
+            document.querySelectorAll('.method-btn').forEach((btn) => {
+                btn.classList.toggle('active', btn.getAttribute('data-method') === method);
+            });
+            document.getElementById('numberRow').classList.toggle('show', method === 'number');
+        }
+
+        document.querySelectorAll('.method-btn').forEach((btn) => {
+            btn.addEventListener('click', () => switchMethod(btn.getAttribute('data-method')));
+        });
+
+        function renderGuaCard(label, gua) {
+            return `
+                <div class="gua-card">
+                    <div class="kicker">${esc(label)}</div>
+                    <div class="title">${esc(gua.name || '未知卦')}</div>
+                    <div class="meta">
+                        上卦：${esc(gua.upper && gua.upper.name)} ${esc(gua.upper && gua.upper.symbol)}<br>
+                        下卦：${esc(gua.lower && gua.lower.name)} ${esc(gua.lower && gua.lower.symbol)}<br>
+                        卦码：${esc(gua.binary || '')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderTrace(trace) {
+            const source = trace && trace.source ? trace.source : {};
+            const indexes = trace && trace.indexes ? trace.indexes : {};
+            const bengua = trace && trace.bengua ? trace.bengua : {};
+            const hugua = trace && trace.hugua ? trace.hugua : {};
+            const biangua = trace && trace.biangua ? trace.biangua : {};
+            const tiyong = trace && trace.tiyong ? trace.tiyong : {};
+
+            return [
+                {
+                    title: '起卦源',
+                    body: JSON.stringify(source, null, 2)
+                },
+                {
+                    title: '取数公式',
+                    body: Array.isArray(indexes.formula) ? indexes.formula.join('\n') : ''
+                },
+                {
+                    title: '本卦',
+                    body: `上卦：${bengua.upper_name || ''}\n下卦：${bengua.lower_name || ''}\n卦码：${bengua.binary || ''}\n结果：${bengua.result || ''}`
+                },
+                {
+                    title: '互卦',
+                    body: `${hugua.formula || ''}\n结果：${hugua.result || ''}`
+                },
+                {
+                    title: '变卦',
+                    body: `${biangua.formula || ''}\n结果：${biangua.result || ''}`
+                },
+                {
+                    title: '体用',
+                    body: `体：${tiyong.ti && tiyong.ti.name}(${tiyong.ti && tiyong.ti.wuxing})\n用：${tiyong.yong && tiyong.yong.name}(${tiyong.yong && tiyong.yong.wuxing})\n关系：${tiyong.relation || ''}\n判断：${tiyong.summary || ''}`
+                }
+            ].map((item) => `
+                <div class="trace-item">
+                    <h4>${esc(item.title)}</h4>
+                    <pre>${esc(item.body)}</pre>
+                </div>
+            `).join('');
+        }
+
+        document.getElementById('meihuaForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            loading.classList.add('show');
+            result.classList.remove('show');
+
+            try {
+                const payload = {
+                    question: document.getElementById('question').value.trim(),
+                    method: currentMethod
+                };
+                if (currentMethod === 'number') {
+                    payload.numbers = ['num1', 'num2', 'num3']
+                        .map((id) => document.getElementById(id).value.trim())
+                        .filter(Boolean)
+                        .map((value) => parseInt(value, 10));
+                }
+
+                const response = await window.apiClient.postJson('/api/divination/meihua', payload);
+                const data = response.data || {};
+                const guaInfo = data.gua_info || {};
+                document.getElementById('guaGrid').innerHTML = [
+                    renderGuaCard('本卦', guaInfo.bengua || {}),
+                    renderGuaCard('互卦', guaInfo.hugua || {}),
+                    renderGuaCard('变卦', guaInfo.biangua || {})
+                ].join('');
+
+                document.getElementById('interpretation').innerHTML = renderMarkdown([
+                    data.interpretation && data.interpretation.summary,
+                    data.interpretation && data.interpretation.advice,
+                    data.interpretation && data.interpretation.timing
+                ].filter(Boolean).join('\n\n'));
+
+                document.getElementById('traceGrid').innerHTML = renderTrace(data.calc_trace || {});
+                result.classList.add('show');
+            } catch (error) {
+                window.showToast(error.message || '起卦失败', 'error');
+            } finally {
+                loading.classList.remove('show');
+            }
+        });
+
+        document.getElementById('fillDemoBtn').addEventListener('click', () => {
+            document.getElementById('question').value = '这次合作能顺利推进吗？';
+            switchMethod('number');
+            document.getElementById('num1').value = '8';
+            document.getElementById('num2').value = '3';
+            document.getElementById('num3').value = '5';
+        });
+    </script>
+</body>
+</html>

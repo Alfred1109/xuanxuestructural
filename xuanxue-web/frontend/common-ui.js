@@ -78,6 +78,14 @@
         }, ttl);
     }
 
+    function isConnectivityError(error) {
+        var msg = String((error && error.message) || '');
+        return msg.indexOf('Failed to fetch') !== -1 ||
+            msg.indexOf('NetworkError') !== -1 ||
+            msg.indexOf('无法连接') !== -1;
+    }
+
     window.showToast = showToast;
     window.escapeHtml = escapeHtml;
+    window.isConnectivityError = isConnectivityError;
 })();

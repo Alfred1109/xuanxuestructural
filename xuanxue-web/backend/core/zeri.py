@@ -180,6 +180,86 @@ class DateSelection:
             'avoid': jianxing_info.get('avoid', [])
         }
 
+    def get_calc_trace(self) -> Dict:
+        """返回择日评分的中间计算过程。"""
+        month_ganzhi = get_month_ganzhi(self.year, self.month)
+        day_ganzhi = get_day_ganzhi(self.year, self.month, self.day)
+        month_zhi = month_ganzhi[1]
+        day_zhi = day_ganzhi[1]
+        month_index = DIZHI.index(month_zhi)
+        day_index = DIZHI.index(day_zhi)
+        jianxing_index = (day_index - month_index) % 12
+
+        day_gan = day_ganzhi[0]
+        start_map = {
+            '甲': 0, '己': 0,
+            '乙': 5, '庚': 5,
+            '丙': 10, '辛': 10,
+            '丁': 3, '壬': 3,
+            '戊': 7, '癸': 7
+        }
+        start_index = start_map.get(day_gan, 0)
+        shier_shen_index = (start_index + day_index) % 12
+        days_from_epoch = (self.date - datetime(2000, 1, 1)).days
+        xingxiu_index = days_from_epoch % 28
+        analysis = self.analyze_day()
+
+        score_steps = [{'item': '基础分', 'delta': 50}]
+        level = analysis['jianxing_info'].get('level')
+        if level == '吉':
+            score_steps.append({'item': '建星加分', 'delta': 15})
+        elif level == '大吉':
+            score_steps.append({'item': '建星加分', 'delta': 25})
+        elif level == '凶':
+            score_steps.append({'item': '建星扣分', 'delta': -15})
+        elif level == '大凶':
+            score_steps.append({'item': '建星扣分', 'delta': -30})
+
+        if analysis['huangdao_type'] == '黄道':
+            score_steps.append({'item': '黄道加分', 'delta': 20})
+        elif analysis['huangdao_type'] == '黑道':
+            score_steps.append({'item': '黑道扣分', 'delta': -20})
+
+        running = 0
+        for step in score_steps:
+            running += step['delta']
+            step['running_total'] = running
+
+        return {
+            'ganzhi': {
+                'month_ganzhi': month_ganzhi,
+                'day_ganzhi': day_ganzhi
+            },
+            'jianxing': {
+                'month_zhi': month_zhi,
+                'day_zhi': day_zhi,
+                'month_index': month_index,
+                'day_index': day_index,
+                'formula': f"({day_index} - {month_index}) % 12 = {jianxing_index}",
+                'result': analysis['jianxing']
+            },
+            'shier_shen': {
+                'day_gan': day_gan,
+                'start_index': start_index,
+                'day_zhi_index': day_index,
+                'formula': f"({start_index} + {day_index}) % 12 = {shier_shen_index}",
+                'result': analysis['shier_shen'],
+                'huangdao_type': analysis['huangdao_type']
+            },
+            'xingxiu': {
+                'days_from_epoch': days_from_epoch,
+                'formula': f"{days_from_epoch} % 28 = {xingxiu_index}",
+                'result': analysis['xingxiu']
+            },
+            'score': {
+                'steps': score_steps,
+                'result': {
+                    'score': analysis['score'],
+                    'level': analysis['level']
+                }
+            }
+        }
+
 
 def find_auspicious_days(year: int, month: int, purpose: str = '通用', days: int = 30) -> List[Dict]:
     """
@@ -257,6 +337,7 @@ def get_today_fortune(year: int, month: int, day: int) -> Dict:
     analysis['weekday'] = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'][
         datetime(year, month, day).weekday()
     ]
+    analysis['calc_trace'] = selector.get_calc_trace()
     
     return analysis
 

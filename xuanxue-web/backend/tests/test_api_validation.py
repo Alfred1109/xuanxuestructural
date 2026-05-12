@@ -392,6 +392,11 @@ class TestApiValidation(unittest.TestCase):
         self.assertFalse(payload.get("ai_enabled"))
         self.assertIn("date", payload.get("data", {}))
 
+    def test_main_exports_runtime_state_and_app_after_router_split(self):
+        self.assertTrue(hasattr(main, "app"))
+        self.assertTrue(hasattr(main, "llm_helper"))
+        self.assertTrue(hasattr(main, "AI_RUNTIME_STATE"))
+
 
 if __name__ == "__main__":
     unittest.main()

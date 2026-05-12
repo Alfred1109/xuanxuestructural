@@ -143,6 +143,62 @@ class QiMenChart:
             }
         
         return chart
+
+    def get_calc_trace(self) -> Dict:
+        """返回奇门排盘的结构化推演过程。"""
+        dongzhi = get_solar_term_date(self.year, 21)
+        xiazhi = get_solar_term_date(self.year, 9)
+        palace_order = [4, 9, 2, 3, 5, 7, 8, 1, 6]
+        zhifu_palace = (self.hour % 8) + 1
+        if zhifu_palace == 5:
+            zhifu_palace = 2
+        zhifu_offset = palace_order.index(zhifu_palace) if zhifu_palace in palace_order else 0
+
+        palace_steps = []
+        for palace_index, palace_num in enumerate(palace_order):
+            gate_index = (palace_index + zhifu_offset) % 8
+            star_index = (palace_index + zhifu_offset) % 9
+            spirit_index = (palace_index + zhifu_offset) % 8
+            palace_steps.append({
+                'palace_num': palace_num,
+                'palace_name': self.PALACES[palace_num],
+                'dipan_index': palace_index % 9,
+                'tianpan_index': (palace_index + self.ju_number) % 9,
+                'gate_index': gate_index,
+                'star_index': star_index,
+                'spirit_index': spirit_index,
+                'result': self.chart[self.PALACES[palace_num]]
+            })
+
+        matter_prediction = self.predict_matter("通用")
+        return {
+            'pillars': {
+                'year': self.year_gz,
+                'month': self.month_gz,
+                'day': self.day_gz,
+                'hour': self.hour_gz
+            },
+            'dun_and_ju': {
+                'datetime': self.datetime.strftime('%Y-%m-%d %H:%M'),
+                'dongzhi': dongzhi.strftime('%Y-%m-%d %H:%M'),
+                'xiazhi': xiazhi.strftime('%Y-%m-%d %H:%M'),
+                'comparison': f"date {'>=' if self.datetime >= dongzhi else '<'} 冬至 或 {'<' if self.datetime < xiazhi else '>='} 夏至",
+                'dun_type': self.dun_type,
+                'ju_formula': f"(({self.month} + {self.day}) % 9) + 1 = {self.ju_number}",
+                'ju_number': self.ju_number
+            },
+            'layout': {
+                'palace_order': palace_order,
+                'zhifu_palace': zhifu_palace,
+                'zhifu_offset': zhifu_offset,
+                'formula': '按九宫顺序布地盘；天盘=宫序+局数；门/星/神=宫序+值符偏移',
+                'palaces': palace_steps
+            },
+            'best_direction': {
+                'result': self.find_best_direction(),
+                'sample_matter_prediction': matter_prediction
+            }
+        }
     
     def get_chart(self) -> Dict:
         """获取完整盘面"""
@@ -288,6 +344,7 @@ class QiMenChart:
             },
             "九宫盘": self.chart,
             "最佳方位": self.find_best_direction(),
+            "calc_trace": self.get_calc_trace(),
             "说明": "奇门遁甲是中国最高级的预测体系，可用于预测、择时、择方、布局等"
         }
 

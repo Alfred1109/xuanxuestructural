@@ -61,6 +61,10 @@ class BaZiChart:
         day_gan_index = TIANGAN.index(self.day_pillar[0])
         self.hour_pillar = get_hour_ganzhi(day_gan_index, self.birth_hour)
 
+    @staticmethod
+    def _format_datetime(value: datetime) -> str:
+        return value.strftime('%Y-%m-%d %H:%M')
+
     def _get_bazi_month_index(self, birth_date: datetime) -> int:
         """
         根据节气边界计算八字月序：
@@ -313,6 +317,218 @@ class BaZiChart:
             'day': get_nayin(self.day_pillar),
             'hour': get_nayin(self.hour_pillar)
         }
+
+    def get_calc_trace(self) -> Dict:
+        """返回八字推演链路，便于前端逐步展示。"""
+        birth_date = datetime(
+            self.birth_year, self.birth_month, self.birth_day, self.birth_hour, self.birth_minute
+        )
+        lichun = get_lichun_date(self.birth_year)
+        year_for_ganzhi = self.birth_year - 1 if birth_date < lichun else self.birth_year
+        year_offset = (year_for_ganzhi - 1984) % 60
+
+        month_index = self._get_bazi_month_index(birth_date)
+        month_gan_base = {
+            0: 2, 5: 2,
+            1: 4, 6: 4,
+            2: 6, 7: 6,
+            3: 8, 8: 8,
+            4: 0, 9: 0
+        }
+        year_gan_index = (year_for_ganzhi - 1984) % 10
+        month_zhi_index = (month_index + 1) % 12
+        month_gan_index = (month_gan_base[year_gan_index] + month_index - 1) % 10
+
+        boundaries = [
+            {"term": "立春", "date": get_solar_term_date(year_for_ganzhi, 2), "month_index": 1},
+            {"term": "惊蛰", "date": get_solar_term_date(year_for_ganzhi, 4), "month_index": 2},
+            {"term": "清明", "date": get_solar_term_date(year_for_ganzhi, 6), "month_index": 3},
+            {"term": "立夏", "date": get_solar_term_date(year_for_ganzhi, 8), "month_index": 4},
+            {"term": "芒种", "date": get_solar_term_date(year_for_ganzhi, 10), "month_index": 5},
+            {"term": "小暑", "date": get_solar_term_date(year_for_ganzhi, 12), "month_index": 6},
+            {"term": "立秋", "date": get_solar_term_date(year_for_ganzhi, 14), "month_index": 7},
+            {"term": "白露", "date": get_solar_term_date(year_for_ganzhi, 16), "month_index": 8},
+            {"term": "寒露", "date": get_solar_term_date(year_for_ganzhi, 18), "month_index": 9},
+            {"term": "立冬", "date": get_solar_term_date(year_for_ganzhi, 20), "month_index": 10},
+            {"term": "大雪", "date": get_solar_term_date(year_for_ganzhi, 22), "month_index": 11},
+            {"term": "小寒", "date": get_solar_term_date(year_for_ganzhi + 1, 0), "month_index": 12},
+        ]
+
+        base_date = datetime(1900, 1, 1)
+        days_diff = (birth_date - base_date).days
+        day_index = (40 + days_diff) % 60
+        day_gan_index = TIANGAN.index(self.day_pillar[0])
+        hour_zhi_index = (self.birth_hour + 1) // 2 % 12
+        hour_gan_base = {
+            0: 0, 5: 0,
+            1: 2, 6: 2,
+            2: 4, 7: 4,
+            3: 6, 8: 6,
+            4: 8, 9: 8
+        }
+        hour_gan_index = (hour_gan_base[day_gan_index] + hour_zhi_index) % 10
+
+        wuxing_contributions = []
+        wuxing_total = {'木': 0, '火': 0, '土': 0, '金': 0, '水': 0}
+        pillars = [
+            ('年干', self.year_pillar[0], 1),
+            ('月干', self.month_pillar[0], 1),
+            ('日干', self.day_pillar[0], 1),
+            ('时干', self.hour_pillar[0], 1),
+            ('年支', self.year_pillar[1], 1),
+            ('月支', self.month_pillar[1], 1),
+            ('日支', self.day_pillar[1], 1),
+            ('时支', self.hour_pillar[1], 1),
+        ]
+        for label, symbol, weight in pillars:
+            wuxing = get_wuxing(symbol)
+            wuxing_total[wuxing] += weight
+            wuxing_contributions.append({
+                'source': label,
+                'symbol': symbol,
+                'wuxing': wuxing,
+                'weight': weight
+            })
+
+        for label, zhi in [('年支藏干', self.year_pillar[1]), ('月支藏干', self.month_pillar[1]), ('日支藏干', self.day_pillar[1]), ('时支藏干', self.hour_pillar[1])]:
+            for canggan in DIZHI_CANGGAN[zhi]:
+                wuxing = get_wuxing(canggan)
+                wuxing_total[wuxing] += 0.5
+                wuxing_contributions.append({
+                    'source': label,
+                    'symbol': canggan,
+                    'wuxing': wuxing,
+                    'weight': 0.5
+                })
+
+        day_gan = self.day_pillar[0]
+        day_wuxing = get_wuxing(day_gan)
+        day_yinyang = get_yinyang(day_gan)
+        wuxing_relation = {
+            '木': {'生': '火', '克': '土', '生我': '水', '克我': '金'},
+            '火': {'生': '土', '克': '金', '生我': '木', '克我': '水'},
+            '土': {'生': '金', '克': '水', '生我': '火', '克我': '木'},
+            '金': {'生': '水', '克': '木', '生我': '土', '克我': '火'},
+            '水': {'生': '木', '克': '火', '生我': '金', '克我': '土'}
+        }
+        shishen_map = {
+            ('同', '同'): '比肩',
+            ('同', '异'): '劫财',
+            ('生我', '同'): '偏印',
+            ('生我', '异'): '正印',
+            ('我生', '同'): '食神',
+            ('我生', '异'): '伤官',
+            ('我克', '同'): '偏财',
+            ('我克', '异'): '正财',
+            ('克我', '同'): '七杀',
+            ('克我', '异'): '正官'
+        }
+        shishen_trace = []
+        for pillar_name, gan in [('年干', self.year_pillar[0]), ('月干', self.month_pillar[0]), ('时干', self.hour_pillar[0])]:
+            gan_wuxing = get_wuxing(gan)
+            gan_yinyang = get_yinyang(gan)
+            if gan_wuxing == day_wuxing:
+                relation = '同'
+            elif wuxing_relation[day_wuxing]['生'] == gan_wuxing:
+                relation = '我生'
+            elif wuxing_relation[day_wuxing]['克'] == gan_wuxing:
+                relation = '我克'
+            elif wuxing_relation[day_wuxing]['生我'] == gan_wuxing:
+                relation = '生我'
+            else:
+                relation = '克我'
+            yinyang_relation = '同' if gan_yinyang == day_yinyang else '异'
+            shishen_trace.append({
+                'source': pillar_name,
+                'target_gan': gan,
+                'target_wuxing': gan_wuxing,
+                'relation': relation,
+                'yinyang_relation': yinyang_relation,
+                'result': shishen_map[(relation, yinyang_relation)]
+            })
+
+        year_yinyang = get_yinyang(self.year_pillar[0])
+        direction = 1 if (self.gender == '男' and year_yinyang == '阳') or (self.gender == '女' and year_yinyang == '阴') else -1
+        prev_jie, next_jie = self._get_prev_next_jieqi(birth_date)
+        delta_days = ((next_jie - birth_date).total_seconds() / 86400) if direction == 1 else ((birth_date - prev_jie).total_seconds() / 86400)
+        start_age = self._estimate_dayun_start_age(direction)
+        month_gan_idx = TIANGAN.index(self.month_pillar[0])
+        month_zhi_idx = DIZHI.index(self.month_pillar[1])
+        dayun_steps = []
+        for i, item in enumerate(self.get_dayun(start_age=start_age), start=1):
+            dayun_steps.append({
+                'step': i,
+                'gan_index': (month_gan_idx + direction * i) % 10,
+                'zhi_index': (month_zhi_idx + direction * i) % 12,
+                'result': item['ganzhi'],
+                'age_range': f"{item['start_age']}-{item['end_age']}岁"
+            })
+
+        return {
+            'year_pillar': {
+                'birth_time': self._format_datetime(birth_date),
+                'lichun': self._format_datetime(lichun),
+                'comparison': f"{self._format_datetime(birth_date)} {'<' if birth_date < lichun else '>='} {self._format_datetime(lichun)}",
+                'year_for_ganzhi': year_for_ganzhi,
+                'formula': f"({year_for_ganzhi} - 1984) % 60 = {year_offset}",
+                'result': self.year_pillar
+            },
+            'month_pillar': {
+                'month_index': month_index,
+                'boundaries': [
+                    {
+                        'term': item['term'],
+                        'date': self._format_datetime(item['date']),
+                        'month_index': item['month_index']
+                    }
+                    for item in boundaries
+                ],
+                'formula': f"month_gan_index = ({month_gan_base[year_gan_index]} + {month_index} - 1) % 10 = {month_gan_index}; month_zhi_index = ({month_index} + 1) % 12 = {month_zhi_index}",
+                'result': self.month_pillar
+            },
+            'day_pillar': {
+                'base_date': self._format_datetime(base_date),
+                'birth_time': self._format_datetime(birth_date),
+                'days_diff': days_diff,
+                'formula': f"(40 + {days_diff}) % 60 = {day_index}",
+                'result': self.day_pillar
+            },
+            'hour_pillar': {
+                'day_gan': self.day_pillar[0],
+                'day_gan_index': day_gan_index,
+                'hour': self.birth_hour,
+                'hour_zhi_index': hour_zhi_index,
+                'hour_gan_base': hour_gan_base[day_gan_index],
+                'formula': f"hour_zhi_index = ({self.birth_hour} + 1) // 2 % 12 = {hour_zhi_index}; hour_gan_index = ({hour_gan_base[day_gan_index]} + {hour_zhi_index}) % 10 = {hour_gan_index}",
+                'result': self.hour_pillar
+            },
+            'wuxing_count': {
+                'contributions': wuxing_contributions,
+                'totals': wuxing_total,
+                'formula': '天干权重=1，地支权重=1，藏干权重=0.5，按五行累加'
+            },
+            'shishen': {
+                'day_master': {
+                    'gan': day_gan,
+                    'wuxing': day_wuxing,
+                    'yinyang': day_yinyang
+                },
+                'items': shishen_trace,
+                'formula': '先判五行关系（同/我生/我克/生我/克我），再判阴阳同异映射十神'
+            },
+            'dayun': {
+                'year_gan': self.year_pillar[0],
+                'year_yinyang': year_yinyang,
+                'gender': self.gender,
+                'direction': '顺排' if direction == 1 else '逆排',
+                'prev_jie': self._format_datetime(prev_jie),
+                'next_jie': self._format_datetime(next_jie),
+                'delta_days': round(delta_days, 2),
+                'start_age_formula': f"ceil({round(delta_days, 2)} / 3) = {start_age}",
+                'month_pillar': self.month_pillar,
+                'steps': dayun_steps
+            }
+        }
     
     def to_dict(self) -> Dict:
         """转换为字典格式"""
@@ -346,7 +562,8 @@ class BaZiChart:
             'wuxing_count': self.get_wuxing_count(),
             'shishen': self.get_shishen(),
             'nayin': self.get_nayin_all(),
-            'dayun': self.get_dayun()
+            'dayun': self.get_dayun(),
+            'calc_trace': self.get_calc_trace()
         }
 
 

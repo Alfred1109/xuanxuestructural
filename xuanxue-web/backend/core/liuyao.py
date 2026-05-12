@@ -132,6 +132,68 @@ class LiuYaoDivination:
             'dongyao': dongyao,
             'yao_details': self._get_yao_details(bengua_binary, dongyao)
         }
+
+    def get_calc_trace(self) -> Dict:
+        """返回六爻起卦与解卦的推演链路。"""
+        gua_info = self.parse_gua()
+        cast_steps = []
+        bengua_bits = []
+        biangua_bits = []
+
+        for index, yao_value in enumerate(self.yao_list, start=1):
+            if yao_value in [7, 9]:
+                bengua_bit = '1'
+                biangua_bit = '0' if yao_value == 9 else '1'
+                yao_type = '阳爻'
+            else:
+                bengua_bit = '0'
+                biangua_bit = '1' if yao_value == 6 else '0'
+                yao_type = '阴爻'
+
+            coins = {
+                6: [2, 2, 2],
+                7: [2, 2, 3],
+                8: [2, 3, 3],
+                9: [3, 3, 3],
+            }.get(yao_value, [])
+            bengua_bits.append(bengua_bit)
+            biangua_bits.append(biangua_bit)
+            cast_steps.append({
+                'position': index,
+                'coins': coins,
+                'sum': yao_value,
+                'rule': '6=老阴，7=少阳，8=少阴，9=老阳',
+                'bengua_bit': bengua_bit,
+                'biangua_bit': biangua_bit,
+                'yao_type': yao_type,
+                'is_moving': index in gua_info['dongyao']
+            })
+
+        bengua = gua_info['bengua']
+        biangua = gua_info['biangua']
+        return {
+            'cast': {
+                'question': self.question,
+                'steps': cast_steps,
+                'formula': '六次成爻值按自下而上拼接成本卦二进制；动爻变位后得到变卦二进制'
+            },
+            'binary': {
+                'bengua_binary': ''.join(bengua_bits),
+                'biangua_binary': ''.join(biangua_bits),
+                'dongyao': gua_info['dongyao'],
+                'result': {
+                    'bengua': bengua['name'],
+                    'biangua': biangua['name']
+                }
+            },
+            'trigrams': {
+                'lower_binary': bengua['binary'][:3],
+                'upper_binary': bengua['binary'][3:],
+                'lower': bengua['xia_gua'],
+                'upper': bengua['shang_gua'],
+                'formula': '前三位为下卦，后三位为上卦'
+            }
+        }
     
     def _get_trigram(self, binary: str) -> Dict:
         """根据二进制获取八卦信息"""
@@ -193,7 +255,8 @@ class LiuYaoDivination:
         return {
             'question': self.question,
             'gua_info': gua_info,
-            'interpretation': interpretation
+            'interpretation': interpretation,
+            'calc_trace': self.get_calc_trace()
         }
     
     def _get_gua_summary(self, gua_name: str) -> str:

@@ -125,27 +125,6 @@ else
 fi
 echo ""
 
-# 启动MkDocs知识库服务
-echo "📚 启动知识库服务..."
-cd "$SCRIPT_DIR"
-if command -v mkdocs > /dev/null; then
-    if is_port_in_use 8004; then
-        echo "⚠️  端口 8004 已被占用，跳过知识库服务启动"
-        echo "   如需启动知识库，请先释放该端口"
-    else
-    mkdocs serve -a localhost:8004 > /tmp/xuanxue-mkdocs.log 2>&1 &
-    MKDOCS_PID=$!
-    echo "✓ 知识库服务已启动 (PID: $MKDOCS_PID)"
-    echo "   访问地址: http://localhost:8004"
-    echo "   日志文件: /tmp/xuanxue-mkdocs.log"
-    echo $MKDOCS_PID > /tmp/xuanxue-mkdocs.pid
-    fi
-else
-    echo "⚠️  未安装MkDocs，知识库服务未启动"
-    echo "   安装方法: pip install mkdocs mkdocs-material"
-fi
-echo ""
-
 # 启动前端HTTP服务器
 echo "🌐 启动前端服务器..."
 cd "$FRONTEND_DIR"
@@ -190,9 +169,6 @@ echo "📌 使用说明："
 echo "   - 前端界面: http://localhost:8003"
 echo "   - 后端API: http://localhost:8002"
 echo "   - API文档: http://localhost:8002/docs"
-if [ -f /tmp/xuanxue-mkdocs.pid ]; then
-    echo "   - 知识库: http://localhost:8004"
-fi
 echo ""
 echo "📌 停止服务："
 echo "   运行: ./stop.sh"
@@ -200,9 +176,6 @@ echo ""
 echo "💡 提示："
 echo "   - 前端日志: tail -f /tmp/xuanxue-frontend.log"
 echo "   - 后端日志: tail -f /tmp/xuanxue-backend.log"
-if [ -f /tmp/xuanxue-mkdocs.pid ]; then
-    echo "   - 知识库日志: tail -f /tmp/xuanxue-mkdocs.log"
-fi
 if [ -z "$ARK_API_KEY" ]; then
     echo "   - AI功能: 未启用，设置方法见 AI配置指南.md"
 else

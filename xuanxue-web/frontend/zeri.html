@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>择日学 - 玄学预测系统</title>
-    <link rel="stylesheet" href="common-header.css?v=20260511-flat">
-    <link rel="stylesheet" href="common-theme.css?v=20260511-flat">
+    <link rel="stylesheet" href="common-header.css?v=20260511-zen">
+    <link rel="stylesheet" href="common-theme.css?v=20260511-zen">
     <style>
         .tabs {
             display: flex;
@@ -16,17 +16,18 @@
         .tab {
             flex: 1;
             padding: 12px;
-            background: #f3f7fb;
-            border: 1px solid #d7e1ea;
-            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.82);
+            border: 1px solid rgba(217, 226, 220, 0.92);
+            border-radius: 12px;
             cursor: pointer;
             font-size: 15px;
             transition: all 0.3s;
             color: #1f3243;
+            backdrop-filter: blur(10px);
         }
 
         .tab.active {
-            background: linear-gradient(135deg, #1f5f8b 0%, #2a6c8a 100%);
+            background: linear-gradient(135deg, var(--color-primary) 0%, #3f7263 100%);
             color: white;
             font-weight: bold;
             border-color: transparent;
@@ -47,7 +48,7 @@
         }
 
         .fortune-card {
-            background: linear-gradient(135deg, #1f5f8b 0%, #2a6c8a 100%);
+            background: linear-gradient(135deg, var(--color-primary-strong) 0%, var(--color-primary) 56%, #4f7b6f 100%);
             padding: 30px;
             border-radius: 15px;
             color: white;
@@ -100,8 +101,8 @@
         }
 
         .day-card.大吉 { border-color: #4caf50; }
-        .day-card.吉 { border-color: #8bc34a; }
-        .day-card.平 { border-color: #ff9800; }
+        .day-card.吉 { border-color: #4f8394; }
+        .day-card.平 { border-color: #b5802f; }
 
         .today-btn-row {
             display: flex;
@@ -237,7 +238,7 @@
         <!-- 吉日列表结果 -->
         <div class="result" id="search-result">
             <div class="card">
-                <h2 style="margin-bottom: 20px; color: #1f5f8b;">🎯 吉日查询结果</h2>
+                    <h2 style="margin-bottom: 20px; color: var(--color-primary-strong);">🎯 吉日查询结果</h2>
                 <p id="searchSummary" style="margin-bottom: 20px; font-size: 16px;"></p>
                 <div class="day-list" id="dayList"></div>
             </div>
@@ -266,12 +267,8 @@
             const isHsl = /^hsla?\((\s*[\d.]+\s*,){2}\s*[\d.]+%?\s*(,\s*[\d.]+\s*)?\)$/.test(text);
             return isHex || isRgb || isHsl ? text : '#666666';
         }
-        function isConnectivityError(error) {
-            const msg = String((error && error.message) || '');
-            return msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('无法连接');
-        }
 
-        const renderMarkdown = (text) => window.renderMarkdownSimple(text, '#1f5f8b');
+        const renderMarkdown = (text) => window.renderMarkdownSimple(text, '#173a34');
 
         function getScoreComment(score) {
             if (score >= 80) return '诸事推进窗口期，适合处理重要事项。';
@@ -428,13 +425,13 @@
             // 设置卡片颜色
             const card = document.getElementById('fortuneCard');
             if (safeData.level === '大吉') {
-                card.style.background = 'linear-gradient(135deg, #2d8f57 0%, #4ca66b 100%)';
+                card.style.background = 'linear-gradient(135deg, #3d7a59 0%, #5b9472 100%)';
             } else if (safeData.level === '吉') {
-                card.style.background = 'linear-gradient(135deg, #2f76a1 0%, #3c88b7 100%)';
+                card.style.background = 'linear-gradient(135deg, #4f8394 0%, #5d98a8 100%)';
             } else if (safeData.level === '平') {
-                card.style.background = 'linear-gradient(135deg, #c27c1a 0%, #d39a42 100%)';
+                card.style.background = 'linear-gradient(135deg, #b5802f 0%, #c99a4d 100%)';
             } else {
-                card.style.background = 'linear-gradient(135deg, #b94939 0%, #c76a5f 100%)';
+                card.style.background = 'linear-gradient(135deg, #aa5548 0%, #c16b60 100%)';
             }
 
             document.getElementById('today-result').classList.add('show');
