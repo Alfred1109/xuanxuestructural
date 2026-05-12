@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>风水 / 空间 - 玄学预测系统</title>
+    <link rel="stylesheet" href="common-header.css?v=20260512-fengshui">
+    <link rel="stylesheet" href="common-theme.css?v=20260512-fengshui">
+    <style>
+        .page-title {
+            margin-bottom: 16px;
+            color: var(--color-primary-strong);
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .result-card {
+            background: rgba(255, 255, 255, 0.86);
+            border: 1px solid rgba(217, 226, 220, 0.92);
+            border-radius: 16px;
+            padding: 16px;
+        }
+
+        .result-card .kicker {
+            color: var(--color-text-soft);
+            font-size: 0.82rem;
+        }
+
+        .result-card .title {
+            font-size: 1.38rem;
+            font-weight: 700;
+            color: var(--color-primary-strong);
+            margin: 6px 0 8px;
+        }
+
+        .result-card .meta {
+            white-space: pre-wrap;
+            word-break: break-word;
+            line-height: 1.7;
+            color: var(--color-text);
+        }
+
+        .trace-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .trace-item {
+            background: rgba(255, 255, 255, 0.84);
+            border: 1px solid rgba(217, 226, 220, 0.92);
+            border-radius: 14px;
+            padding: 14px;
+        }
+
+        .trace-item h4 {
+            color: var(--color-primary-strong);
+            margin-bottom: 8px;
+        }
+
+        .trace-item .trace-body {
+            white-space: pre-wrap;
+            word-break: break-word;
+            line-height: 1.7;
+            color: var(--color-text);
+            font-size: 0.92rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="unified-header">
+        <div class="container">
+            <div class="site-title">
+                <h1>🔮 玄学预测系统</h1>
+                <p>传统命理学 · 现代科技 · 智能分析</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h2 class="page-title">🏠 风水 / 空间评估</h2>
+            <p class="text-muted">用于评估朝向、布局、环境支持与空间风险。第一版已接入统一问事与决策层。</p>
+
+            <form id="fengshuiForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="question">你想看什么</label>
+                        <textarea id="question" placeholder="例如：这个办公室工位适合我长期坐吗？"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="location">地点</label>
+                        <input type="text" id="location" placeholder="例如：上海浦东办公室 / 家中书房">
+                    </div>
+                    <div class="form-group">
+                        <label for="orientation">朝向</label>
+                        <select id="orientation">
+                            <option value="">未知</option>
+                            <option value="南向">南向</option>
+                            <option value="东南向">东南向</option>
+                            <option value="东向">东向</option>
+                            <option value="西南向">西南向</option>
+                            <option value="北向">北向</option>
+                            <option value="西向">西向</option>
+                            <option value="东北向">东北向</option>
+                            <option value="西北向">西北向</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="sceneType">场景</label>
+                        <select id="sceneType">
+                            <option value="generic">通用空间</option>
+                            <option value="home">住宅</option>
+                            <option value="office">办公</option>
+                            <option value="shop">经营场所</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="layoutNote">布局描述</label>
+                        <textarea id="layoutNote" placeholder="例如：背后是走道，正前方有窗，左侧堆杂物，采光一般。"></textarea>
+                    </div>
+                </div>
+
+                <div class="btn-row">
+                    <button type="submit" class="btn">开始评估</button>
+                    <button type="button" class="btn btn-accent" id="fillDemoBtn">填入示例</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p class="loading-text">正在评估空间格局...</p>
+        </div>
+
+        <div class="result" id="result">
+            <div class="card">
+                <h2 class="page-title">空间摘要</h2>
+                <div class="result-grid" id="summaryGrid"></div>
+            </div>
+
+            <div class="card">
+                <h2 class="page-title">综合建议</h2>
+                <div id="analysis"></div>
+            </div>
+
+            <div class="card">
+                <h2 class="page-title">推演链</h2>
+                <div class="trace-grid" id="traceGrid"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="common-links.js"></script>
+    <script src="common-ui.js"></script>
+    <script src="markdown.js"></script>
+    <script src="api-client.js"></script>
+    <script src="common-renderers.js"></script>
+    <script>
+        const esc = (value) => (window.escapeHtml ? window.escapeHtml(value ?? '') : String(value ?? ''));
+        const renderMarkdown = (text) => window.renderMarkdownSimple(text || '', '#173a34');
+
+        if (window.applyCommonLinks) {
+            window.applyCommonLinks();
+        }
+
+        function renderCard(title, value, meta) {
+            return [
+                '<div class="result-card">',
+                '  <div class="kicker">' + esc(meta || '') + '</div>',
+                '  <div class="title">' + esc(title || '未命名') + '</div>',
+                '  <div class="meta">' + esc(value || '') + '</div>',
+                '</div>'
+            ].join('');
+        }
+
+        function renderTrace(trace) {
+            const renderers = window.commonRenderers || {};
+            const format = typeof renderers.renderTraceText === 'function'
+                ? renderers.renderTraceText
+                : function (value) { return typeof value === 'string' ? value : JSON.stringify(value, null, 2); };
+
+            return [
+                { title: '朝向推导', body: format(trace && trace.orientation ? trace.orientation : {}) },
+                { title: '布局推导', body: format(trace && trace.layout ? trace.layout : {}) },
+                { title: '综合结论', body: format(trace && trace.summary ? trace.summary : {}) }
+            ].map((item) => [
+                '<div class="trace-item">',
+                '  <h4>' + esc(item.title) + '</h4>',
+                '  <div class="trace-body">' + esc(item.body) + '</div>',
+                '</div>'
+            ].join('')).join('');
+        }
+
+        document.getElementById('fengshuiForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            loading.classList.add('show');
+            result.classList.remove('show');
+
+            try {
+                const payload = {
+                    question: document.getElementById('question').value.trim(),
+                    location: document.getElementById('location').value.trim(),
+                    orientation: document.getElementById('orientation').value,
+                    scene_type: document.getElementById('sceneType').value,
+                    layout_note: document.getElementById('layoutNote').value.trim()
+                };
+
+                const response = await window.apiClient.postJson('/api/fengshui', payload);
+                const data = response.data || {};
+
+                document.getElementById('summaryGrid').innerHTML = [
+                    renderCard(data.orientation || '未知朝向', '朝向适配：' + (data.orientation_fit || 0) + '分', '朝向'),
+                    renderCard(data.scene_type || '通用空间', '空间支持：' + (data.space_support || 0) + '分', '场景'),
+                    renderCard(data.recommended_direction || '待判断', data.avoid_direction || '暂无回避方位', '宜 / 忌'),
+                    renderCard(String(data.layout_risk || 0), '布局风险分', '风险')
+                ].join('');
+
+                document.getElementById('analysis').innerHTML = renderMarkdown([
+                    data.summary,
+                    data.adjustment_advice,
+                    data.location ? ('地点：' + data.location) : ''
+                ].filter(Boolean).join('\n\n'));
+
+                document.getElementById('traceGrid').innerHTML = renderTrace(data.calc_trace || {});
+                result.classList.add('show');
+            } catch (error) {
+                window.showToast(error.message || '风水评估失败', 'error');
+            } finally {
+                loading.classList.remove('show');
+            }
+        });
+
+        document.getElementById('fillDemoBtn').addEventListener('click', () => {
+            document.getElementById('question').value = '这个办公室工位适合我长期坐吗？';
+            document.getElementById('location').value = '上海浦东办公室';
+            document.getElementById('orientation').value = '东南向';
+            document.getElementById('sceneType').value = 'office';
+            document.getElementById('layoutNote').value = '背后有靠，前方较开阔，但左侧杂物较多，采光不错。';
+        });
+    </script>
+</body>
+</html>

@@ -8,94 +8,188 @@
     <link rel="stylesheet" href="common-theme.css?v=20260511-zen">
     <style>
         .page-title {
-            margin-bottom: 18px;
-            color: var(--color-primary-strong);
-            font-family: var(--font-serif);
-            letter-spacing: 0.2px;
+            margin-bottom: var(--spacing-lg);
+            color: var(--color-text);
+            font-size: var(--font-size-2xl);
+            font-weight: var(--font-weight-medium);
+            line-height: var(--line-height-tight);
         }
 
         .hermes-entry {
-            padding: 24px;
+            padding: var(--spacing-3xl) var(--spacing-xl);
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            max-width: 880px;
+            margin: 0 auto;
         }
 
         .entry-top {
-            display: grid;
-            grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.7fr);
-            gap: 18px;
-            align-items: start;
-            margin-bottom: 18px;
+            margin-bottom: var(--spacing-3xl);
         }
 
         .entry-kicker {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 5px 12px;
-            border-radius: 999px;
-            background: var(--color-accent-soft);
-            border: 1px solid rgba(168, 116, 60, 0.16);
-            color: var(--color-primary-strong);
-            font-size: 0.82rem;
-            font-weight: 600;
-            margin-bottom: 12px;
+            display: block;
+            color: var(--color-text-tertiary);
+            font-size: var(--font-size-xs);
+            font-weight: var(--font-weight-medium);
+            line-height: var(--line-height-normal);
+            margin-bottom: var(--spacing-lg);
+            letter-spacing: 1px;
+            text-transform: uppercase;
         }
 
         .entry-title {
-            margin: 0 0 10px;
-            color: var(--color-primary-strong);
-            font-size: clamp(1.5rem, 2.8vw, 2.1rem);
+            margin: 0 0 var(--spacing-lg);
+            color: var(--color-text);
+            font-size: var(--font-size-3xl);
+            font-weight: var(--font-weight-medium);
+            line-height: var(--line-height-tight);
+            letter-spacing: -0.02em;
         }
 
         .entry-copy p {
-            margin: 0;
-            color: var(--color-text-soft);
+            margin: 0 0 var(--spacing-xl);
+            color: var(--color-text-secondary);
+            font-size: var(--font-size-base);
+            font-weight: var(--font-weight-normal);
+            line-height: var(--line-height-loose);
+            max-width: 640px;
         }
 
         .entry-stats {
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 10px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0;
+            background: #ffffff;
+            border: 1px solid var(--color-line);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
         }
 
         .entry-stat {
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(248, 245, 238, 0.92) 100%);
-            border: 1px solid rgba(217, 226, 220, 0.9);
-            border-radius: 14px;
-            padding: 12px 14px;
-            box-shadow: 0 8px 18px rgba(23, 45, 62, 0.035);
+            padding: var(--spacing-lg);
+            text-align: center;
+            border-right: 1px solid var(--color-line);
+        }
+
+        .entry-stat:last-child {
+            border-right: none;
         }
 
         .entry-stat .label {
-            font-size: 0.78rem;
-            color: var(--color-text-soft);
+            font-size: var(--font-size-xs);
+            font-weight: var(--font-weight-medium);
+            color: var(--color-text-tertiary);
             text-transform: uppercase;
-            letter-spacing: 0.3px;
+            letter-spacing: 0.5px;
+            margin-bottom: var(--spacing-sm);
         }
 
         .entry-stat .value {
-            margin-top: 4px;
-            font-size: 1rem;
-            font-weight: 700;
-            color: var(--color-primary-strong);
+            font-size: var(--font-size-base);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-text);
         }
 
         .consult-form {
-            margin-top: 4px;
+            margin-top: 0;
+        }
+
+        .consult-form .form-group {
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .consult-form label {
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-medium);
+            color: var(--color-text);
+            margin-bottom: var(--spacing-sm);
         }
 
         .consult-question {
-            min-height: 120px;
+            min-height: 140px;
+            border: 1px solid var(--color-line);
+            border-radius: var(--radius-sm);
+            padding: 12px 16px;
+            font-size: var(--font-size-base);
+            font-weight: var(--font-weight-normal);
+            line-height: var(--line-height-relaxed);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            font-family: var(--font-sans);
+            background: #ffffff;
+        }
+
+        .consult-question:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(44, 91, 79, 0.1);
+        }
+
+        .consult-question::placeholder {
+            color: var(--color-text-tertiary);
+        }
+
+        .consult-form .form-row {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .consult-form .form-row input,
+        .consult-form .form-row select {
+            border: 1px solid var(--color-line);
+            border-radius: var(--radius-sm);
+            padding: 10px 12px;
+            font-size: var(--font-size-base);
+            font-weight: var(--font-weight-normal);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            background: #ffffff;
+        }
+
+        .consult-form .form-row input:focus,
+        .consult-form .form-row select:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(44, 91, 79, 0.1);
         }
 
         .consult-actions {
             display: flex;
-            gap: 10px;
+            gap: var(--spacing-md);
             flex-wrap: wrap;
         }
 
         .consult-actions .btn {
-            width: auto;
-            min-width: 160px;
+            flex: 1;
+            min-width: 140px;
+            padding: 12px 24px;
+            border-radius: var(--radius-sm);
+            font-size: var(--font-size-base);
+            font-weight: var(--font-weight-medium);
+        }
+
+        .consult-actions .btn:first-child {
+            background: var(--color-primary);
+            border-color: var(--color-primary);
+            color: #ffffff;
+        }
+
+        .consult-actions .btn:first-child:hover {
+            background: var(--color-primary-dark);
+            border-color: var(--color-primary-dark);
+        }
+
+        .consult-actions .btn:not(:first-child) {
+            background: transparent;
+            color: var(--color-text);
+            border-color: var(--color-line);
+        }
+
+        .consult-actions .btn:not(:first-child):hover {
+            background: var(--color-bg);
+            border-color: var(--color-text-tertiary);
         }
 
         .consult-result {
@@ -289,9 +383,130 @@
                 rgba(255, 255, 255, 0.78);
         }
 
+        .trace-diagram.is-interactive {
+            cursor: zoom-in;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+        }
+
+        .trace-diagram.is-interactive:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 30px rgba(23, 45, 62, 0.08);
+            border-color: rgba(148, 179, 167, 0.96);
+        }
+
+        .trace-diagram.is-interactive:focus-visible {
+            outline: 3px solid rgba(168, 116, 60, 0.28);
+            outline-offset: 3px;
+        }
+
+        .trace-diagram.is-interactive::after {
+            content: "点击放大查看";
+            position: sticky;
+            right: 0;
+            bottom: 0;
+            float: right;
+            margin-top: 10px;
+            padding: 7px 12px;
+            border-radius: 999px;
+            background: rgba(23, 58, 52, 0.88);
+            color: #fff;
+            font-size: 0.78rem;
+            letter-spacing: 0.18px;
+            box-shadow: 0 10px 24px rgba(23, 45, 62, 0.12);
+            pointer-events: none;
+        }
+
         .trace-diagram svg {
             max-width: 100%;
             height: auto;
+        }
+
+        .trace-diagram-modal-open {
+            overflow: hidden;
+        }
+
+        .trace-diagram-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 1200;
+            display: none;
+        }
+
+        .trace-diagram-modal.is-open {
+            display: block;
+        }
+
+        .trace-diagram-modal-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(10, 24, 28, 0.56);
+            backdrop-filter: blur(6px);
+        }
+
+        .trace-diagram-modal-dialog {
+            position: relative;
+            width: min(1200px, calc(100vw - 32px));
+            max-height: calc(100vh - 32px);
+            margin: 16px auto;
+            border-radius: 24px;
+            overflow: hidden;
+            border: 1px solid rgba(217, 226, 220, 0.92);
+            background:
+                radial-gradient(circle at 18% 0%, rgba(168, 116, 60, 0.12) 0%, transparent 26%),
+                radial-gradient(circle at 86% 100%, rgba(44, 91, 79, 0.12) 0%, transparent 28%),
+                rgba(250, 248, 243, 0.98);
+            box-shadow: 0 30px 80px rgba(10, 24, 28, 0.28);
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr);
+        }
+
+        .trace-diagram-modal-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 18px 22px 14px;
+            border-bottom: 1px solid rgba(217, 226, 220, 0.92);
+            background: rgba(255, 255, 255, 0.72);
+        }
+
+        .trace-diagram-modal-copy {
+            display: grid;
+            gap: 4px;
+        }
+
+        .trace-diagram-modal-copy strong {
+            color: var(--color-primary-strong);
+            font-size: 1rem;
+            letter-spacing: 0.2px;
+        }
+
+        .trace-diagram-modal-copy span {
+            color: var(--color-text-soft);
+            font-size: 0.86rem;
+        }
+
+        .trace-diagram-modal-close {
+            border: 0;
+            border-radius: 999px;
+            padding: 9px 14px;
+            background: rgba(23, 58, 52, 0.9);
+            color: #fff;
+            font: inherit;
+            cursor: pointer;
+        }
+
+        .trace-diagram-modal-body {
+            overflow: auto;
+            padding: 18px 22px 24px;
+        }
+
+        .trace-diagram-modal-body svg {
+            display: block;
+            min-width: min-content;
+            max-width: none;
+            height: auto;
+            margin: 0 auto;
         }
 
         .trace-fallback {
@@ -415,7 +630,7 @@
             color: var(--color-primary-strong);
         }
 
-        .trace-field pre {
+        .trace-field .trace-field-content {
             margin: 0;
             padding: 10px 12px;
             border-radius: 10px;
@@ -424,13 +639,14 @@
             color: var(--color-text);
             white-space: pre-wrap;
             word-break: break-word;
-            font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+            line-height: 1.7;
             font-size: 0.85rem;
         }
 
-        .trace-field pre.formula-block {
+        .trace-field .trace-field-content.formula-block {
             background: rgba(241, 247, 243, 0.96);
             border-color: rgba(44, 91, 79, 0.14);
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
         }
 
         .trace-step .detail {
@@ -457,7 +673,18 @@
         }
 
         .shell-container {
-            max-width: 1440px;
+            max-width: 1280px;
+            padding: 32px 24px;
+        }
+
+        .shell-container > .card {
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(217, 226, 220, 0.3);
+            border-radius: 20px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(23, 45, 62, 0.02);
+            backdrop-filter: blur(20px);
         }
 
         .workbench {
@@ -932,8 +1159,21 @@
         }
 
         @media (max-width: 900px) {
-            .entry-top {
-                grid-template-columns: 1fr;
+            .entry-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .entry-stat {
+                border-right: 1px solid var(--color-line);
+                border-bottom: 1px solid var(--color-line);
+            }
+
+            .entry-stat:nth-child(2n) {
+                border-right: none;
+            }
+
+            .entry-stat:nth-child(n+3) {
+                border-bottom: none;
             }
 
             .workbench {
@@ -963,16 +1203,19 @@
 
         @media (max-width: 768px) {
             .hermes-entry {
-                padding: 18px;
+                padding: var(--spacing-2xl) var(--spacing-lg);
+            }
+
+            .entry-title {
+                font-size: 1.5rem;
             }
 
             .entry-stats {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(2, 1fr);
             }
 
-            .workspace-head {
-                flex-direction: column;
-                align-items: flex-start;
+            .consult-form .form-row {
+                grid-template-columns: repeat(3, 1fr);
             }
 
             .consult-actions {
@@ -983,13 +1226,18 @@
                 width: 100%;
             }
 
+            .workspace-head {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
             .sidebar-nav {
                 display: grid;
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
 
             .hero-panel {
-                padding: 18px;
+                padding: var(--spacing-lg);
             }
 
             .hero-summary,
@@ -1007,17 +1255,85 @@
 
             .trace-step-body {
                 margin-left: 0;
-                padding: 0 14px 14px 14px;
-                border-top: 1px solid #e6ece6;
+                padding: 0 var(--spacing-md) var(--spacing-md) var(--spacing-md);
+                border-top: 1px solid var(--color-line);
             }
 
             .trace-step:not(:last-child)::after {
                 display: none;
             }
 
+            .trace-diagram {
+                padding: var(--spacing-md);
+            }
+
+            .trace-diagram.is-interactive::after {
+                position: static;
+                float: none;
+                display: inline-flex;
+                margin-top: var(--spacing-md);
+            }
+
+            .trace-diagram-modal-dialog {
+                width: calc(100vw - 20px);
+                max-height: calc(100vh - 20px);
+                margin: 10px auto;
+                border-radius: var(--radius-lg);
+            }
+
+            .trace-diagram-modal-head {
+                align-items: flex-start;
+                flex-direction: column;
+                padding: var(--spacing-md);
+            }
+
+            .trace-diagram-modal-close {
+                align-self: flex-end;
+            }
+
+            .trace-diagram-modal-body {
+                padding: var(--spacing-md);
+            }
+
             .bazi-display,
             .wuxing-chart {
                 grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hermes-entry {
+                padding: var(--spacing-xl) var(--spacing-md);
+            }
+
+            .entry-title {
+                font-size: 1.375rem;
+            }
+
+            .consult-form .form-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .entry-stats {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .entry-stat {
+                padding: var(--spacing-md);
+                border-right: 1px solid var(--color-line);
+                border-bottom: none;
+            }
+
+            .entry-stat:last-child {
+                border-right: none;
+            }
+
+            .entry-stat .label {
+                font-size: 0.6875rem;
+            }
+
+            .entry-stat .value {
+                font-size: 0.875rem;
             }
         }
     </style>
@@ -1037,26 +1353,26 @@
         <section class="card hermes-entry">
             <div class="entry-top">
                 <div class="entry-copy">
-                    <div class="entry-kicker">Hermes · 统一问事中心</div>
-                    <h2 class="entry-title">一个入口，系统自动编排八字、六爻、奇门与择日</h2>
-                    <p>你只要说清楚「我是谁」和「我想问什么」，系统会自动选择相关模块，并把结果汇总成一份统一结论。</p>
-                </div>
-                <div class="entry-stats">
-                    <div class="entry-stat">
-                        <div class="label">入口数量</div>
-                        <div class="value">1</div>
-                    </div>
-                    <div class="entry-stat">
-                        <div class="label">自动编排</div>
-                        <div class="value">多模块联判</div>
-                    </div>
-                    <div class="entry-stat">
-                        <div class="label">输出方式</div>
-                        <div class="value">统一答案</div>
-                    </div>
-                    <div class="entry-stat">
-                        <div class="label">解释层</div>
-                        <div class="value">AI 辅助</div>
+                    <div class="entry-kicker">统一问事中心</div>
+                    <h2 class="entry-title">一个入口，自动编排多种术数</h2>
+                    <p>说清楚「我是谁」和「我想问什么」，系统自动选择相关模块，汇总成统一结论。</p>
+                    <div class="entry-stats">
+                        <div class="entry-stat">
+                            <div class="label">入口</div>
+                            <div class="value">1</div>
+                        </div>
+                        <div class="entry-stat">
+                            <div class="label">编排</div>
+                            <div class="value">自动</div>
+                        </div>
+                        <div class="entry-stat">
+                            <div class="label">输出</div>
+                            <div class="value">统一</div>
+                        </div>
+                        <div class="entry-stat">
+                            <div class="label">辅助</div>
+                            <div class="value">AI</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1163,6 +1479,14 @@
                         <span class="title">八字排盘</span>
                         <span class="desc">直接跳到出生信息与命盘结果</span>
                     </button>
+                    <button class="sidebar-item" type="button" data-view="ziwei">
+                        <span class="title">紫微斗数</span>
+                        <span class="desc">从命宫、主星与四化补强长期结构</span>
+                    </button>
+                    <button class="sidebar-item" type="button" data-view="fengshui">
+                        <span class="title">风水 / 空间</span>
+                        <span class="desc">评估朝向、布局与环境支持度</span>
+                    </button>
                     <button class="sidebar-item" type="button" data-view="liuyao">
                         <span class="title">六爻占卜</span>
                         <span class="desc">围绕具体问题做即时判断</span>
@@ -1217,21 +1541,31 @@
                             </div>
                             <div class="flow-item">
                                 <div class="step">02</div>
+                                <div class="name">紫微斗数</div>
+                                <div class="note">补充命宫、主星与长期运势结构</div>
+                            </div>
+                            <div class="flow-item">
+                                <div class="step">03</div>
+                                <div class="name">风水空间</div>
+                                <div class="note">把朝向、布局和环境纳入判断</div>
+                            </div>
+                            <div class="flow-item">
+                                <div class="step">04</div>
                                 <div class="name">六爻占卜</div>
                                 <div class="note">聚焦单一问题做即时判断</div>
                             </div>
                             <div class="flow-item">
-                                <div class="step">03</div>
+                                <div class="step">05</div>
                                 <div class="name">梅花易数</div>
                                 <div class="note">轻量起卦，快速取象定趋势</div>
                             </div>
                             <div class="flow-item">
-                                <div class="step">04</div>
+                                <div class="step">06</div>
                                 <div class="name">奇门遁甲</div>
                                 <div class="note">从时空格局看局势走向</div>
                             </div>
                             <div class="flow-item">
-                                <div class="step">05</div>
+                                <div class="step">07</div>
                                 <div class="name">择日学</div>
                                 <div class="note">把关键动作落到合适时间</div>
                             </div>
@@ -1264,6 +1598,18 @@
                         <div class="title">八字排盘</div>
                         <div class="desc">出生盘、五行、十神、大运与综合分析。</div>
                         <div class="meta">进入本命分析</div>
+                    </a>
+                    <a class="module-card primary" href="ziwei.html">
+                        <div class="kicker">命理补核</div>
+                        <div class="title">紫微斗数</div>
+                        <div class="desc">从命宫、身宫、主星与四化补强长期结构判断。</div>
+                        <div class="meta">进入紫微页面</div>
+                    </a>
+                    <a class="module-card success" href="fengshui.html">
+                        <div class="kicker">空间评估</div>
+                        <div class="title">风水 / 空间</div>
+                        <div class="desc">把朝向、布局、办公位和住宅环境接入统一判断。</div>
+                        <div class="meta">进入风水页面</div>
                     </a>
                     <a class="module-card accent" href="liuyao.html">
                         <div class="kicker">即时问事</div>

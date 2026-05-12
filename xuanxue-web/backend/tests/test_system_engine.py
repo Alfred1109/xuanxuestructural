@@ -27,8 +27,9 @@ class TestSystemEngine(unittest.TestCase):
         with patch("core.system_engine.llm_helper.is_available", return_value=False):
             result = consultation_engine.consult(payload)
 
-        self.assertEqual(result["intent"]["modules"], ["bazi", "liuyao", "qimen"])
+        self.assertEqual(result["intent"]["modules"], ["bazi", "ziwei", "liuyao", "qimen"])
         self.assertIn("bazi", result["module_summaries"])
+        self.assertIn("ziwei", result["module_summaries"])
         self.assertIn("liuyao", result["module_summaries"])
         self.assertIn("qimen", result["module_summaries"])
         self.assertTrue(result["ai"]["fallback"])
@@ -49,12 +50,32 @@ class TestSystemEngine(unittest.TestCase):
         self.assertIn("derivation", first_step)
         self.assertEqual(result["trace"]["steps"][-1]["id"], "answer")
         self.assertIn("八字", result["trace"]["mermaid"])
+        self.assertIn("紫微", result["trace"]["mermaid"])
         self.assertIn("六爻", result["trace"]["mermaid"])
         self.assertIn("奇门", result["trace"]["mermaid"])
         self.assertTrue(any(step["id"] == "bazi_year" for step in result["trace"]["steps"]))
+        self.assertTrue(any(step["id"] == "ziwei_mingpan" for step in result["trace"]["steps"]))
         bazi_year = next(step for step in result["trace"]["steps"] if step["id"] == "bazi_year")
         self.assertTrue(bazi_year["formulas"])
         self.assertEqual(bazi_year["derivation"]["result"], result["modules"]["bazi"]["bazi"]["year"])
+
+    def test_consultation_engine_uses_ziwei_when_birth_is_present(self):
+        payload = UnifiedConsultRequest(
+            question="我接下来三年的事业方向如何？",
+            year=1990,
+            month=1,
+            day=1,
+            hour=12,
+            minute=0,
+            gender="男",
+        )
+
+        with patch("core.system_engine.llm_helper.is_available", return_value=False):
+            result = consultation_engine.consult(payload)
+
+        self.assertIn("ziwei", result["intent"]["modules"])
+        self.assertIn("ziwei", result["module_summaries"])
+        self.assertTrue(any(step["id"] == "ziwei_judge" for step in result["trace"]["steps"]))
 
     def test_consultation_engine_uses_meihua_for_non_birth_quick_question(self):
         payload = UnifiedConsultRequest(
@@ -81,6 +102,19 @@ class TestSystemEngine(unittest.TestCase):
         self.assertTrue(any(step["id"] == "zeri_score" for step in result["trace"]["steps"]))
         self.assertTrue(any(step["id"] == "zeri_jianxing" for step in result["trace"]["steps"]))
         self.assertEqual(result["profile"]["purpose"], "开业")
+
+    def test_consultation_engine_uses_fengshui_for_space_question(self):
+        payload = UnifiedConsultRequest(
+            question="这个办公室工位风水怎么样，适合我长期坐吗？",
+            location="上海浦东办公室",
+        )
+
+        with patch("core.system_engine.llm_helper.is_available", return_value=False):
+            result = consultation_engine.consult(payload)
+
+        self.assertIn("fengshui", result["intent"]["modules"])
+        self.assertIn("fengshui", result["module_summaries"])
+        self.assertTrue(any(step["id"] == "fengshui_judge" for step in result["trace"]["steps"]))
 
     def test_consultation_engine_writes_decision_log_snapshot(self):
         payload = UnifiedConsultRequest(question="今天适合开业吗？")
@@ -148,7 +182,7 @@ class TestSystemEngine(unittest.TestCase):
 
             self.assertEqual(effective["strategic"]["bazi"], 0.7)
             self.assertEqual(result["effective_weights"]["strategic"]["bazi"], 0.7)
-            self.assertGreater(result["decision_kernel"]["arbitration"]["weights"]["bazi"], 0.7)
+            self.assertEqual(result["decision_kernel"]["arbitration"]["weights"]["bazi"], 0.7)
             self.assertGreater(
                 result["decision_kernel"]["arbitration"]["weights"]["bazi"],
                 result["decision_kernel"]["arbitration"]["weights"]["qimen"],

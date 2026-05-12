@@ -11,10 +11,10 @@ from .runtime.store import append_jsonl, read_recent_jsonl, resolve_runtime_path
 
 
 DEFAULT_WEIGHT_PRESETS = {
-    "strategic": {"bazi": 0.45, "qimen": 0.2, "liuyao": 0.15, "meihua": 0.1, "zeri": 0.1},
-    "tactical": {"qimen": 0.3, "liuyao": 0.3, "meihua": 0.2, "bazi": 0.1, "zeri": 0.1},
-    "temporal": {"zeri": 0.45, "qimen": 0.25, "liuyao": 0.15, "meihua": 0.1, "bazi": 0.05},
-    "balanced": {"bazi": 0.25, "qimen": 0.25, "liuyao": 0.2, "meihua": 0.15, "zeri": 0.15},
+    "strategic": {"bazi": 0.29, "ziwei": 0.2, "qimen": 0.16, "fengshui": 0.11, "liuyao": 0.11, "meihua": 0.07, "zeri": 0.06},
+    "tactical": {"qimen": 0.26, "liuyao": 0.22, "meihua": 0.15, "fengshui": 0.12, "bazi": 0.09, "ziwei": 0.08, "zeri": 0.08},
+    "temporal": {"zeri": 0.35, "qimen": 0.2, "fengshui": 0.12, "liuyao": 0.1, "meihua": 0.07, "bazi": 0.07, "ziwei": 0.09},
+    "balanced": {"bazi": 0.18, "ziwei": 0.16, "qimen": 0.19, "fengshui": 0.12, "liuyao": 0.15, "meihua": 0.1, "zeri": 0.1},
 }
 
 

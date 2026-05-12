@@ -57,6 +57,54 @@ def signal_from_bazi(summary: Dict[str, Any]) -> ModuleSignal:
     )
 
 
+def signal_from_ziwei(summary: Dict[str, Any]) -> ModuleSignal:
+    stars = summary.get("major_stars", []) or []
+    star_density = min(4, len([item for item in stars if item])) / 4
+    baseline = 60.0 + star_density * 18.0
+    direction = 0.2 if "稳" in (summary.get("career_vector", "") or "") else 0.05
+    return ModuleSignal(
+        module="ziwei",
+        layer="baseline",
+        baseline_strength=baseline,
+        timing_window=52.0,
+        external_support=66.0,
+        internal_resistance=38.0,
+        risk_exposure=36.0,
+        certainty=74.0,
+        actionability=56.0,
+        direction_score=direction,
+        rationale=[
+            summary.get("summary", ""),
+            summary.get("career_vector", ""),
+            summary.get("advice", ""),
+        ],
+        raw=summary,
+    )
+
+
+def signal_from_fengshui(summary: Dict[str, Any]) -> ModuleSignal:
+    support = float(summary.get("space_support", 50) or 50)
+    risk = float(summary.get("layout_risk", 50) or 50)
+    direction = max(-1.0, min(1.0, (support - risk) / 100))
+    return ModuleSignal(
+        module="fengshui",
+        layer="space",
+        baseline_strength=54.0,
+        timing_window=50.0,
+        external_support=support,
+        internal_resistance=max(20.0, 85.0 - support),
+        risk_exposure=risk,
+        certainty=68.0,
+        actionability=62.0,
+        direction_score=direction,
+        rationale=[
+            summary.get("summary", ""),
+            summary.get("adjustment_advice", ""),
+        ],
+        raw=summary,
+    )
+
+
 def signal_from_liuyao(summary: Dict[str, Any]) -> ModuleSignal:
     direction = _direction_from_text(
         f"{summary.get('summary', '')}{summary.get('advice', '')}",
@@ -181,6 +229,10 @@ def build_unified_world_model(
 
     if module_summaries.get("bazi"):
         signals.append(signal_from_bazi(module_summaries["bazi"]))
+    if module_summaries.get("ziwei"):
+        signals.append(signal_from_ziwei(module_summaries["ziwei"]))
+    if module_summaries.get("fengshui"):
+        signals.append(signal_from_fengshui(module_summaries["fengshui"]))
     if module_summaries.get("liuyao"):
         signals.append(signal_from_liuyao(module_summaries["liuyao"]))
     if module_summaries.get("meihua"):

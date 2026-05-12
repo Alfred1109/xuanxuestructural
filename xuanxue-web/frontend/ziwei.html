@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>紫微斗数 - 玄学预测系统</title>
+    <link rel="stylesheet" href="common-header.css?v=20260512-ziwei">
+    <link rel="stylesheet" href="common-theme.css?v=20260512-ziwei">
+    <style>
+        .page-title {
+            margin-bottom: 16px;
+            color: var(--color-primary-strong);
+        }
+
+        .panel-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .panel-card {
+            background: rgba(255, 255, 255, 0.86);
+            border: 1px solid rgba(217, 226, 220, 0.92);
+            border-radius: 16px;
+            padding: 16px;
+        }
+
+        .panel-card .kicker {
+            color: var(--color-text-soft);
+            font-size: 0.82rem;
+        }
+
+        .panel-card .title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--color-primary-strong);
+            margin: 6px 0 8px;
+        }
+
+        .panel-card .meta {
+            white-space: pre-wrap;
+            word-break: break-word;
+            line-height: 1.7;
+            color: var(--color-text);
+        }
+
+        .trace-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .trace-item {
+            background: rgba(255, 255, 255, 0.84);
+            border: 1px solid rgba(217, 226, 220, 0.92);
+            border-radius: 14px;
+            padding: 14px;
+        }
+
+        .trace-item h4 {
+            color: var(--color-primary-strong);
+            margin-bottom: 8px;
+        }
+
+        .trace-item .trace-body {
+            white-space: pre-wrap;
+            word-break: break-word;
+            line-height: 1.7;
+            color: var(--color-text);
+            font-size: 0.92rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="unified-header">
+        <div class="container">
+            <div class="site-title">
+                <h1>🔮 玄学预测系统</h1>
+                <p>传统命理学 · 现代科技 · 智能分析</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h2 class="page-title">✨ 紫微斗数命盘</h2>
+            <p class="text-muted">当前接入的是最小集成版，用于补充命宫、身宫、主星与四化视角，并进入统一问事主链。</p>
+
+            <form id="ziweiForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="year">年</label>
+                        <input type="number" id="year" min="1900" max="2100" placeholder="1990">
+                    </div>
+                    <div class="form-group">
+                        <label for="month">月</label>
+                        <input type="number" id="month" min="1" max="12" placeholder="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="day">日</label>
+                        <input type="number" id="day" min="1" max="31" placeholder="1">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="hour">时</label>
+                        <input type="number" id="hour" min="0" max="23" placeholder="12">
+                    </div>
+                    <div class="form-group">
+                        <label for="minute">分</label>
+                        <input type="number" id="minute" min="0" max="59" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="gender">性别</label>
+                        <select id="gender">
+                            <option value="男">男</option>
+                            <option value="女">女</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="btn-row">
+                    <button type="submit" class="btn">开始排盘</button>
+                    <button type="button" class="btn btn-accent" id="fillDemoBtn">填入示例</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p class="loading-text">正在排出紫微命盘...</p>
+        </div>
+
+        <div class="result" id="result">
+            <div class="card">
+                <h2 class="page-title">命盘摘要</h2>
+                <div class="panel-grid" id="summaryGrid"></div>
+            </div>
+
+            <div class="card">
+                <h2 class="page-title">综合解读</h2>
+                <div id="analysis"></div>
+            </div>
+
+            <div class="card">
+                <h2 class="page-title">推演链</h2>
+                <div class="trace-grid" id="traceGrid"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="common-links.js"></script>
+    <script src="common-ui.js"></script>
+    <script src="markdown.js"></script>
+    <script src="api-client.js"></script>
+    <script src="common-renderers.js"></script>
+    <script>
+        const esc = (value) => (window.escapeHtml ? window.escapeHtml(value ?? '') : String(value ?? ''));
+        const renderMarkdown = (text) => window.renderMarkdownSimple(text || '', '#173a34');
+
+        if (window.applyCommonLinks) {
+            window.applyCommonLinks();
+        }
+
+        function renderSummaryCard(title, value, meta) {
+            return [
+                '<div class="panel-card">',
+                '  <div class="kicker">' + esc(meta || '') + '</div>',
+                '  <div class="title">' + esc(title || '未命名') + '</div>',
+                '  <div class="meta">' + esc(value || '') + '</div>',
+                '</div>'
+            ].join('');
+        }
+
+        function renderTrace(trace) {
+            const renderers = window.commonRenderers || {};
+            const format = typeof renderers.renderTraceText === 'function'
+                ? renderers.renderTraceText
+                : function (value) { return typeof value === 'string' ? value : JSON.stringify(value, null, 2); };
+
+            return [
+                {
+                    title: '命宫',
+                    body: format(trace && trace.minggong ? trace.minggong : {})
+                },
+                {
+                    title: '身宫',
+                    body: format(trace && trace.shengong ? trace.shengong : {})
+                },
+                {
+                    title: '四化',
+                    body: format(trace && trace.four_transformations ? trace.four_transformations.result || trace.four_transformations : {})
+                },
+                {
+                    title: '命宫推导',
+                    body: trace && trace.minggong ? format(trace.minggong) : ''
+                },
+                {
+                    title: '身宫推导',
+                    body: trace && trace.shengong ? format(trace.shengong) : ''
+                },
+                {
+                    title: '排盘依据',
+                    body: trace && trace.source ? trace.source : ''
+                }
+            ].map((item) => [
+                '<div class="trace-item">',
+                '  <h4>' + esc(item.title) + '</h4>',
+                '  <div class="trace-body">' + esc(item.body) + '</div>',
+                '</div>'
+            ].join('')).join('');
+        }
+
+        document.getElementById('ziweiForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            loading.classList.add('show');
+            result.classList.remove('show');
+
+            try {
+                const payload = {
+                    year: parseInt(document.getElementById('year').value, 10),
+                    month: parseInt(document.getElementById('month').value, 10),
+                    day: parseInt(document.getElementById('day').value, 10),
+                    hour: parseInt(document.getElementById('hour').value, 10),
+                    minute: parseInt(document.getElementById('minute').value || '0', 10),
+                    gender: document.getElementById('gender').value
+                };
+
+                const response = await window.apiClient.postJson('/api/ziwei', payload);
+                const data = response.data || {};
+                const stars = Array.isArray(data.major_stars) ? data.major_stars.map((item) => item.name).filter(Boolean) : [];
+                const currentDecadal = data.analysis && data.analysis.current_decadal ? data.analysis.current_decadal : {};
+                const currentDecadalText = currentDecadal.palace
+                    ? (currentDecadal.palace + ' ' + ((currentDecadal.range || []).join('-')) + '岁')
+                    : '待进一步结合流年判断';
+
+                document.getElementById('summaryGrid').innerHTML = [
+                    renderSummaryCard(data.minggong && data.minggong.name || '未知', '命宫落点', '命宫'),
+                    renderSummaryCard(data.shengong && data.shengong.name || '未知', '身宫落点', '身宫'),
+                    renderSummaryCard(stars.join('、') || '暂无主星', '主星组合', '主星'),
+                    renderSummaryCard(currentDecadalText, (data.analysis && data.analysis.mutagen_summary) || '待进一步结合四化判断', '当前大限 / 四化')
+                ].join('');
+
+                document.getElementById('analysis').innerHTML = renderMarkdown([
+                    data.analysis && data.analysis.summary,
+                    data.analysis && data.analysis.advice,
+                    data.analysis && data.analysis.minggong_focus ? ('命宫主轴：' + data.analysis.minggong_focus) : '',
+                    data.analysis && data.analysis.career_vector ? ('事业：' + data.analysis.career_vector) : '',
+                    data.analysis && data.analysis.relationship_vector ? ('关系：' + data.analysis.relationship_vector) : '',
+                    data.analysis && data.analysis.wealth_vector ? ('财务：' + data.analysis.wealth_vector) : '',
+                    data.analysis && data.analysis.health_vector ? ('健康：' + data.analysis.health_vector) : ''
+                ].filter(Boolean).join('\n\n'));
+
+                document.getElementById('traceGrid').innerHTML = renderTrace(data.calc_trace || {});
+                result.classList.add('show');
+            } catch (error) {
+                window.showToast(error.message || '紫微排盘失败', 'error');
+            } finally {
+                loading.classList.remove('show');
+            }
+        });
+
+        document.getElementById('fillDemoBtn').addEventListener('click', () => {
+            document.getElementById('year').value = '1990';
+            document.getElementById('month').value = '1';
+            document.getElementById('day').value = '1';
+            document.getElementById('hour').value = '12';
+            document.getElementById('minute').value = '0';
+            document.getElementById('gender').value = '男';
+        });
+    </script>
+</body>
+</html>

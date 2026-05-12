@@ -14,6 +14,20 @@
             mode: 'overview',
             scrollTarget: 'baziForm'
         },
+        ziwei: {
+            title: '紫微斗数',
+            desc: '补充命宫、身宫、主星与四化视角，强化长期结构判断。',
+            pill: '紫微',
+            mode: 'frame',
+            url: 'ziwei.html?embed=1'
+        },
+        fengshui: {
+            title: '风水 / 空间',
+            desc: '从朝向、布局与场景结构评估空间支持度与风险点。',
+            pill: '风水',
+            mode: 'frame',
+            url: 'fengshui.html?embed=1'
+        },
         liuyao: {
             title: '六爻占卜',
             desc: '围绕单一问题做即时起卦与结构解读。',

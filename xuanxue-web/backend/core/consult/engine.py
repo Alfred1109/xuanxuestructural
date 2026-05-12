@@ -6,20 +6,24 @@ from ..bazi_advanced import get_advanced_analysis
 from ..bazi_core import BaZiChart
 from ..decision_log import append_decision_log
 from ..decision.kernel import build_unified_world_model
+from ..fengshui import FengShuiReading
 from ..decision.weight_tuning import resolve_effective_weight_presets
 from ..liuyao import divine
 from ..llm_helper import llm_helper
 from ..meihua import divine_meihua
 from ..qimen import divine_qimen
+from ..ziwei import ZiWeiChart, analyze_ziwei_chart
 from ..zeri import find_auspicious_days, get_today_fortune
 from .models import UnifiedConsultRequest
 from .router import infer_consult_modules, normalize_matter_type, normalize_purpose
 from .summarizers import (
     generate_simple_analysis,
     summarize_bazi_result,
+    summarize_fengshui_result,
     summarize_liuyao_result,
     summarize_meihua_result,
     summarize_qimen_result,
+    summarize_ziwei_result,
     summarize_zeri_result,
 )
 from .trace import build_trace_graph
@@ -53,6 +57,9 @@ def fallback_consultation_summary(question: str, module_summaries: Dict[str, Any
     qimen = module_summaries.get("qimen")
     if qimen:
         lines.append(f"奇门提示：{qimen.get('matter_advice', '')} 可优先考虑方位 {qimen.get('best_direction', '')}")
+    fengshui = module_summaries.get("fengshui")
+    if fengshui:
+        lines.append(f"风水提示：{fengshui.get('summary', '')} 建议优先处理 {fengshui.get('recommended_direction', '')} 与空间动线。")
     zeri = module_summaries.get("zeri")
     if zeri:
         lines.append(f"择日提示：{zeri.get('level', '')}，评分 {zeri.get('score', 0)}，{zeri.get('fortune_advice', '')}")
@@ -102,6 +109,31 @@ class ConsultationEngine:
             bazi_result["advanced_analysis"] = get_advanced_analysis(chart)
             module_results["bazi"] = bazi_result
             module_summaries["bazi"] = summarize_bazi_result(bazi_result)
+
+        if "ziwei" in modules and has_birth:
+            ziwei_chart = ZiWeiChart(
+                payload.year,
+                payload.month,
+                payload.day,
+                payload.hour,
+                payload.minute or 0,
+                payload.gender or "男",
+            )
+            ziwei_result = ziwei_chart.to_dict()
+            ziwei_result["analysis"] = analyze_ziwei_chart(ziwei_result)
+            module_results["ziwei"] = ziwei_result
+            module_summaries["ziwei"] = summarize_ziwei_result(ziwei_result)
+
+        if "fengshui" in modules:
+            fengshui_result = FengShuiReading(
+                question=question,
+                location=payload.location or "",
+                orientation="",
+                scene_type="office" if any(term in question for term in ["办公室", "工位", "办公"]) else "home" if any(term in question for term in ["住宅", "搬家", "入宅", "家里"]) else "generic",
+                layout_note=question,
+            ).to_dict()
+            module_results["fengshui"] = fengshui_result
+            module_summaries["fengshui"] = summarize_fengshui_result(fengshui_result)
 
         if "liuyao" in modules:
             liuyao_result = divine(question)

@@ -3,6 +3,8 @@ from typing import List, Optional
 
 MODULE_LABELS = {
     "bazi": "八字",
+    "ziwei": "紫微",
+    "fengshui": "风水",
     "liuyao": "六爻",
     "meihua": "梅花",
     "qimen": "奇门",
@@ -61,6 +63,7 @@ def infer_consult_modules(question: str, has_birth: bool, matter_type: str, purp
 
     if has_birth:
         modules.append("bazi")
+        modules.append("ziwei")
 
     liuyao_terms = [
         "能不能", "会不会", "是否", "结果", "感情", "工作", "事业", "合作", "考试", "offer",
@@ -77,6 +80,10 @@ def infer_consult_modules(question: str, has_birth: bool, matter_type: str, purp
         "择日", "吉日", "哪天", "日期", "时间", "开业", "结婚", "搬家", "入宅",
         "签约", "出行", "动土", "安排",
     ]
+    fengshui_terms = [
+        "风水", "朝向", "方位", "办公室", "工位", "住宅", "家里", "布局", "选址",
+        "入宅", "店铺", "门店", "环境", "采光", "动线",
+    ]
 
     if any(term.lower() in text for term in liuyao_terms) or matter_type in ("婚姻", "求职", "求财", "学业", "诉讼", "疾病"):
         modules.append("liuyao")
@@ -86,6 +93,9 @@ def infer_consult_modules(question: str, has_birth: bool, matter_type: str, purp
 
     if any(term.lower() in text for term in qimen_terms) or matter_type in ("求财", "求职", "出行", "婚姻"):
         modules.append("qimen")
+
+    if any(term.lower() in text for term in fengshui_terms):
+        modules.append("fengshui")
 
     if any(term.lower() in text for term in zeri_terms) or purpose != "通用":
         modules.append("zeri")

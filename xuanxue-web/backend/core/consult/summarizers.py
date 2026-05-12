@@ -20,6 +20,40 @@ def summarize_bazi_result(result: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def summarize_ziwei_result(result: Dict[str, Any]) -> Dict[str, Any]:
+    analysis = result.get("analysis", {})
+    return {
+        "summary": analysis.get("summary", ""),
+        "minggong": result.get("minggong", {}).get("name", ""),
+        "shengong": result.get("shengong", {}).get("name", ""),
+        "major_stars": [item.get("name", "") for item in result.get("major_stars", [])],
+        "career_vector": analysis.get("career_vector", ""),
+        "relationship_vector": analysis.get("relationship_vector", ""),
+        "wealth_vector": analysis.get("wealth_vector", ""),
+        "health_vector": analysis.get("health_vector", ""),
+        "minggong_focus": analysis.get("minggong_focus", ""),
+        "mutagen_summary": analysis.get("mutagen_summary", ""),
+        "current_decadal": analysis.get("current_decadal", {}),
+        "fortune_cycle": result.get("fortune_cycle", {}),
+        "advice": analysis.get("advice", ""),
+    }
+
+
+def summarize_fengshui_result(result: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "summary": result.get("summary", ""),
+        "location": result.get("location", ""),
+        "scene_type": result.get("scene_type", ""),
+        "orientation": result.get("orientation", ""),
+        "orientation_fit": result.get("orientation_fit", 0),
+        "layout_risk": result.get("layout_risk", 0),
+        "space_support": result.get("space_support", 0),
+        "recommended_direction": result.get("recommended_direction", ""),
+        "avoid_direction": result.get("avoid_direction", ""),
+        "adjustment_advice": result.get("adjustment_advice", ""),
+    }
+
+
 def summarize_liuyao_result(result: Dict[str, Any]) -> Dict[str, Any]:
     gua_info = result.get("gua_info", {})
     interpretation = result.get("interpretation", {})

@@ -92,6 +92,53 @@ class TestApiValidation(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assert_success_envelope(resp)
 
+    def test_ziwei_valid_payload_returns_200(self):
+        resp = self.request(
+            "POST",
+            "/api/ziwei",
+            json={
+                "year": 1990,
+                "month": 1,
+                "day": 1,
+                "hour": 12,
+                "minute": 0,
+                "gender": "男",
+            },
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assert_success_envelope(resp)
+
+    def test_ziwei_invalid_gender_returns_422(self):
+        resp = self.request(
+            "POST",
+            "/api/ziwei",
+            json={
+                "year": 1990,
+                "month": 1,
+                "day": 1,
+                "hour": 12,
+                "minute": 0,
+                "gender": "X",
+            },
+        )
+        self.assertEqual(resp.status_code, 422)
+        self.assert_error_envelope(resp, "validation_error")
+
+    def test_fengshui_valid_payload_returns_200(self):
+        resp = self.request(
+            "POST",
+            "/api/fengshui",
+            json={
+                "question": "这个办公室工位适合我长期坐吗？",
+                "location": "上海浦东办公室",
+                "orientation": "东南向",
+                "scene_type": "office",
+                "layout_note": "背后有靠，前方较开阔，但左侧杂物较多。",
+            },
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assert_success_envelope(resp)
+
     def test_calendar_invalid_day_returns_422(self):
         resp = self.request(
             "POST",

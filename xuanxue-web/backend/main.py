@@ -17,7 +17,9 @@ from api.common import (
     validation_exception_handler,
 )
 from api.divination import router as divination_router
+from api.fengshui import router as fengshui_router
 from api.system import router as system_router
+from api.ziwei import router as ziwei_router
 from core.llm_helper import llm_helper
 
 
@@ -45,6 +47,8 @@ app.add_exception_handler(Exception, unhandled_exception_handler)
 
 app.include_router(system_router)
 app.include_router(bazi_router)
+app.include_router(ziwei_router)
+app.include_router(fengshui_router)
 app.include_router(divination_router)
 app.include_router(ai_router)
 

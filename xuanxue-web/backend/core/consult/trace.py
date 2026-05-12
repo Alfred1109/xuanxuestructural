@@ -15,6 +15,218 @@ def _compact(value: Any) -> Any:
     return value
 
 
+def _build_architecture_mermaid(steps: List[TraceStep], modules: List[str], ai_enabled: bool) -> str:
+    step_labels = {step.id: step.label for step in steps}
+    step_ids = set(step_labels.keys())
+    default_labels = {
+        "input": "输入问题",
+        "intent": "意图识别",
+        "router": "模块编排",
+        "module_bus": "统一问事总线",
+        "bazi_year": "八字定年柱",
+        "bazi_month": "八字定月柱",
+        "bazi_day": "八字定日柱",
+        "bazi_hour": "八字定时柱",
+        "bazi_wuxing": "八字计五行",
+        "bazi_shishen": "八字判十神",
+        "bazi_dayun": "八字排大运",
+        "bazi_judge": "八字综合判读",
+        "ziwei_mingpan": "紫微排盘",
+        "ziwei_minggong": "紫微定命身宫",
+        "ziwei_sihua": "紫微排四化",
+        "ziwei_judge": "紫微综合判读",
+        "fengshui_orientation": "风水定朝向",
+        "fengshui_layout": "风水看布局",
+        "fengshui_judge": "风水综合判断",
+        "liuyao_cast": "六爻起卦",
+        "liuyao_judge": "六爻解读",
+        "meihua_cast": "梅花起卦",
+        "meihua_judge": "梅花判体用",
+        "qimen_dun": "奇门定阴阳遁与局数",
+        "qimen_chart": "奇门布九宫",
+        "qimen_judge": "奇门判断",
+        "zeri_jianxing": "择日定建星",
+        "zeri_shier": "择日定十二神",
+        "zeri_score": "择日综合评分",
+        "zeri_candidates": "候选日期",
+        "environment": "环境修正",
+        "world_model": "统一世界模型",
+        "arbitration": "仲裁引擎",
+        "synthesis": "统一综合",
+        "fallback": "兼容模式",
+        "answer": "结果输出",
+    }
+
+    def label(step_id: str, fallback: str) -> str:
+        return step_labels.get(step_id, default_labels.get(step_id, fallback))
+
+    def add_node(lines: List[str], step_id: str, fallback: str) -> None:
+        lines.append(f'    {step_id}["{label(step_id, fallback)}"]')
+
+    lines = [
+        "flowchart TD",
+        '  subgraph control["统一问事总控层"]',
+        "    direction TB",
+    ]
+    add_node(lines, "input", "输入问题")
+    add_node(lines, "intent", "意图识别")
+    add_node(lines, "router", "模块编排")
+    lines.extend(
+        [
+            '    module_bus["统一问事总线"]',
+            "    input --> intent --> router --> module_bus",
+            "  end",
+            '  subgraph module_layer["术数模块执行层"]',
+            "    direction LR",
+        ]
+    )
+
+    module_configs = {
+        "bazi": (
+            "八字命理线",
+            [
+                "bazi_year",
+                "bazi_month",
+                "bazi_day",
+                "bazi_hour",
+                "bazi_wuxing",
+                "bazi_shishen",
+                "bazi_dayun",
+                "bazi_judge",
+            ],
+        ),
+        "ziwei": (
+            "紫微斗数线",
+            [
+                "ziwei_mingpan",
+                "ziwei_minggong",
+                "ziwei_sihua",
+                "ziwei_judge",
+            ],
+        ),
+        "fengshui": (
+            "风水空间线",
+            [
+                "fengshui_orientation",
+                "fengshui_layout",
+                "fengshui_judge",
+            ],
+        ),
+        "liuyao": (
+            "六爻占断线",
+            ["liuyao_cast", "liuyao_judge"],
+        ),
+        "meihua": (
+            "梅花易数线",
+            ["meihua_cast", "meihua_judge"],
+        ),
+        "qimen": (
+            "奇门遁甲线",
+            ["qimen_dun", "qimen_chart", "qimen_judge"],
+        ),
+        "zeri": (
+            "择日择时线",
+            ["zeri_jianxing", "zeri_shier", "zeri_score", "zeri_candidates"],
+        ),
+    }
+
+    module_sinks: List[str] = []
+    for module, (title, chain) in module_configs.items():
+        title, chain = module_configs[module]
+        lines.append(f'    subgraph {module}_lane["{title}"]')
+        lines.append("      direction TB")
+        for step_id in chain:
+            add_node(lines, step_id, step_id)
+        for source, target in zip(chain, chain[1:]):
+            lines.append(f"      {source} --> {target}")
+        lines.append("    end")
+        module_sinks.append(chain[-1])
+    lines.append("  end")
+    for module, (_title, chain) in module_configs.items():
+        lines.append(f"  module_bus --> {chain[0]}")
+
+    lines.extend(
+        [
+            '  subgraph decision["统一决策集成层"]',
+            "    direction TB",
+        ]
+    )
+    add_node(lines, "environment", "环境修正")
+    add_node(lines, "world_model", "统一世界模型")
+    add_node(lines, "arbitration", "仲裁引擎")
+    add_node(lines, "synthesis", "统一综合")
+    if not ai_enabled and "fallback" in step_ids:
+        add_node(lines, "fallback", "兼容模式")
+    else:
+        add_node(lines, "fallback", "兼容模式")
+    add_node(lines, "answer", "结果输出")
+    lines.append("  end")
+
+    lines.append("  intent --> environment")
+    for sink in module_sinks:
+        lines.append(f"  {sink} --> world_model")
+    lines.append("  environment --> world_model --> arbitration --> synthesis")
+    lines.append("  synthesis --> fallback --> answer")
+
+    active_nodes = set(step_ids)
+    active_nodes.add("module_bus")
+    if "fallback" not in step_ids:
+        active_nodes.discard("fallback")
+
+    inactive_nodes = [
+        "input",
+        "intent",
+        "router",
+        "module_bus",
+        "bazi_year",
+        "bazi_month",
+        "bazi_day",
+        "bazi_hour",
+        "bazi_wuxing",
+        "bazi_shishen",
+        "bazi_dayun",
+        "bazi_judge",
+        "ziwei_mingpan",
+        "ziwei_minggong",
+        "ziwei_sihua",
+        "ziwei_judge",
+        "fengshui_orientation",
+        "fengshui_layout",
+        "fengshui_judge",
+        "liuyao_cast",
+        "liuyao_judge",
+        "meihua_cast",
+        "meihua_judge",
+        "qimen_dun",
+        "qimen_chart",
+        "qimen_judge",
+        "zeri_jianxing",
+        "zeri_shier",
+        "zeri_score",
+        "zeri_candidates",
+        "environment",
+        "world_model",
+        "arbitration",
+        "synthesis",
+        "fallback",
+        "answer",
+    ]
+    inactive_nodes = [node for node in inactive_nodes if node not in active_nodes]
+
+    lines.extend(
+        [
+            "  classDef inactive fill:#eef1ef,stroke:#c9d2cd,color:#8a968f,stroke-width:1px;",
+            "  classDef active fill:#f7efe1,stroke:#2c5b4f,color:#173a34,stroke-width:2px;",
+        ]
+    )
+    if inactive_nodes:
+        lines.append("  class " + ",".join(inactive_nodes) + " inactive;")
+    if active_nodes:
+        lines.append("  class " + ",".join(sorted(active_nodes)) + " active;")
+
+    return "\n".join(lines)
+
+
 def build_trace_graph(
     question: str,
     modules: List[str],
@@ -279,6 +491,172 @@ def build_trace_graph(
             ],
             formulas=[liuyao_trace.get("cast", {}).get("formula", "")],
             derivation=liuyao_trace,
+            previous=last_step,
+        )
+
+    if "fengshui" in modules:
+        fengshui_result = module_results.get("fengshui", {})
+        fengshui_trace = fengshui_result.get("calc_trace", {})
+        last_step = add_step(
+            "fengshui_orientation",
+            "风水定朝向",
+            "先识别空间朝向与场景类型",
+            inputs={
+                "location": profile.get("location", ""),
+                "question": question,
+            },
+            rule="朝向映射基础空间支持度，场景类型决定判断重点",
+            outputs={
+                "scene_type": fengshui_result.get("scene_type", ""),
+                "orientation": fengshui_result.get("orientation", ""),
+                "orientation_fit": fengshui_result.get("orientation_fit", 0),
+            },
+            evidence=[
+                f"场景：{fengshui_result.get('scene_type', '')}",
+                f"朝向：{fengshui_result.get('orientation', '')}",
+            ],
+            formulas=[fengshui_trace.get("orientation", {}).get("formula", "")],
+            derivation=fengshui_trace.get("orientation", {}),
+            previous=last_step,
+        )
+        last_step = add_step(
+            "fengshui_layout",
+            "风水看布局",
+            "根据空间描述评估动线、压迫与采光通风等风险",
+            inputs={
+                "layout_note": fengshui_result.get("layout_note", question),
+            },
+            rule="布局描述命中风险词与正向词后修正空间风险分",
+            outputs={
+                "layout_risk": fengshui_result.get("layout_risk", 0),
+                "space_support": fengshui_result.get("space_support", 0),
+            },
+            evidence=[
+                f"布局风险：{fengshui_result.get('layout_risk', 0)}",
+                f"空间支持：{fengshui_result.get('space_support', 0)}",
+            ],
+            formulas=[fengshui_trace.get("layout", {}).get("formula", "")],
+            derivation=fengshui_trace.get("layout", {}),
+            previous=last_step,
+        )
+        last_step = add_step(
+            "fengshui_judge",
+            "风水综合判断",
+            "结合朝向、布局与空间类型给出调整建议",
+            inputs={
+                "orientation": fengshui_result.get("orientation", ""),
+                "scene_type": fengshui_result.get("scene_type", ""),
+                "location": fengshui_result.get("location", ""),
+            },
+            rule="风水层输出空间支持度、风险点与推荐方位，供统一仲裁层吸收",
+            outputs={
+                "summary": fengshui_result.get("summary", ""),
+                "recommended_direction": fengshui_result.get("recommended_direction", ""),
+                "avoid_direction": fengshui_result.get("avoid_direction", ""),
+                "adjustment_advice": fengshui_result.get("adjustment_advice", ""),
+            },
+            evidence=[
+                fengshui_result.get("summary", ""),
+                fengshui_result.get("adjustment_advice", ""),
+            ],
+            formulas=[fengshui_trace.get("summary", {}).get("formula", "")],
+            derivation=fengshui_trace.get("summary", {}),
+            previous=last_step,
+        )
+
+    if "ziwei" in modules and profile.get("birth"):
+        ziwei_result = module_results.get("ziwei", {})
+        ziwei_analysis = ziwei_result.get("analysis", {})
+        ziwei_trace = ziwei_result.get("calc_trace", {})
+        last_step = add_step(
+            "ziwei_mingpan",
+            "紫微排盘",
+            "根据出生年月日时生成紫微斗数命盘骨架",
+            inputs={
+                "birth": profile.get("birth"),
+                "gender": profile.get("gender"),
+            },
+            rule="先统一出生信息，再按紫微斗数排盘规则生成命盘骨架与宫位快照",
+            outputs={
+                "major_stars": ziwei_result.get("major_stars", []),
+                "palace_snapshot": ziwei_result.get("palace_snapshot", []),
+            },
+            evidence=[
+                f"主星数：{len(ziwei_result.get('major_stars', []))}",
+            ],
+            formulas=[ziwei_trace.get("seed_formula", "")],
+            derivation={"seed": ziwei_trace.get("seed", 0)},
+            previous=last_step,
+        )
+        last_step = add_step(
+            "ziwei_minggong",
+            "紫微定命身宫",
+            "确定命宫与身宫落点",
+            inputs={
+                "birth": profile.get("birth"),
+            },
+            rule="以出生信息映射命宫与身宫，用于判断人格重心与行动落点",
+            outputs={
+                "minggong": ziwei_result.get("minggong", {}),
+                "shengong": ziwei_result.get("shengong", {}),
+            },
+            evidence=[
+                f"命宫：{ziwei_result.get('minggong', {}).get('name', '')}",
+                f"身宫：{ziwei_result.get('shengong', {}).get('name', '')}",
+            ],
+            formulas=[ziwei_trace.get("minggong", {}).get("formula", ""), ziwei_trace.get("shengong", {}).get("formula", "")],
+            derivation={
+                "minggong": ziwei_trace.get("minggong", {}),
+                "shengong": ziwei_trace.get("shengong", {}),
+            },
+            previous=last_step,
+        )
+        last_step = add_step(
+            "ziwei_sihua",
+            "紫微排四化",
+            "根据命盘种子偏移生成四化主星",
+            inputs={
+                "major_stars": ziwei_result.get("major_stars", []),
+            },
+            rule="以命盘基础偏移映射化禄、化权、化科、化忌，形成趋势修正层",
+            outputs={
+                "four_transformations": ziwei_result.get("four_transformations", {}),
+            },
+            evidence=[
+                f"化禄：{ziwei_result.get('four_transformations', {}).get('化禄', '')}",
+                f"化忌：{ziwei_result.get('four_transformations', {}).get('化忌', '')}",
+            ],
+            formulas=[ziwei_trace.get("four_transformations", {}).get("formula", "")],
+            derivation=ziwei_trace.get("four_transformations", {}),
+            previous=last_step,
+        )
+        last_step = add_step(
+            "ziwei_judge",
+            "紫微综合判读",
+            "结合命宫、主星、四化与运程方向生成综合判断",
+            inputs={
+                "minggong": ziwei_result.get("minggong", {}),
+                "major_stars": ziwei_result.get("major_stars", []),
+                "fortune_cycle": ziwei_result.get("fortune_cycle", {}),
+                "core_palaces": ziwei_result.get("core_palaces", {}),
+            },
+            rule="紫微更偏结构性判断，用于补强长期格局、职业、关系与健康向量",
+            outputs={
+                "summary": ziwei_analysis.get("summary", ""),
+                "career_vector": ziwei_analysis.get("career_vector", ""),
+                "relationship_vector": ziwei_analysis.get("relationship_vector", ""),
+                "wealth_vector": ziwei_analysis.get("wealth_vector", ""),
+                "health_vector": ziwei_analysis.get("health_vector", ""),
+                "minggong_focus": ziwei_analysis.get("minggong_focus", ""),
+                "mutagen_summary": ziwei_analysis.get("mutagen_summary", ""),
+                "current_decadal": ziwei_analysis.get("current_decadal", {}),
+                "advice": ziwei_analysis.get("advice", ""),
+            },
+            evidence=[
+                ziwei_analysis.get("summary", ""),
+                ziwei_analysis.get("mutagen_summary", ""),
+                ziwei_analysis.get("advice", ""),
+            ],
             previous=last_step,
         )
         last_step = add_step(
@@ -594,9 +972,7 @@ def build_trace_graph(
         previous=last_step,
     )
 
-    label_map = {step.id: step.label for step in steps}
-    mermaid_lines = ["flowchart TD"]
-    for source, target in edges:
-        mermaid_lines.append(f'  {source}["{label_map.get(source, source)}"] --> {target}["{label_map.get(target, target)}"]')
-
-    return TraceGraph(steps=steps, mermaid="\n".join(mermaid_lines))
+    return TraceGraph(
+        steps=steps,
+        mermaid=_build_architecture_mermaid(steps, modules, ai_enabled),
+    )

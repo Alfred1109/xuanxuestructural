@@ -16,6 +16,8 @@
     function moduleNameLabel(moduleName) {
         var labels = {
             bazi: '八字底盘',
+            ziwei: '紫微命盘',
+            fengshui: '风水空间',
             liuyao: '六爻问事',
             meihua: '梅花起卦',
             qimen: '奇门时空',
@@ -45,6 +47,35 @@
                 summary.summary,
                 summary.advice,
                 summary.timing
+            ].filter(Boolean).join('\n');
+        }
+        if (moduleName === 'ziwei') {
+            return [
+                summary.summary,
+                summary.minggong ? '命宫：' + summary.minggong : '',
+                summary.shengong ? '身宫：' + summary.shengong : '',
+                summary.minggong_focus ? '命宫主轴：' + summary.minggong_focus : '',
+                Array.isArray(summary.major_stars) && summary.major_stars.length ? ('主星：' + summary.major_stars.join('、')) : '',
+                summary.career_vector ? '事业：' + summary.career_vector : '',
+                summary.relationship_vector ? '关系：' + summary.relationship_vector : '',
+                summary.wealth_vector ? '财务：' + summary.wealth_vector : '',
+                summary.health_vector ? '健康：' + summary.health_vector : '',
+                summary.mutagen_summary ? '四化：' + summary.mutagen_summary : '',
+                summary.current_decadal && summary.current_decadal.palace ? ('当前大限：' + summary.current_decadal.palace + ' ' + ((summary.current_decadal.range || []).join('-'))) : '',
+                summary.advice ? '建议：' + summary.advice : ''
+            ].filter(Boolean).join('\n');
+        }
+        if (moduleName === 'fengshui') {
+            return [
+                summary.summary,
+                summary.location ? '地点：' + summary.location : '',
+                summary.scene_type ? '场景：' + summary.scene_type : '',
+                summary.orientation ? '朝向：' + summary.orientation : '',
+                summary.recommended_direction ? '宜：' + summary.recommended_direction : '',
+                summary.avoid_direction ? '忌：' + summary.avoid_direction : '',
+                typeof summary.space_support === 'number' ? '空间支持：' + summary.space_support + '分' : '',
+                typeof summary.layout_risk === 'number' ? '布局风险：' + summary.layout_risk + '分' : '',
+                summary.adjustment_advice ? '调整：' + summary.adjustment_advice : ''
             ].filter(Boolean).join('\n');
         }
         if (moduleName === 'meihua') {
@@ -270,24 +301,176 @@
             evidence: ['结果可回看']
         });
 
-        var mermaidLines = [
-            'flowchart TD',
-            '  input["输入问题"] --> intent["意图识别"]',
-            '  intent --> router["模块编排"]'
-        ];
-        modules.forEach(function (moduleName) {
-            mermaidLines.push('  router --> ' + moduleName + '["' + esc(moduleNameLabel(moduleName)) + '"]');
-            mermaidLines.push('  ' + moduleName + ' --> synthesis["统一综合"]');
-        });
-        if (!modules.length) {
-            mermaidLines.push('  router --> synthesis["统一综合"]');
-        }
-        mermaidLines.push('  synthesis --> answer["结果输出"]');
-
         return {
             steps: steps,
-            mermaid: mermaidLines.join('\n')
+            mermaid: buildArchitectureMermaid(steps, modules, !!(payload.ai && payload.ai.enabled), !!(payload.ai && payload.ai.fallback))
         };
+    }
+
+    function buildArchitectureMermaid(steps, modules, aiEnabled, useFallback) {
+        var labels = {};
+        var ids = {};
+        var defaultLabels = {
+            input: '输入问题',
+            intent: '意图识别',
+            router: '模块编排',
+            module_bus: '统一问事总线',
+            bazi_year: '八字定年柱',
+            bazi_month: '八字定月柱',
+            bazi_day: '八字定日柱',
+            bazi_hour: '八字定时柱',
+            bazi_wuxing: '八字计五行',
+            bazi_shishen: '八字判十神',
+            bazi_dayun: '八字排大运',
+            bazi_judge: '八字综合判读',
+            ziwei_mingpan: '紫微排盘',
+            ziwei_minggong: '紫微定命身宫',
+            ziwei_sihua: '紫微排四化',
+            ziwei_judge: '紫微综合判读',
+            fengshui_orientation: '风水定朝向',
+            fengshui_layout: '风水看布局',
+            fengshui_judge: '风水综合判断',
+            liuyao_cast: '六爻起卦',
+            liuyao_judge: '六爻解读',
+            meihua_cast: '梅花起卦',
+            meihua_judge: '梅花判体用',
+            qimen_dun: '奇门定阴阳遁与局数',
+            qimen_chart: '奇门布九宫',
+            qimen_judge: '奇门判断',
+            zeri_jianxing: '择日定建星',
+            zeri_shier: '择日定十二神',
+            zeri_score: '择日综合评分',
+            zeri_candidates: '候选日期',
+            environment: '环境修正',
+            world_model: '统一世界模型',
+            arbitration: '仲裁引擎',
+            synthesis: '统一综合',
+            fallback: '兼容模式',
+            answer: '结果输出'
+        };
+        (steps || []).forEach(function (step) {
+            labels[step.id] = step.label;
+            ids[step.id] = true;
+        });
+
+        function nodeLabel(id, fallback) {
+            return esc(labels[id] || defaultLabels[id] || fallback);
+        }
+
+        function addNode(lines, id, fallback, indent) {
+            lines.push(indent + id + '["' + nodeLabel(id, fallback) + '"]');
+        }
+
+        var moduleConfigs = {
+            bazi: {
+                title: '八字命理线',
+                chain: ['bazi_year', 'bazi_month', 'bazi_day', 'bazi_hour', 'bazi_wuxing', 'bazi_shishen', 'bazi_dayun', 'bazi_judge']
+            },
+            ziwei: {
+                title: '紫微斗数线',
+                chain: ['ziwei_mingpan', 'ziwei_minggong', 'ziwei_sihua', 'ziwei_judge']
+            },
+            fengshui: {
+                title: '风水空间线',
+                chain: ['fengshui_orientation', 'fengshui_layout', 'fengshui_judge']
+            },
+            liuyao: {
+                title: '六爻占断线',
+                chain: ['liuyao_cast', 'liuyao_judge']
+            },
+            meihua: {
+                title: '梅花易数线',
+                chain: ['meihua_cast', 'meihua_judge']
+            },
+            qimen: {
+                title: '奇门遁甲线',
+                chain: ['qimen_dun', 'qimen_chart', 'qimen_judge']
+            },
+            zeri: {
+                title: '择日择时线',
+                chain: ['zeri_jianxing', 'zeri_shier', 'zeri_score', 'zeri_candidates']
+            }
+        };
+
+        var mermaidLines = [
+            'flowchart TD',
+            '  subgraph control["统一问事总控层"]',
+            '    direction TB',
+            '    input["' + nodeLabel('input', '输入问题') + '"]',
+            '    intent["' + nodeLabel('intent', '意图识别') + '"]',
+            '    router["' + nodeLabel('router', '模块编排') + '"]',
+            '    module_bus["统一问事总线"]',
+            '    input --> intent --> router --> module_bus',
+            '  end',
+            '  subgraph module_layer["术数模块执行层"]',
+            '    direction LR'
+        ];
+
+        Object.keys(moduleConfigs).forEach(function (moduleName) {
+            var config = moduleConfigs[moduleName];
+            mermaidLines.push('    subgraph ' + moduleName + '_lane["' + esc(config.title) + '"]');
+            mermaidLines.push('      direction TB');
+            config.chain.forEach(function (id) {
+                addNode(mermaidLines, id, id, '      ');
+            });
+            for (var i = 0; i < config.chain.length - 1; i += 1) {
+                mermaidLines.push('      ' + config.chain[i] + ' --> ' + config.chain[i + 1]);
+            }
+            mermaidLines.push('    end');
+        });
+        mermaidLines.push('  end');
+        Object.keys(moduleConfigs).forEach(function (moduleName) {
+            mermaidLines.push('  module_bus --> ' + moduleConfigs[moduleName].chain[0]);
+        });
+
+        mermaidLines.push('  subgraph decision["统一决策集成层"]');
+        mermaidLines.push('    direction TB');
+        addNode(mermaidLines, 'environment', '环境修正', '    ');
+        addNode(mermaidLines, 'world_model', '统一世界模型', '    ');
+        addNode(mermaidLines, 'arbitration', '仲裁引擎', '    ');
+        addNode(mermaidLines, 'synthesis', '统一综合', '    ');
+        addNode(mermaidLines, 'fallback', '兼容模式', '    ');
+        addNode(mermaidLines, 'answer', '结果输出', '    ');
+        mermaidLines.push('  end');
+
+        mermaidLines.push('  intent --> environment');
+        Object.keys(moduleConfigs).forEach(function (moduleName) {
+            var sink = moduleConfigs[moduleName].chain[moduleConfigs[moduleName].chain.length - 1];
+            mermaidLines.push('  ' + sink + ' --> world_model');
+        });
+        mermaidLines.push('  environment --> world_model --> arbitration --> synthesis');
+        mermaidLines.push('  synthesis --> fallback --> answer');
+
+        var activeNodes = {};
+        Object.keys(ids).forEach(function (id) {
+            activeNodes[id] = true;
+        });
+        activeNodes.module_bus = true;
+        if (!ids.fallback) {
+            delete activeNodes.fallback;
+        }
+
+        var allNodes = [
+            'input', 'intent', 'router', 'module_bus',
+            'bazi_year', 'bazi_month', 'bazi_day', 'bazi_hour', 'bazi_wuxing', 'bazi_shishen', 'bazi_dayun', 'bazi_judge',
+            'ziwei_mingpan', 'ziwei_minggong', 'ziwei_sihua', 'ziwei_judge',
+            'fengshui_orientation', 'fengshui_layout', 'fengshui_judge',
+            'liuyao_cast', 'liuyao_judge',
+            'meihua_cast', 'meihua_judge',
+            'qimen_dun', 'qimen_chart', 'qimen_judge',
+            'zeri_jianxing', 'zeri_shier', 'zeri_score', 'zeri_candidates',
+            'environment', 'world_model', 'arbitration', 'synthesis', 'fallback', 'answer'
+        ];
+        var inactiveNodes = allNodes.filter(function (id) { return !activeNodes[id]; });
+
+        mermaidLines.push('  classDef inactive fill:#eef1ef,stroke:#c9d2cd,color:#8a968f,stroke-width:1px;');
+        mermaidLines.push('  classDef active fill:#f7efe1,stroke:#2c5b4f,color:#173a34,stroke-width:2px;');
+        if (inactiveNodes.length) {
+            mermaidLines.push('  class ' + inactiveNodes.join(',') + ' inactive;');
+        }
+        mermaidLines.push('  class ' + Object.keys(activeNodes).sort().join(',') + ' active;');
+
+        return mermaidLines.join('\n');
     }
 
     function buildTraceSummary(trace) {
