@@ -15,6 +15,23 @@ def _compact(value: Any) -> Any:
     return value
 
 
+def _build_brief_answer(answer: str) -> str:
+    text = (answer or "").strip()
+    if not text:
+        return "已生成综合结论，请查看上方完整结果。"
+
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    for line in lines:
+        normalized = line.lstrip("#*-0123456789. ").strip()
+        if not normalized:
+            continue
+        if len(normalized) <= 60:
+            return normalized
+        return normalized[:60].rstrip("，,;；:： ") + "…"
+
+    return "已生成综合结论，请查看上方完整结果。"
+
+
 def _build_architecture_mermaid(steps: List[TraceStep], modules: List[str], ai_enabled: bool) -> str:
     step_labels = {step.id: step.label for step in steps}
     step_ids = set(step_labels.keys())
@@ -238,6 +255,7 @@ def build_trace_graph(
     ai_synthesized: bool,
 ) -> TraceGraph:
     steps: List[TraceStep] = []
+    brief_answer = _build_brief_answer(answer)
     edges: List[tuple[str, str]] = []
 
     def add_step(
@@ -955,9 +973,9 @@ def build_trace_graph(
     last_step = add_step(
         "answer",
         "结果输出",
-        answer,
+        brief_answer,
         inputs={
-            "answer": answer,
+            "summary": brief_answer,
             "decision_kernel": decision_kernel,
             "effective_weights": effective_weights,
             "ai": {
@@ -967,8 +985,8 @@ def build_trace_graph(
             },
         },
         rule="把综合结果呈现给用户",
-        outputs={"answer": answer},
-        evidence=["最终答案已返回前端"],
+        outputs={"summary": brief_answer},
+        evidence=["完整结论已在上方结果区展示"],
         previous=last_step,
     )
 

@@ -7,6 +7,30 @@
         return window.renderMarkdownSimple(text, '#173a34');
     }
 
+    function buildBriefAnswer(answer) {
+        var text = String(answer || '').trim();
+        if (!text) {
+            return '已生成综合结论，请查看上方完整结果。';
+        }
+
+        var lines = text.split('\n').map(function (line) {
+            return line.trim();
+        }).filter(Boolean);
+
+        for (var i = 0; i < lines.length; i += 1) {
+            var normalized = lines[i].replace(/^[#*\-\d.\s]+/, '').trim();
+            if (!normalized) {
+                continue;
+            }
+            if (normalized.length <= 60) {
+                return normalized;
+            }
+            return normalized.slice(0, 60).replace(/[，,;；:：\s]+$/, '') + '...';
+        }
+
+        return '已生成综合结论，请查看上方完整结果。';
+    }
+
     function readOptionalInt(id) {
         var field = document.getElementById(id);
         var value = field ? field.value : '';
@@ -142,6 +166,7 @@
             && payload.day !== null && payload.day !== undefined
             && payload.hour !== null && payload.hour !== undefined
             && payload.gender;
+        var briefAnswer = buildBriefAnswer(answer);
 
         return {
             question: payload.question,
@@ -202,11 +227,11 @@
                     {
                         id: 'answer',
                         label: '结果输出',
-                        detail: answer,
-                        inputs: { answer: answer },
+                        detail: briefAnswer,
+                        inputs: { summary: briefAnswer },
                         rule: '把兼容模式结果呈现给用户',
-                        outputs: { answer: answer },
-                        evidence: ['兼容模式回退输出']
+                        outputs: { summary: briefAnswer },
+                        evidence: ['完整结论已在上方结果区展示']
                     }
                 ]
             },
@@ -224,6 +249,7 @@
             : [];
         var summaries = payload.module_summaries || {};
         var answer = payload.answer || '';
+        var briefAnswer = buildBriefAnswer(answer);
         var steps = [
             {
                 id: 'input',
@@ -294,11 +320,11 @@
         steps.push({
             id: 'answer',
             label: '结果输出',
-            detail: answer,
-            inputs: { answer: answer },
+            detail: briefAnswer,
+            inputs: { summary: briefAnswer },
             rule: '把最终答案返回给前端',
-            outputs: { answer: answer },
-            evidence: ['结果可回看']
+            outputs: { summary: briefAnswer },
+            evidence: ['完整结论已在上方结果区展示']
         });
 
         return {

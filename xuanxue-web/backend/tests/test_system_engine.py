@@ -58,6 +58,10 @@ class TestSystemEngine(unittest.TestCase):
         bazi_year = next(step for step in result["trace"]["steps"] if step["id"] == "bazi_year")
         self.assertTrue(bazi_year["formulas"])
         self.assertEqual(bazi_year["derivation"]["result"], result["modules"]["bazi"]["bazi"]["year"])
+        answer_step = result["trace"]["steps"][-1]
+        self.assertNotEqual(answer_step["detail"], result["answer"])
+        self.assertEqual(answer_step["outputs"]["summary"], answer_step["detail"])
+        self.assertIn("完整结论已在上方结果区展示", answer_step["evidence"])
 
     def test_consultation_engine_uses_ziwei_when_birth_is_present(self):
         payload = UnifiedConsultRequest(
