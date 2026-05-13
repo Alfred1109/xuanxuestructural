@@ -5,7 +5,8 @@ LLM Helper Module - AI-Enhanced Analysis
 
 import os
 import json
-from typing import Dict, Optional
+import base64
+from typing import Any, Dict, Optional
 
 # 尝试导入 OpenAI，如果没有安装则设为 None
 try:
@@ -37,6 +38,7 @@ class LLMHelper:
             )
         
         self.model = "deepseek-v3-2-251201"
+        self.vision_model = os.getenv('ARK_VISION_MODEL') or "doubao-1.5-vision-pro-32k"
     
     def is_available(self) -> bool:
         """检查LLM是否可用"""
@@ -323,6 +325,192 @@ class LLMHelper:
             
         except Exception as e:
             print(f"LLM对话失败: {str(e)}")
+            return None
+
+    def analyze_visual_insight(
+        self,
+        image_data_urls: list[str],
+        mode: str,
+        question: Optional[str] = None,
+        location: Optional[str] = None,
+        scene_type: Optional[str] = None,
+    ) -> Optional[str]:
+        """
+        多模态图片分析，支持空间/风水观察、手相参考与面相参考。
+        """
+        if not self.is_available():
+            return None
+
+        try:
+            mode_prompts = {
+                "space": """你是一位擅长空间观察与风水场景拆解的文化顾问。
+请只基于图片中可见的空间、采光、动线、朝向线索、整洁度、压迫感、门窗关系、座位背靠与遮挡关系进行分析。
+不要臆造无法从图中确认的事实。若图像不足以判断，请明确指出需要补拍的角度。
+输出结构：
+1. 画面里看到了什么
+2. 对空间支持度与风险点的判断
+3. 建议补拍的角度
+4. 可以立即调整的事项
+5. 免责声明：仅作文化娱乐与环境观察参考，不替代实地勘测""",
+                "palm": """你是一位做传统手相文化解读的参考助手。
+请只描述图中可见的手掌纹理、掌丘起伏、手型轮廓与手部姿态，再结合传统手相文化给出“仅供娱乐参考”的解读。
+不要做身份识别、年龄识别、健康诊断、医学建议或确定性命运判断。
+如果图片角度、光线、清晰度不足，请明确指出需要如何重拍。
+输出结构：
+1. 可见特征
+2. 传统手相里的参考含义
+3. 还需要补拍哪些细节
+4. 免责声明：仅作文化娱乐参考，不代表确定事实""",
+                "face": """你是一位做传统面相文化解读的参考助手。
+请只基于图中可见的五官比例、额头、眉眼、鼻梁、嘴部、下颌与整体神态，给出传统面相文化中的“仅供娱乐参考”的解读。
+不要做身份识别、相似人比对、年龄推断、种族民族推断、健康诊断、心理诊断或确定性人格结论。
+如果图片不够正面、光线不足、遮挡明显，请明确说明需要如何重拍。
+输出结构：
+1. 可见特征
+2. 传统面相里的参考含义
+3. 还需要补拍哪些细节
+4. 免责声明：仅作文化娱乐参考，不代表确定事实""",
+            }
+
+            prompt = [
+                mode_prompts.get(mode, mode_prompts["space"]),
+                question and ("补充问题：" + question.strip()) or "",
+                location and ("地点信息：" + location.strip()) or "",
+                scene_type and mode == "space" and ("场景类型：" + scene_type.strip()) or "",
+            ]
+            prompt_text = "\n".join([item for item in prompt if item])
+
+            content_items = [{"type": "text", "text": prompt_text}]
+            for image_data_url in image_data_urls:
+                content_items.append({"type": "image_url", "image_url": {"url": image_data_url}})
+
+            response = self.client.chat.completions.create(
+                model=self.vision_model,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": content_items,
+                    }
+                ],
+                temperature=0.5,
+                max_tokens=1200,
+            )
+
+            return response.choices[0].message.content
+        except Exception as e:
+            print(f"LLM图片分析失败: {str(e)}")
+            return None
+
+    def extract_visual_structure(
+        self,
+        image_data_urls: list[str],
+        mode: str,
+        question: Optional[str] = None,
+        location: Optional[str] = None,
+        scene_type: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        对图片做结构化提取，输出稳定 JSON 字段，便于统一问事吸收。
+        """
+        if not self.is_available():
+            return None
+
+        try:
+            schema_prompts = {
+                "space": """请只输出 JSON，不要输出任何额外说明。
+从空间照片中提取结构化信息，字段如下：
+{
+  "shots": [
+    {
+      "visible_subject": "",
+      "lighting": "high/medium/low/unknown",
+      "airflow_openness": "open/neutral/blocked/unknown",
+      "clutter_level": "low/medium/high/unknown",
+      "seat_backing": "supported/neutral/exposed/unknown",
+      "door_window_relation": "balanced/neutral/conflicted/unknown",
+      "compression_feeling": "low/medium/high/unknown",
+      "notable_objects": []
+    }
+  ],
+  "aggregate": {
+    "visible_subject": "",
+    "space_type_guess": "office/home/shop/generic/unknown",
+    "lighting": {"level": "high/medium/low/unknown", "evidence": []},
+    "airflow_openness": {"level": "open/neutral/blocked/unknown", "evidence": []},
+    "clutter_level": {"level": "low/medium/high/unknown", "evidence": []},
+    "seat_backing": {"level": "supported/neutral/exposed/unknown", "evidence": []},
+    "door_window_relation": {"level": "balanced/neutral/conflicted/unknown", "evidence": []},
+    "compression_feeling": {"level": "low/medium/high/unknown", "evidence": []},
+    "recommended_shots": [],
+    "notable_objects": [],
+    "confidence": 0-100
+  }
+}
+要求：只填图中看得见的，不确定就写 unknown 或空数组。""",
+                "palm": """请只输出 JSON，不要输出任何额外说明。
+从手掌照片中提取结构化信息，字段如下：
+{
+  "hand_side_guess": "left/right/unknown",
+  "palm_pose": "open/partial/unknown",
+  "image_quality": {"clarity": "high/medium/low", "lighting": "high/medium/low"},
+  "major_lines_visibility": {"life_line": "clear/partial/unclear", "head_line": "clear/partial/unclear", "heart_line": "clear/partial/unclear", "fate_line": "clear/partial/unclear"},
+  "palm_shape": "square/rectangular/unknown",
+  "finger_shape": "slender/normal/broad/unknown",
+  "mount_balance": {"thenar": "full/normal/flat", "hypothenar": "full/normal/flat", "overall": "balanced/uneven/unknown"},
+  "recommended_shots": [],
+  "confidence": 0-100
+}
+要求：只做可见特征提取，不做身份、年龄、健康判断。""",
+                "face": """请只输出 JSON，不要输出任何额外说明。
+从正脸或近似正脸照片中提取结构化信息，字段如下：
+{
+  "face_angle": "front/near-front/side/unknown",
+  "image_quality": {"clarity": "high/medium/low", "lighting": "high/medium/low", "occlusion": "none/light/heavy"},
+  "face_shape": "oval/round/square/long/unknown",
+  "forehead_visibility": "clear/partial/unclear",
+  "brow_impression": "defined/soft/unclear",
+  "eye_impression": "steady/bright/tired/unclear",
+  "nose_bridge": "defined/medium/soft/unclear",
+  "mouth_impression": "stable/tense/soft/unclear",
+  "jawline": "defined/medium/soft/unclear",
+  "symmetry_impression": "balanced/slightly-uneven/unclear",
+  "recommended_shots": [],
+  "confidence": 0-100
+}
+要求：只做可见结构提取，不做身份、年龄、种族、健康或心理判断。""",
+            }
+
+            prompt = [
+                schema_prompts.get(mode, schema_prompts["space"]),
+                question and ("补充问题：" + question.strip()) or "",
+                location and ("地点信息：" + location.strip()) or "",
+                scene_type and mode == "space" and ("场景类型：" + scene_type.strip()) or "",
+            ]
+            prompt_text = "\n".join([item for item in prompt if item])
+
+            content_items = [{"type": "text", "text": prompt_text}]
+            for image_data_url in image_data_urls:
+                content_items.append({"type": "image_url", "image_url": {"url": image_data_url}})
+
+            response = self.client.chat.completions.create(
+                model=self.vision_model,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": content_items,
+                    }
+                ],
+                temperature=0.1,
+                max_tokens=1200,
+                response_format={"type": "json_object"},
+            )
+
+            content = response.choices[0].message.content
+            if not content:
+                return None
+            return json.loads(content)
+        except Exception as e:
+            print(f"LLM图片结构提取失败: {str(e)}")
             return None
 
 

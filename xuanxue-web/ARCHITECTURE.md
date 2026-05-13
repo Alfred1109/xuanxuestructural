@@ -188,10 +188,8 @@ xuanxue-web/
   决策内核卡片和指标条
 - `trace-panel.js`
   Mermaid 与步骤展开区
-- `workspace-shell.js`
-  左侧导航、iframe 切换、overview 模式
-- `index-bazi-panel.js`
-  首页内嵌八字面板逻辑
+- `auth-client.js`
+  登录态、账号中心、问事历史与账号资料维护
 
 ### 5.2 前端职责边界
 
@@ -222,18 +220,6 @@ frontend/index.html
   -> decision_log + trace
   -> 返回统一结果
   -> decision-panel.js + trace-panel.js 渲染
-```
-
-### 6.2 首页八字面板
-
-```text
-frontend/index.html
-  -> index-bazi-panel.js
-  -> POST /api/bazi 或 /api/ai/enhance-bazi
-  -> api/bazi.py / api/ai.py
-  -> bazi_core + bazi_advanced
-  -> 返回命盘与分析
-  -> index-bazi-panel.js 渲染
 ```
 
 ## 7. 测试策略

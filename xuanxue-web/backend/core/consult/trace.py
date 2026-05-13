@@ -55,6 +55,9 @@ def _build_architecture_mermaid(steps: List[TraceStep], modules: List[str], ai_e
         "fengshui_orientation": "风水定朝向",
         "fengshui_layout": "风水看布局",
         "fengshui_judge": "风水综合判断",
+        "visual_structure": "视觉结构提取",
+        "visual_score": "视觉规则吸收",
+        "visual_observe": "视觉观察补充",
         "liuyao_cast": "六爻起卦",
         "liuyao_judge": "六爻解读",
         "meihua_cast": "梅花起卦",
@@ -129,6 +132,10 @@ def _build_architecture_mermaid(steps: List[TraceStep], modules: List[str], ai_e
                 "fengshui_judge",
             ],
         ),
+        "visual": (
+            "视觉观察线",
+            ["visual_structure", "visual_score", "visual_observe"],
+        ),
         "liuyao": (
             "六爻占断线",
             ["liuyao_cast", "liuyao_judge"],
@@ -152,15 +159,33 @@ def _build_architecture_mermaid(steps: List[TraceStep], modules: List[str], ai_e
         title, chain = module_configs[module]
         lines.append(f'    subgraph {module}_lane["{title}"]')
         lines.append("      direction TB")
-        for step_id in chain:
-            add_node(lines, step_id, step_id)
-        for source, target in zip(chain, chain[1:]):
-            lines.append(f"      {source} --> {target}")
+        if module == "bazi":
+            lines.append('      subgraph bazi_pillars["四柱"]')
+            lines.append("        direction LR")
+            for step_id in chain[:4]:
+                lines.append(f'        {step_id}["{label(step_id, step_id)}"]')
+            lines.append("      end")
+            for step_id in chain[4:]:
+                add_node(lines, step_id, step_id)
+            lines.append("      bazi_year --> bazi_wuxing")
+            lines.append("      bazi_month --> bazi_wuxing")
+            lines.append("      bazi_day --> bazi_wuxing")
+            lines.append("      bazi_hour --> bazi_wuxing")
+            lines.append("      bazi_wuxing --> bazi_shishen --> bazi_dayun --> bazi_judge")
+        else:
+            for step_id in chain:
+                add_node(lines, step_id, step_id)
+            for source, target in zip(chain, chain[1:]):
+                lines.append(f"      {source} --> {target}")
         lines.append("    end")
         module_sinks.append(chain[-1])
     lines.append("  end")
     for module, (_title, chain) in module_configs.items():
-        lines.append(f"  module_bus --> {chain[0]}")
+        if module == "bazi":
+            for bazi_pillar in chain[:4]:
+                lines.append(f"  module_bus --> {bazi_pillar}")
+        else:
+            lines.append(f"  module_bus --> {chain[0]}")
 
     lines.extend(
         [
@@ -579,6 +604,78 @@ def build_trace_graph(
             ],
             formulas=[fengshui_trace.get("summary", {}).get("formula", "")],
             derivation=fengshui_trace.get("summary", {}),
+            previous=last_step,
+        )
+
+    if "visual" in modules:
+        visual_result = module_results.get("visual", {})
+        visual_summary = module_summaries.get("visual", {})
+        visual_trace = visual_result.get("calc_trace", {})
+        last_step = add_step(
+            "visual_structure",
+            "视觉结构提取",
+            "先抽取图片里稳定、可复用的结构化可见特征。",
+            inputs={
+                "mode": visual_result.get("mode", ""),
+                "image_name": visual_result.get("image_name", ""),
+            },
+            rule="把空间/手掌/面部照片转成结构化字段，供统一问事与环境层吸收。",
+            outputs={
+                "structure": visual_summary.get("structure", {}),
+            },
+            evidence=[
+                "结构化字段用于降低自由文本波动，增强可解释性。",
+            ],
+            formulas=[visual_trace.get("structure", {}).get("formula", "")],
+            derivation=visual_trace.get("structure", {}),
+            previous=last_step,
+        )
+        last_step = add_step(
+            "visual_score",
+            "视觉规则吸收",
+            "将结构特征映射成空间支持度、风险暴露与执行性分表。"
+            if visual_result.get("mode") == "space"
+            else "将结构特征映射成清晰度、可信度等参考质量指标。",
+            inputs={
+                "structure": visual_summary.get("structure", {}),
+            },
+            rule="规则层把结构提取结果转成稳定分值，供统一决策核吸收。",
+            outputs={
+                "rule_scores": visual_summary.get("rule_scores", {}),
+            },
+            evidence=[
+                "该步骤用于降低自由文本波动，增强微观观察的可解释性。",
+            ],
+            formulas=[visual_trace.get("rule_scores", {}).get("formula", "")],
+            derivation=visual_trace.get("rule_scores", {}),
+            previous=last_step,
+        )
+        last_step = add_step(
+            "visual_observe",
+            "视觉观察补充",
+            visual_summary.get("summary", "已纳入图片观察结果。"),
+            inputs={
+                "mode": visual_result.get("mode", ""),
+                "image_name": visual_result.get("image_name", ""),
+                "location": visual_result.get("location", ""),
+                "scene_type": visual_result.get("scene_type", ""),
+            },
+            rule="将图片中可见的空间线索或微观文化参考信息并入统一问事上下文。",
+            outputs={
+                "summary": visual_summary.get("summary", ""),
+                "mode_label": visual_result.get("mode_label", ""),
+                "rule_scores": visual_summary.get("rule_scores", {}),
+            },
+            evidence=[
+                visual_summary.get("summary", ""),
+                (
+                    "空间模式会增强环境层判断，并根据结构提取调整支持度/风险值。"
+                    if visual_result.get("mode") == "space"
+                    else "手相/面相模式仅作传统文化参考层，结构提取只稳定可见特征描述。"
+                ),
+            ],
+            formulas=[visual_trace.get("image", {}).get("formula", "")],
+            derivation=visual_trace.get("image", {}),
             previous=last_step,
         )
 

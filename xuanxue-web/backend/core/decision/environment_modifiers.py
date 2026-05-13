@@ -19,6 +19,36 @@ def build_environment_modifiers(profile: Dict[str, Any], question: str) -> Dict[
             "reason": f"已提供地点信息：{profile.get('location')}",
         })
 
+    visual_context = profile.get("visual_context") or {}
+    if visual_context:
+        mode = visual_context.get("mode", "")
+        if mode == "bundle":
+            item_modes = {item.get("mode", "") for item in (visual_context.get("items", []) or [])}
+            if "space" in item_modes:
+                modifiers.append({
+                    "name": "visual_space_context",
+                    "effect": {"external_support": 3.0, "certainty": 2.0, "actionability": 4.0},
+                    "reason": "已提供空间照片观察结果，环境判断更贴近现场细节。",
+                })
+            if "palm" in item_modes or "face" in item_modes:
+                modifiers.append({
+                    "name": "visual_micro_reference",
+                    "effect": {"certainty": 1.0, "actionability": 1.0},
+                    "reason": "已提供微观图像参考，可作为文化层面的补充观察。",
+                })
+        elif mode == "space":
+            modifiers.append({
+                "name": "visual_space_context",
+                "effect": {"external_support": 3.0, "certainty": 2.0, "actionability": 4.0},
+                "reason": "已提供空间照片观察结果，环境判断更贴近现场细节。",
+            })
+        elif mode in ("palm", "face"):
+            modifiers.append({
+                "name": "visual_micro_reference",
+                "effect": {"certainty": 1.0, "actionability": 1.0},
+                "reason": "已提供微观图像参考，可作为文化层面的补充观察。",
+            })
+
     if any(term in text for term in ["谈判", "合作", "签约", "客户", "对手"]):
         modifiers.append({
             "name": "game_context",

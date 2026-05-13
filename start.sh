@@ -2,6 +2,8 @@
 
 # 玄学预测系统 - 一键启动脚本
 
+set -u
+
 echo "======================================"
 echo "  玄学预测系统 - 启动中..."
 echo "======================================"
@@ -11,6 +13,12 @@ echo ""
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 BACKEND_DIR="$SCRIPT_DIR/xuanxue-web/backend"
 FRONTEND_DIR="$SCRIPT_DIR/xuanxue-web/frontend"
+BACKEND_PORT=8002
+FRONTEND_PORT=8003
+BACKEND_LOG=/tmp/xuanxue-backend.log
+FRONTEND_LOG=/tmp/xuanxue-frontend.log
+BACKEND_PID_FILE=/tmp/xuanxue-backend.pid
+FRONTEND_PID_FILE=/tmp/xuanxue-frontend.pid
 
 is_port_in_use() {
     local port="$1"
@@ -21,6 +29,19 @@ is_port_in_use() {
     if command -v ss > /dev/null 2>&1; then
         ss -ltn "( sport = :$port )" | tail -n +2 | grep -q .
         return $?
+    fi
+    return 1
+}
+
+list_port_pids() {
+    local port="$1"
+    if command -v lsof > /dev/null 2>&1; then
+        lsof -ti:"$port" 2>/dev/null
+        return 0
+    fi
+    if command -v ss > /dev/null 2>&1; then
+        ss -ltnp "( sport = :$port )" 2>/dev/null | awk -F'pid=' 'NF>1 {split($2, a, ","); print a[1]}' | sort -u
+        return 0
     fi
     return 1
 }
@@ -49,6 +70,79 @@ show_recent_log() {
     fi
 }
 
+wait_for_port_release() {
+    local port="$1"
+    local attempts="${2:-20}"
+    local delay="${3:-1}"
+    local i
+
+    for ((i=1; i<=attempts; i++)); do
+        if ! is_port_in_use "$port"; then
+            return 0
+        fi
+        sleep "$delay"
+    done
+    return 1
+}
+
+ensure_process_stopped() {
+    local pid="$1"
+    local name="$2"
+    if [ -z "$pid" ]; then
+        return 0
+    fi
+    if ps -p "$pid" > /dev/null 2>&1; then
+        echo "🛑 停止$name (PID: $pid)..."
+        kill "$pid" >/dev/null 2>&1 || true
+        sleep 1
+        if ps -p "$pid" > /dev/null 2>&1; then
+            echo "⚠️  $name未及时退出，强制停止..."
+            kill -9 "$pid" >/dev/null 2>&1 || true
+        fi
+    fi
+}
+
+cleanup_existing_services() {
+    echo "🧹 检查旧服务实例..."
+
+    if [ -f "$BACKEND_PID_FILE" ]; then
+        ensure_process_stopped "$(cat "$BACKEND_PID_FILE" 2>/dev/null || true)" "后端服务"
+        rm -f "$BACKEND_PID_FILE"
+    fi
+    if [ -f "$FRONTEND_PID_FILE" ]; then
+        ensure_process_stopped "$(cat "$FRONTEND_PID_FILE" 2>/dev/null || true)" "前端服务"
+        rm -f "$FRONTEND_PID_FILE"
+    fi
+
+    if is_port_in_use "$BACKEND_PORT"; then
+        local backend_pids
+        backend_pids="$(list_port_pids "$BACKEND_PORT" | tr '\n' ' ')"
+        if [ -n "$backend_pids" ]; then
+            echo "🛑 发现占用 $BACKEND_PORT 的旧进程: $backend_pids"
+            kill $backend_pids >/dev/null 2>&1 || true
+        fi
+    fi
+    if is_port_in_use "$FRONTEND_PORT"; then
+        local frontend_pids
+        frontend_pids="$(list_port_pids "$FRONTEND_PORT" | tr '\n' ' ')"
+        if [ -n "$frontend_pids" ]; then
+            echo "🛑 发现占用 $FRONTEND_PORT 的旧进程: $frontend_pids"
+            kill $frontend_pids >/dev/null 2>&1 || true
+        fi
+    fi
+
+    wait_for_port_release "$BACKEND_PORT" 20 1 || {
+        echo "❌ 端口 $BACKEND_PORT 未能释放"
+        exit 1
+    }
+    wait_for_port_release "$FRONTEND_PORT" 20 1 || {
+        echo "❌ 端口 $FRONTEND_PORT 未能释放"
+        exit 1
+    }
+    echo "✓ 旧服务清理完成"
+    echo ""
+}
+
 # 加载环境变量
 if [ -f "$HOME/.bashrc" ]; then
     source "$HOME/.bashrc" 2>/dev/null || true
@@ -75,7 +169,7 @@ if [ ! -d "$BACKEND_DIR/venv" ]; then
 fi
 
 # 检查依赖是否安装
-if ! "$BACKEND_DIR/venv/bin/python" -c "import fastapi, uvicorn, pydantic" >/dev/null 2>&1; then
+if ! "$BACKEND_DIR/venv/bin/python" -c "import fastapi, uvicorn, pydantic, httpx, openai, iztro_py" >/dev/null 2>&1; then
     echo "📦 正在安装依赖..."
     cd "$BACKEND_DIR"
     venv/bin/pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
@@ -83,81 +177,98 @@ if ! "$BACKEND_DIR/venv/bin/python" -c "import fastapi, uvicorn, pydantic" >/dev
     echo ""
 fi
 
-if is_port_in_use 8002; then
-    echo "❌ 端口 8002 已被占用，无法启动后端服务"
-    echo "   请先运行 ./stop.sh 或释放该端口后重试"
-    exit 1
-fi
-
-if is_port_in_use 8003; then
-    echo "❌ 端口 8003 已被占用，无法启动前端服务"
-    echo "   请先运行 ./stop.sh 或释放该端口后重试"
-    exit 1
-fi
+cleanup_existing_services
 
 # 启动后端服务器（后台运行）
 echo "🚀 启动后端服务器..."
 cd "$BACKEND_DIR"
+rm -f "$BACKEND_LOG"
 # 传递环境变量给后端进程
 if [ -n "$ARK_API_KEY" ]; then
-    ARK_API_KEY="$ARK_API_KEY" venv/bin/python main.py > /tmp/xuanxue-backend.log 2>&1 &
+    setsid env ARK_API_KEY="$ARK_API_KEY" venv/bin/python main.py > "$BACKEND_LOG" 2>&1 < /dev/null &
 else
-    venv/bin/python main.py > /tmp/xuanxue-backend.log 2>&1 &
+    setsid venv/bin/python main.py > "$BACKEND_LOG" 2>&1 < /dev/null &
 fi
 BACKEND_PID=$!
+disown || true
 echo "✓ 后端服务器已启动 (PID: $BACKEND_PID)"
-echo "   访问地址: http://localhost:8002"
-echo "   API文档: http://localhost:8002/docs"
-echo "   日志文件: /tmp/xuanxue-backend.log"
+echo "   访问地址: http://localhost:$BACKEND_PORT"
+echo "   API文档: http://localhost:$BACKEND_PORT/docs"
+echo "   日志文件: $BACKEND_LOG"
 echo "   AI状态: $AI_STATUS"
 echo ""
+echo "$BACKEND_PID" > "$BACKEND_PID_FILE"
 
 # 等待后端启动
 echo "⏳ 等待后端服务启动..."
-if wait_for_http "http://localhost:8002/" 20 1; then
+if wait_for_http "http://localhost:$BACKEND_PORT/" 20 1; then
     echo "✓ 后端服务启动成功"
 else
     echo "❌ 后端服务启动失败"
-    show_recent_log /tmp/xuanxue-backend.log
+    show_recent_log "$BACKEND_LOG"
     kill "$BACKEND_PID" >/dev/null 2>&1 || true
-    rm -f /tmp/xuanxue-backend.pid
+    rm -f "$BACKEND_PID_FILE"
     exit 1
 fi
+echo ""
+
+echo "🔎 校验关键接口..."
+AUTH_ROUTE_STATUS="$(
+    curl -s -o /tmp/xuanxue-auth-route-check.json -w "%{http_code}" \
+        -X POST "http://localhost:$BACKEND_PORT/api/auth/register" \
+        -H "Content-Type: application/json" \
+        -d '{}'
+)"
+if [ "$AUTH_ROUTE_STATUS" != "422" ]; then
+    echo "❌ /api/auth/register 校验失败，当前后端可能不是最新版本"
+    echo "   返回状态码: $AUTH_ROUTE_STATUS"
+    if [ -f /tmp/xuanxue-auth-route-check.json ]; then
+        cat /tmp/xuanxue-auth-route-check.json
+        echo ""
+    fi
+    show_recent_log "$BACKEND_LOG"
+    kill "$BACKEND_PID" >/dev/null 2>&1 || true
+    rm -f "$BACKEND_PID_FILE"
+    exit 1
+fi
+echo "✓ 关键接口已就绪"
 echo ""
 
 # 启动前端HTTP服务器
 echo "🌐 启动前端服务器..."
 cd "$FRONTEND_DIR"
-python3 -m http.server 8003 > /tmp/xuanxue-frontend.log 2>&1 &
+rm -f "$FRONTEND_LOG"
+setsid python3 -m http.server "$FRONTEND_PORT" > "$FRONTEND_LOG" 2>&1 < /dev/null &
 FRONTEND_PID=$!
+disown || true
 echo "✓ 前端服务器已启动 (PID: $FRONTEND_PID)"
-echo "   访问地址: http://localhost:8003"
-echo "   日志文件: /tmp/xuanxue-frontend.log"
-echo $FRONTEND_PID > /tmp/xuanxue-frontend.pid
+echo "   访问地址: http://localhost:$FRONTEND_PORT"
+echo "   日志文件: $FRONTEND_LOG"
+echo "$FRONTEND_PID" > "$FRONTEND_PID_FILE"
 echo ""
 
 # 等待前端服务启动
-if wait_for_http "http://localhost:8003/index.html" 10 1; then
+if wait_for_http "http://localhost:$FRONTEND_PORT/index.html" 10 1; then
     echo "✓ 前端服务启动成功"
 else
     echo "❌ 前端服务启动失败"
-    show_recent_log /tmp/xuanxue-frontend.log
+    show_recent_log "$FRONTEND_LOG"
     kill "$FRONTEND_PID" >/dev/null 2>&1 || true
     kill "$BACKEND_PID" >/dev/null 2>&1 || true
-    rm -f /tmp/xuanxue-frontend.pid /tmp/xuanxue-backend.pid
+    rm -f "$FRONTEND_PID_FILE" "$BACKEND_PID_FILE"
     exit 1
 fi
 
 # 打开浏览器
 if command -v xdg-open > /dev/null; then
-    xdg-open "http://localhost:8003/index.html" 2>/dev/null &
+    xdg-open "http://localhost:$FRONTEND_PORT/index.html" 2>/dev/null &
     echo "✓ 前端页面已在浏览器中打开"
 elif command -v gnome-open > /dev/null; then
-    gnome-open "http://localhost:8003/index.html" 2>/dev/null &
+    gnome-open "http://localhost:$FRONTEND_PORT/index.html" 2>/dev/null &
     echo "✓ 前端页面已在浏览器中打开"
 else
     echo "⚠️  无法自动打开浏览器"
-    echo "   请手动打开: http://localhost:8003/index.html"
+    echo "   请手动打开: http://localhost:$FRONTEND_PORT/index.html"
 fi
 
 echo ""
@@ -166,22 +277,19 @@ echo "  系统启动完成！"
 echo "======================================"
 echo ""
 echo "📌 使用说明："
-echo "   - 前端界面: http://localhost:8003"
-echo "   - 后端API: http://localhost:8002"
-echo "   - API文档: http://localhost:8002/docs"
+echo "   - 前端界面: http://localhost:$FRONTEND_PORT"
+echo "   - 后端API: http://localhost:$BACKEND_PORT"
+echo "   - API文档: http://localhost:$BACKEND_PORT/docs"
 echo ""
 echo "📌 停止服务："
 echo "   运行: ./stop.sh"
 echo ""
 echo "💡 提示："
-echo "   - 前端日志: tail -f /tmp/xuanxue-frontend.log"
-echo "   - 后端日志: tail -f /tmp/xuanxue-backend.log"
+echo "   - 前端日志: tail -f $FRONTEND_LOG"
+echo "   - 后端日志: tail -f $BACKEND_LOG"
 if [ -z "$ARK_API_KEY" ]; then
     echo "   - AI功能: 未启用，设置方法见 AI配置指南.md"
 else
     echo "   - AI功能: 已启用 ✓"
 fi
 echo ""
-
-# 保存PID到文件，方便停止
-echo $BACKEND_PID > /tmp/xuanxue-backend.pid

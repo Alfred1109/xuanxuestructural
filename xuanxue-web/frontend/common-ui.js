@@ -20,7 +20,7 @@
             '  position: fixed;',
             '  top: 16px;',
             '  right: 16px;',
-            '  z-index: 9999;',
+            '  z-index: 11010;',
             '  display: flex;',
             '  flex-direction: column;',
             '  gap: 10px;',

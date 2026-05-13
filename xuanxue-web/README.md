@@ -56,9 +56,8 @@ xuanxue-web/
 │   ├── consult-panel.js       # 首页统一问事主流程
 │   ├── decision-panel.js      # 决策内核面板渲染
 │   ├── trace-panel.js         # Trace 图与步骤渲染
-│   ├── workspace-shell.js     # 左侧导航与工作台切换
+│   ├── auth-client.js         # 登录、账号中心与历史记录
 │   ├── common-renderers.js    # 公共渲染函数
-│   ├── index-bazi-panel.js    # 首页内嵌八字面板逻辑
 │   ├── common-header.css      # 公共顶部导航样式
 │   └── config.js              # 前端统一配置（API_BASE_URL）
 │
@@ -145,7 +144,7 @@ xuanxue-web/
 - 详细的解释说明
 - 可视化图表展示
 - AI 状态感知与基础结果回退
-- 首页统一工作台与模块切换
+- 首页账号中心与统一问事联动
 
 ## 当前未包含
 

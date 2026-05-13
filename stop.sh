@@ -2,41 +2,58 @@
 
 # 玄学预测系统 - 停止脚本
 
+set -u
+
+BACKEND_PORT=8002
+FRONTEND_PORT=8003
+BACKEND_PID_FILE=/tmp/xuanxue-backend.pid
+FRONTEND_PID_FILE=/tmp/xuanxue-frontend.pid
+
 echo "======================================"
 echo "  玄学预测系统 - 停止服务..."
 echo "======================================"
 echo ""
 
-# 停止后端服务
-if [ -f /tmp/xuanxue-backend.pid ]; then
-    BACKEND_PID=$(cat /tmp/xuanxue-backend.pid)
-    
-    if ps -p $BACKEND_PID > /dev/null 2>&1; then
-        echo "🛑 停止后端服务 (PID: $BACKEND_PID)..."
-        kill $BACKEND_PID
-        sleep 1
-        
-        # 检查是否成功停止
-        if ps -p $BACKEND_PID > /dev/null 2>&1; then
-            echo "⚠️  进程未响应，强制停止..."
-            kill -9 $BACKEND_PID
-        fi
-        
-        echo "✓ 后端服务已停止"
-    else
-        echo "⚠️  后端服务未运行 (PID: $BACKEND_PID)"
+list_port_pids() {
+    local port="$1"
+    if command -v lsof > /dev/null 2>&1; then
+        lsof -ti:"$port" 2>/dev/null
+        return 0
     fi
-    
-    rm -f /tmp/xuanxue-backend.pid
+    return 1
+}
+
+stop_pid_if_running() {
+    local pid="$1"
+    local name="$2"
+    if [ -z "$pid" ]; then
+        return 0
+    fi
+    if ps -p "$pid" > /dev/null 2>&1; then
+        echo "🛑 停止$name (PID: $pid)..."
+        kill "$pid" >/dev/null 2>&1 || true
+        sleep 1
+        if ps -p "$pid" > /dev/null 2>&1; then
+            echo "⚠️  进程未响应，强制停止..."
+            kill -9 "$pid" >/dev/null 2>&1 || true
+        fi
+        echo "✓ $name已停止"
+    else
+        echo "⚠️  $name未运行 (PID: $pid)"
+    fi
+}
+
+# 停止后端服务
+if [ -f "$BACKEND_PID_FILE" ]; then
+    BACKEND_PID=$(cat "$BACKEND_PID_FILE")
+    stop_pid_if_running "$BACKEND_PID" "后端服务"
+    rm -f "$BACKEND_PID_FILE"
 else
     echo "⚠️  未找到后端PID文件，尝试查找进程..."
-    
-    # 尝试通过端口查找进程
-    PIDS=$(lsof -ti:8002 2>/dev/null)
-    
+    PIDS=$(list_port_pids "$BACKEND_PORT")
     if [ -n "$PIDS" ]; then
-        echo "🛑 找到占用8002端口的进程: $PIDS"
-        kill $PIDS
+        echo "🛑 找到占用$BACKEND_PORT端口的进程: $PIDS"
+        kill $PIDS >/dev/null 2>&1 || true
         sleep 1
         echo "✓ 后端进程已停止"
     else
@@ -45,35 +62,16 @@ else
 fi
 
 # 停止前端服务
-if [ -f /tmp/xuanxue-frontend.pid ]; then
-    FRONTEND_PID=$(cat /tmp/xuanxue-frontend.pid)
-    
-    if ps -p $FRONTEND_PID > /dev/null 2>&1; then
-        echo "🛑 停止前端服务 (PID: $FRONTEND_PID)..."
-        kill $FRONTEND_PID
-        sleep 1
-        
-        # 检查是否成功停止
-        if ps -p $FRONTEND_PID > /dev/null 2>&1; then
-            echo "⚠️  进程未响应，强制停止..."
-            kill -9 $FRONTEND_PID
-        fi
-        
-        echo "✓ 前端服务已停止"
-    else
-        echo "⚠️  前端服务未运行 (PID: $FRONTEND_PID)"
-    fi
-    
-    rm -f /tmp/xuanxue-frontend.pid
+if [ -f "$FRONTEND_PID_FILE" ]; then
+    FRONTEND_PID=$(cat "$FRONTEND_PID_FILE")
+    stop_pid_if_running "$FRONTEND_PID" "前端服务"
+    rm -f "$FRONTEND_PID_FILE"
 else
     echo "⚠️  未找到前端PID文件，尝试查找进程..."
-    
-    # 尝试通过端口查找进程
-    PIDS=$(lsof -ti:8003 2>/dev/null)
-    
+    PIDS=$(list_port_pids "$FRONTEND_PORT")
     if [ -n "$PIDS" ]; then
-        echo "🛑 找到占用8003端口的进程: $PIDS"
-        kill $PIDS
+        echo "🛑 找到占用$FRONTEND_PORT端口的进程: $PIDS"
+        kill $PIDS >/dev/null 2>&1 || true
         sleep 1
         echo "✓ 前端进程已停止"
     else

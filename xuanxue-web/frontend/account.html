@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>账号中心 - Hermes 玄学系统</title>
+    <link rel="stylesheet" href="common-header.css?v=20260512-auth-fix">
+    <link rel="stylesheet" href="common-theme.css?v=20260512-auth-fix">
+    <style>
+        .page-shell {
+            padding: 28px 0 44px;
+        }
+
+        .page-shell .card {
+            border-radius: 22px;
+            box-shadow: 0 12px 28px rgba(23, 45, 62, 0.05);
+        }
+
+        .header-account {
+            margin-top: 18px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .header-account-card {
+            width: min(100%, 780px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 14px 18px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+        }
+
+        .header-account-copy {
+            display: grid;
+            gap: 4px;
+            text-align: left;
+        }
+
+        .header-account-copy strong {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .header-account-copy span {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.72);
+        }
+
+        .header-account-actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .header-ghost-btn {
+            appearance: none;
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            background: rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+            border-radius: 999px;
+            padding: 10px 16px;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .header-ghost-btn:hover {
+            background: rgba(255, 255, 255, 0.16);
+        }
+
+        .account-center {
+            display: grid;
+            gap: 24px;
+        }
+
+        .account-overview {
+            position: relative;
+            overflow: hidden;
+            padding: 28px;
+            background:
+                radial-gradient(circle at top right, rgba(213, 186, 140, 0.26) 0%, transparent 28%),
+                linear-gradient(145deg, rgba(23, 58, 52, 0.98) 0%, rgba(44, 91, 79, 0.95) 52%, rgba(168, 116, 60, 0.88) 100%);
+            color: #ffffff;
+            border: none;
+        }
+
+        .account-overview::after {
+            content: "";
+            position: absolute;
+            inset: auto -40px -60px auto;
+            width: 220px;
+            height: 220px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.07);
+            filter: blur(2px);
+        }
+
+        .account-overview-inner {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr);
+            gap: 22px;
+            align-items: start;
+        }
+
+        .account-hero-copy {
+            display: grid;
+            gap: 10px;
+        }
+
+        .account-hero-kicker {
+            display: inline-flex;
+            width: fit-content;
+            padding: 6px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            background: rgba(255, 255, 255, 0.08);
+            font-size: 0.78rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .account-hero-copy h2 {
+            margin-bottom: 0;
+            color: #ffffff;
+            font-size: clamp(1.8rem, 2.8vw, 2.5rem);
+        }
+
+        .account-hero-copy p {
+            margin-bottom: 0;
+            color: rgba(255, 248, 236, 0.84);
+            max-width: 42rem;
+        }
+
+        .account-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .account-meta-card {
+            padding: 14px 15px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(10px);
+        }
+
+        .account-meta-card .label {
+            display: block;
+            font-size: 0.78rem;
+            color: rgba(255, 248, 236, 0.72);
+        }
+
+        .account-meta-card .value {
+            display: block;
+            margin-top: 6px;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #ffffff;
+            line-height: 1.45;
+        }
+
+        .account-hero {
+            display: grid;
+            gap: 16px;
+        }
+
+        .account-hero-top {
+            display: flex;
+            align-items: start;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .account-title-copy {
+            display: grid;
+            gap: 8px;
+        }
+
+        .account-title-copy h3 {
+            margin-bottom: 0;
+        }
+
+        .account-title-copy p {
+            margin-bottom: 0;
+            max-width: 620px;
+        }
+
+        .account-email-pill {
+            white-space: nowrap;
+            border-radius: 999px;
+            border: 1px solid rgba(44, 91, 79, 0.14);
+            background: rgba(44, 91, 79, 0.06);
+            color: var(--color-primary-dark);
+            padding: 9px 14px;
+            font-size: 0.82rem;
+        }
+
+        .account-gate {
+            display: grid;
+            gap: 14px;
+            padding: 20px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, rgba(245, 247, 245, 0.95) 0%, rgba(247, 242, 231, 0.95) 100%);
+            border: 1px solid rgba(44, 91, 79, 0.08);
+        }
+
+        .account-gate-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .account-layout {
+            display: grid;
+            gap: 22px;
+            align-items: start;
+        }
+
+        .account-panel-card {
+            background: #ffffff;
+            border: 1px solid var(--color-line);
+            border-radius: 18px;
+            padding: 16px 18px 18px;
+        }
+
+        .account-panel-card h4 {
+            margin-bottom: 12px;
+        }
+
+        .account-profile-card {
+            width: 100%;
+            max-width: none;
+        }
+
+        .account-history-card {
+            padding: 22px;
+        }
+
+        .account-history-head {
+            display: flex;
+            align-items: end;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .account-history-head h4 {
+            margin-bottom: 4px;
+        }
+
+        .account-history-head p {
+            margin: 0;
+            font-size: 0.88rem;
+            color: var(--color-text-secondary);
+        }
+
+        .history-count-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 92px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(44, 91, 79, 0.08);
+            border: 1px solid rgba(44, 91, 79, 0.1);
+            color: var(--color-primary-dark);
+            font-size: 0.82rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .account-form-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px 12px;
+        }
+
+        .account-form-grid .span-2 {
+            grid-column: span 2;
+        }
+
+        .account-form-grid .span-3 {
+            grid-column: span 3;
+        }
+
+        .account-profile-card .form-group {
+            margin-bottom: 8px;
+        }
+
+        .account-profile-card .form-group label {
+            margin-bottom: 6px;
+            font-size: 0.82rem;
+        }
+
+        .account-profile-card .form-group input,
+        .account-profile-card .form-group select {
+            padding: 9px 12px;
+        }
+
+        .account-profile-card .location-field {
+            display: grid;
+            gap: 6px;
+        }
+
+        .account-profile-card .location-input-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .account-profile-card .location-ghost-btn {
+            appearance: none;
+            border: 1px solid rgba(44, 91, 79, 0.14);
+            background: rgba(44, 91, 79, 0.05);
+            color: var(--color-primary-dark);
+            border-radius: 12px;
+            padding: 9px 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .account-profile-card .location-ghost-btn:hover {
+            background: rgba(44, 91, 79, 0.1);
+        }
+
+        .account-form-note {
+            font-size: 0.82rem;
+            color: var(--color-text-tertiary);
+            margin-top: 5px;
+            line-height: 1.55;
+        }
+
+        .account-profile-card .consult-actions {
+            margin-top: 8px;
+        }
+
+        .account-profile-card .consult-actions .btn {
+            flex: 0 0 auto;
+            min-width: 168px;
+            padding: 11px 18px;
+        }
+
+        .history-stack {
+            display: grid;
+            grid-template-columns: minmax(300px, 340px) minmax(0, 1fr);
+            gap: 18px;
+            align-items: start;
+        }
+
+        .history-list,
+        .history-detail {
+            min-height: 560px;
+            border-radius: 18px;
+            border: 1px solid rgba(44, 91, 79, 0.08);
+            background: linear-gradient(180deg, rgba(247, 248, 246, 0.82) 0%, rgba(252, 252, 250, 0.96) 100%);
+            padding: 14px;
+        }
+
+        .history-list {
+            display: grid;
+            align-content: start;
+            gap: 10px;
+            max-height: 72vh;
+            overflow: auto;
+        }
+
+        .history-item {
+            width: 100%;
+            text-align: left;
+            border: 1px solid rgba(44, 91, 79, 0.08);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(250, 251, 249, 0.98) 100%);
+            border-radius: 16px;
+            padding: 14px;
+            cursor: pointer;
+            transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+        }
+
+        .history-item:hover {
+            border-color: rgba(44, 91, 79, 0.24);
+            box-shadow: 0 8px 16px rgba(23, 45, 62, 0.04);
+            transform: translateY(-1px);
+        }
+
+        .history-item.active {
+            border-color: rgba(44, 91, 79, 0.3);
+            background: linear-gradient(180deg, rgba(245, 249, 247, 0.98) 0%, rgba(255, 252, 247, 0.98) 100%);
+            box-shadow: 0 12px 22px rgba(23, 45, 62, 0.06);
+        }
+
+        .history-item-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: start;
+            margin-bottom: 10px;
+            font-size: 0.76rem;
+            color: var(--color-text-tertiary);
+        }
+
+        .history-item-time {
+            line-height: 1.5;
+        }
+
+        .history-item-tag {
+            color: var(--color-primary);
+            font-weight: 700;
+            padding-top: 2px;
+        }
+
+        .history-item-question {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--color-text);
+            margin-bottom: 8px;
+            line-height: 1.55;
+        }
+
+        .history-item-answer {
+            font-size: 0.84rem;
+            line-height: 1.65;
+            color: var(--color-text-secondary);
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .history-chip-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .history-chip {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            background: rgba(44, 91, 79, 0.08);
+            color: var(--color-primary-dark);
+            padding: 5px 10px;
+            font-size: 0.74rem;
+        }
+
+        .history-empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 180px;
+            padding: 20px;
+            text-align: center;
+            color: var(--color-text-tertiary);
+            line-height: 1.7;
+        }
+
+        .history-detail-top {
+            margin-bottom: 18px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid rgba(44, 91, 79, 0.08);
+        }
+
+        .history-detail-top h3 {
+            margin: 8px 0 0;
+            font-size: 1.28rem;
+            line-height: 1.5;
+        }
+
+        .history-detail-time {
+            font-size: 0.8rem;
+            color: var(--color-text-tertiary);
+        }
+
+        .history-detail-answer {
+            padding: 18px 20px;
+            border-radius: 16px;
+            background: #ffffff;
+            border: 1px solid rgba(44, 91, 79, 0.08);
+            color: var(--color-text);
+            line-height: 1.9;
+            font-size: 0.98rem;
+        }
+
+        .history-summary-block {
+            margin-top: 14px;
+        }
+
+        .history-summary-title {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--color-primary-dark);
+            margin-bottom: 10px;
+        }
+
+        .history-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
+        }
+
+        .history-summary-card {
+            border-radius: 14px;
+            background: #ffffff;
+            border: 1px solid rgba(44, 91, 79, 0.08);
+            padding: 14px;
+        }
+
+        .history-summary-card .title {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--color-primary-dark);
+            margin-bottom: 8px;
+        }
+
+        .history-summary-card .body {
+            white-space: pre-wrap;
+            font-size: 0.8rem;
+            line-height: 1.7;
+            color: var(--color-text-secondary);
+        }
+
+        .auth-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 20, 18, 0.48);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 10000;
+        }
+
+        .auth-modal.show {
+            display: flex;
+        }
+
+        .auth-dialog {
+            width: min(100%, 920px);
+            display: grid;
+            grid-template-columns: minmax(260px, 0.95fr) minmax(320px, 1.05fr);
+            background: #fbfaf7;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 26px 60px rgba(10, 20, 18, 0.22);
+        }
+
+        .auth-aside {
+            padding: 28px;
+            background: linear-gradient(160deg, #20473f 0%, #1a3a34 55%, #4b6a4d 100%);
+            color: #ffffff;
+        }
+
+        .auth-aside .kicker {
+            display: inline-block;
+            margin-bottom: 12px;
+            font-size: 0.75rem;
+            opacity: 0.72;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .auth-aside h3 {
+            color: #ffffff;
+            margin-bottom: 12px;
+        }
+
+        .auth-aside p {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .auth-list {
+            display: grid;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .auth-list-item {
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.92);
+            font-size: 0.86rem;
+        }
+
+        .auth-main {
+            padding: 24px;
+            background: #fbfaf7;
+        }
+
+        .auth-main-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .auth-main-head h3 {
+            margin-bottom: 0;
+        }
+
+        .auth-close {
+            appearance: none;
+            border: none;
+            background: transparent;
+            color: var(--color-text-tertiary);
+            font-size: 1.4rem;
+            cursor: pointer;
+        }
+
+        .auth-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .auth-tab {
+            appearance: none;
+            border: 1px solid rgba(44, 91, 79, 0.12);
+            background: rgba(44, 91, 79, 0.04);
+            color: var(--color-primary-dark);
+            border-radius: 999px;
+            padding: 9px 14px;
+            font-size: 0.84rem;
+            cursor: pointer;
+        }
+
+        .auth-tab.active {
+            background: var(--color-primary);
+            border-color: var(--color-primary);
+            color: #ffffff;
+        }
+
+        @media (max-width: 980px) {
+            .account-overview-inner,
+            .history-stack,
+            .auth-dialog {
+                grid-template-columns: 1fr;
+            }
+
+            .history-list,
+            .history-detail {
+                min-height: auto;
+            }
+
+            .history-list {
+                max-height: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .page-shell {
+                padding-top: 22px;
+            }
+
+            .header-account-card,
+            .account-hero-top {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .header-account-actions {
+                justify-content: flex-start;
+            }
+
+            .account-meta-grid,
+            .account-form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .account-form-grid .span-2,
+            .account-form-grid .span-3 {
+                grid-column: span 1;
+            }
+
+            .account-profile-card .location-input-row {
+                grid-template-columns: 1fr;
+            }
+
+            .account-history-head {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .auth-aside {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="unified-header">
+        <div class="container">
+            <div class="site-title">
+                <h1>☯ 玄学预测系统</h1>
+                <p>传统命理学 · 现代科技 · 智能分析</p>
+            </div>
+            <div class="header-account">
+                <div class="header-account-card">
+                    <div class="header-account-copy">
+                        <strong id="headerAccountName">未登录</strong>
+                        <span id="headerAccountMeta">请先登录，统一问事功能仅对账号开放</span>
+                    </div>
+                    <div class="header-account-actions">
+                        <button type="button" class="header-ghost-btn" id="openAuthModalBtn">登录 / 注册</button>
+                        <a class="header-ghost-btn" id="openAccountCenterBtn" href="account.html" style="display:none; text-decoration:none;">账号中心</a>
+                        <a class="header-ghost-btn" href="index.html" style="text-decoration:none;">返回首页</a>
+                        <button type="button" class="header-ghost-btn" id="logoutBtn" style="display:none;">退出登录</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container page-shell">
+        <section class="account-center" id="accountCenter">
+            <div class="card account-overview">
+                <div class="account-overview-inner">
+                    <div class="account-hero-copy">
+                        <span class="account-hero-kicker">Hermes Account</span>
+                        <p>这里集中管理你的登录资料、默认出生信息和统一问事历史。问事入口与账户管理分开后，路径会更清晰，也更符合正常的产品体验。</p>
+                    </div>
+                    <div class="account-meta-grid">
+                        <div class="account-meta-card">
+                            <span class="label">资料用途</span>
+                            <span class="value">保存昵称、性别、出生资料与常用地点</span>
+                        </div>
+                        <div class="account-meta-card">
+                            <span class="label">历史回看</span>
+                            <span class="value">按账号查看统一问事结论与模块摘要</span>
+                        </div>
+                        <div class="account-meta-card">
+                            <span class="label">登录后能力</span>
+                            <span class="value">开启统一问事并自动沉淀历史记录</span>
+                        </div>
+                        <div class="account-meta-card">
+                            <span class="label">主入口</span>
+                            <span class="value">统一问事中心</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card account-hero">
+                <div class="account-hero-top">
+                    <div class="account-title-copy">
+                        <span class="account-hero-kicker" style="color: var(--color-text-tertiary); background: none; border: none; padding: 0;">Account Center</span>
+                        <h3 id="accountTitleText">登录后才能使用统一问事</h3>
+                        <p id="accountTitleMeta">账号用于开启系统问事、保存资料，并回看个人历史记录。</p>
+                    </div>
+                    <div class="account-email-pill" id="accountEmailPill">统一问事仅对已登录账号开放</div>
+                </div>
+
+                <div id="accountGuestGate" class="account-gate">
+                    <div>当前未登录。请先登录或注册账号，登录后才能使用统一问事，并自动保存每次问事记录。</div>
+                    <div class="account-gate-actions">
+                        <button type="button" class="btn" id="accountGuestLoginBtn">立即登录</button>
+                        <a class="btn btn-accent" href="index.html" style="text-decoration:none; text-align:center;">返回主入口</a>
+                    </div>
+                </div>
+
+                <div id="accountAuthedContent" style="display:none;">
+                    <div class="account-layout">
+                        <div class="account-panel-card account-profile-card">
+                            <h4>账号资料</h4>
+                            <form id="accountProfileForm">
+                                <div class="account-form-grid">
+                                    <div class="form-group span-3">
+                                        <label for="profileDisplayName">昵称</label>
+                                        <input id="profileDisplayName" type="text" maxlength="40" placeholder="怎么称呼你">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="profileGender">性别</label>
+                                        <select id="profileGender">
+                                            <option value="">可选</option>
+                                            <option value="男">男</option>
+                                            <option value="女">女</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group span-2 location-field">
+                                        <label for="profileLocation">常用地点</label>
+                                        <div class="location-input-row">
+                                            <input id="profileLocation" type="text" maxlength="80" placeholder="例如：上海浦东 / 陆家嘴办公区 / 家中书房">
+                                            <button type="button" class="location-ghost-btn" id="detectProfileLocationBtn">定位当前城市</button>
+                                        </div>
+                                        <div class="account-form-note">识别后你仍可以手动继续补充到更精确的位置描述。</div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="profileYear">出生年份</label>
+                                        <input id="profileYear" type="number" min="1900" max="2100" placeholder="可选">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="profileMonth">出生月份</label>
+                                        <input id="profileMonth" type="number" min="1" max="12" placeholder="可选">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="profileDay">出生日期</label>
+                                        <input id="profileDay" type="number" min="1" max="31" placeholder="可选">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="profileHour">出生时辰</label>
+                                        <input id="profileHour" type="number" min="0" max="23" placeholder="可选">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="profileMinute">出生分钟</label>
+                                        <input id="profileMinute" type="number" min="0" max="59" placeholder="可选">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="profileCurrentPassword">当前密码</label>
+                                        <input id="profileCurrentPassword" type="password" placeholder="仅在修改密码时填写">
+                                    </div>
+                                    <div class="form-group span-3">
+                                        <label for="profileNewPassword">新密码</label>
+                                        <input id="profileNewPassword" type="password" placeholder="留空则不修改密码">
+                                        <div class="account-form-note">修改密码时需要同时填写当前密码。昵称、出生资料和常用地点会作为默认账号资料保存。</div>
+                                    </div>
+                                </div>
+                                <div class="consult-actions">
+                                    <button type="submit" class="btn">保存账号资料</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="account-panel-card account-history-card">
+                            <div class="account-history-head">
+                                <div>
+                                    <h4>问事历史</h4>
+                                    <p>左侧快速浏览历史记录，右侧展开完整结论与分项依据。</p>
+                                </div>
+                                <div class="history-count-pill" id="historyCountPill">0 条记录</div>
+                            </div>
+                            <div class="history-stack">
+                                <div id="historyList" class="history-list"></div>
+                                <div id="historyDetail" class="history-detail"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div id="authModal" class="auth-modal">
+        <div class="auth-dialog">
+            <aside class="auth-aside">
+                <span class="kicker">Hermes Account</span>
+                <h3>先登录，再开始统一问事</h3>
+                <p>账号不仅用于保存历史，更是统一问事的使用门槛。登录后才能发起问事、累计资料并追踪结果。</p>
+                <div class="auth-list">
+                    <div class="auth-list-item">自动保存每次统一问事的完整结论</div>
+                    <div class="auth-list-item">按账号查看历史记录和模块摘要</div>
+                    <div class="auth-list-item">维护出生信息，减少重复填写</div>
+                </div>
+            </aside>
+            <div class="auth-main">
+                <div class="auth-main-head">
+                    <h3>登录与注册</h3>
+                    <button type="button" class="auth-close" id="authModalClose">×</button>
+                </div>
+                <div class="auth-tabs">
+                    <button type="button" class="auth-tab active" id="authTabLogin">登录</button>
+                    <button type="button" class="auth-tab" id="authTabRegister">注册</button>
+                </div>
+                <div id="authLoginPanel">
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label for="loginEmail">邮箱</label>
+                            <input id="loginEmail" type="email" maxlength="120" required placeholder="name@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="loginPassword">密码</label>
+                            <input id="loginPassword" type="password" minlength="8" maxlength="120" required placeholder="至少 8 位">
+                        </div>
+                        <div class="consult-actions">
+                            <button type="submit" class="btn">登录</button>
+                        </div>
+                    </form>
+                </div>
+                <div id="authRegisterPanel" style="display:none;">
+                    <form id="registerForm">
+                        <div class="form-group">
+                            <label for="registerDisplayName">昵称</label>
+                            <input id="registerDisplayName" type="text" maxlength="40" placeholder="例如：阿明">
+                        </div>
+                        <div class="form-group">
+                            <label for="registerEmail">邮箱</label>
+                            <input id="registerEmail" type="email" maxlength="120" required placeholder="name@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="registerPassword">密码</label>
+                            <input id="registerPassword" type="password" minlength="8" maxlength="120" required placeholder="至少 8 位">
+                        </div>
+                        <div class="consult-actions">
+                            <button type="submit" class="btn">创建账号</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js?v=20260512-auth-fix"></script>
+    <script src="common-links.js?v=20260512-auth-fix"></script>
+    <script src="common-ui.js?v=20260512-auth-fix"></script>
+    <script src="markdown.js?v=20260512-auth-fix"></script>
+    <script src="api-client.js?v=20260512-auth-fix"></script>
+    <script src="auth-client.js?v=20260512-auth-fix"></script>
+    <script>
+        if (window.applyCommonLinks) {
+            window.applyCommonLinks();
+        }
+        if (window.authClient) {
+            window.authClient.initialize();
+        }
+    </script>
+</body>
+</html>

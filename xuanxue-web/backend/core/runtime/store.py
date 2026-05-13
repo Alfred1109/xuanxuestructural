@@ -22,8 +22,8 @@ def append_jsonl(path: Path, payload: Dict[str, Any]) -> None:
         file.write(json.dumps(payload, ensure_ascii=False) + "\n")
 
 
-def read_recent_jsonl(path: Path, limit: int = 20) -> List[Dict[str, Any]]:
-    if limit <= 0 or not path.exists():
+def read_jsonl(path: Path) -> List[Dict[str, Any]]:
+    if not path.exists():
         return []
 
     entries: List[Dict[str, Any]] = []
@@ -38,4 +38,30 @@ def read_recent_jsonl(path: Path, limit: int = 20) -> List[Dict[str, Any]]:
                 continue
             if isinstance(item, dict):
                 entries.append(item)
-    return entries[-limit:]
+    return entries
+
+
+def read_recent_jsonl(path: Path, limit: int = 20) -> List[Dict[str, Any]]:
+    if limit <= 0 or not path.exists():
+        return []
+
+    return read_jsonl(path)[-limit:]
+
+
+def read_json_file(path: Path, default: Any) -> Any:
+    if not path.exists():
+        return default
+
+    try:
+        with path.open("r", encoding="utf-8") as file:
+            return json.load(file)
+    except (json.JSONDecodeError, OSError):
+        return default
+
+
+def write_json_file(path: Path, payload: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temp_path = path.with_suffix(path.suffix + ".tmp")
+    with temp_path.open("w", encoding="utf-8") as file:
+        json.dump(payload, file, ensure_ascii=False, indent=2)
+    temp_path.replace(path)

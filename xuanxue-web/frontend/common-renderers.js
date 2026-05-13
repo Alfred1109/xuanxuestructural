@@ -88,6 +88,7 @@
             birth: '出生信息',
             gender: '性别',
             location: '地点',
+            visual_context: '视觉上下文',
             matter_type: '事项类型',
             purpose: '用途',
             modules: '命中模块',

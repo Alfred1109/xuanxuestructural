@@ -1,6 +1,7 @@
 import sys
 import unittest
 import asyncio
+import tempfile
 from unittest.mock import patch
 
 import httpx
@@ -12,6 +13,24 @@ app = main.app
 
 
 class TestApiValidation(unittest.TestCase):
+    def setUp(self):
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.env_patch = patch.dict(
+            "os.environ",
+            {
+                "USER_STORE_PATH": self.temp_dir.name + "/users.json",
+                "SESSION_STORE_PATH": self.temp_dir.name + "/sessions.json",
+                "CONSULT_HISTORY_PATH": self.temp_dir.name + "/consult_history.jsonl",
+                "DECISION_LOG_PATH": self.temp_dir.name + "/decision_logs.jsonl",
+                "WEIGHT_TUNING_PATH": self.temp_dir.name + "/weight_tuning.jsonl",
+            },
+        )
+        self.env_patch.start()
+
+    def tearDown(self):
+        self.env_patch.stop()
+        self.temp_dir.cleanup()
+
     def request(self, method: str, url: str, **kwargs) -> httpx.Response:
         async def _run():
             transport = httpx.ASGITransport(app=app)
@@ -257,6 +276,159 @@ class TestApiValidation(unittest.TestCase):
         resp = self.request("POST", "/api/ai/chat")
         self.assertEqual(resp.status_code, 422)
         self.assert_error_envelope(resp, "missing_question")
+
+    def test_system_consult_requires_login(self):
+        resp = self.request(
+            "POST",
+            "/api/system/consult",
+            json={"question": "我现在适合换工作吗？"},
+        )
+        self.assertEqual(resp.status_code, 401)
+        self.assert_error_envelope(resp, "unauthorized")
+
+    def test_auth_register_login_profile_and_history_flow(self):
+        register_resp = self.request(
+            "POST",
+            "/api/auth/register",
+            json={
+                "email": "demo@example.com",
+                "password": "password123",
+                "display_name": "演示用户",
+            },
+        )
+        self.assertEqual(register_resp.status_code, 200)
+        register_payload = self.assert_success_envelope(register_resp)
+        token = register_payload["data"]["token"]
+        self.assertEqual(register_payload["data"]["user"]["display_name"], "演示用户")
+
+        me_resp = self.request(
+            "GET",
+            "/api/auth/me",
+            headers={"Authorization": "Bearer " + token},
+        )
+        self.assertEqual(me_resp.status_code, 200)
+        me_payload = self.assert_success_envelope(me_resp)
+        self.assertEqual(me_payload["data"]["user"]["email"], "demo@example.com")
+
+        profile_resp = self.request(
+            "PATCH",
+            "/api/auth/profile",
+            headers={"Authorization": "Bearer " + token},
+            json={
+                "display_name": "新昵称",
+                "gender": "男",
+                "year": 1990,
+                "month": 1,
+                "day": 1,
+                "hour": 12,
+                "minute": 0,
+                "location": "上海",
+            },
+        )
+        self.assertEqual(profile_resp.status_code, 200)
+        profile_payload = self.assert_success_envelope(profile_resp)
+        self.assertEqual(profile_payload["data"]["user"]["display_name"], "新昵称")
+        self.assertEqual(profile_payload["data"]["user"]["profile"]["location"], "上海")
+
+        consult_resp = self.request(
+            "POST",
+            "/api/system/consult",
+            headers={"Authorization": "Bearer " + token},
+            json={"question": "我现在适合换工作吗？"},
+        )
+        self.assertEqual(consult_resp.status_code, 200)
+        consult_payload = self.assert_success_envelope(consult_resp)
+        self.assertTrue(consult_payload["data"]["account_history"]["saved"])
+
+        history_resp = self.request(
+            "GET",
+            "/api/auth/history",
+            headers={"Authorization": "Bearer " + token},
+        )
+        self.assertEqual(history_resp.status_code, 200)
+        history_payload = self.assert_success_envelope(history_resp)
+        self.assertEqual(history_payload["data"]["count"], 1)
+        history_id = history_payload["data"]["items"][0]["history_id"]
+
+        detail_resp = self.request(
+            "GET",
+            "/api/auth/history/" + history_id,
+            headers={"Authorization": "Bearer " + token},
+        )
+        self.assertEqual(detail_resp.status_code, 200)
+        detail_payload = self.assert_success_envelope(detail_resp)
+        self.assertIn("换工作", detail_payload["data"]["item"]["question"])
+
+        preset_save_resp = self.request(
+            "POST",
+            "/api/auth/consult-presets",
+            headers={"Authorization": "Bearer " + token},
+            json={
+                "name": "我的事业问事模板",
+                "question": "我现在适合换工作吗？",
+                "year": 1990,
+                "month": 1,
+                "day": 1,
+                "hour": 12,
+                "minute": 0,
+                "gender": "男",
+                "location": "上海",
+                "is_default": True,
+            },
+        )
+        self.assertEqual(preset_save_resp.status_code, 200)
+        preset_save_payload = self.assert_success_envelope(preset_save_resp)
+        self.assertEqual(preset_save_payload["data"]["count"], 1)
+        preset_id = preset_save_payload["data"]["items"][0]["preset_id"]
+
+        preset_list_resp = self.request(
+            "GET",
+            "/api/auth/consult-presets",
+            headers={"Authorization": "Bearer " + token},
+        )
+        self.assertEqual(preset_list_resp.status_code, 200)
+        preset_list_payload = self.assert_success_envelope(preset_list_resp)
+        self.assertEqual(preset_list_payload["data"]["items"][0]["name"], "我的事业问事模板")
+        self.assertTrue(preset_list_payload["data"]["items"][0]["is_default"])
+
+        preset_delete_resp = self.request(
+            "DELETE",
+            "/api/auth/consult-presets/" + preset_id,
+            headers={"Authorization": "Bearer " + token},
+        )
+        self.assertEqual(preset_delete_resp.status_code, 200)
+        preset_delete_payload = self.assert_success_envelope(preset_delete_resp)
+        self.assertEqual(preset_delete_payload["data"]["count"], 0)
+
+        logout_resp = self.request(
+            "POST",
+            "/api/auth/logout",
+            headers={"Authorization": "Bearer " + token},
+        )
+        self.assertEqual(logout_resp.status_code, 200)
+        self.assert_success_envelope(logout_resp)
+
+    def test_auth_login_rejects_wrong_password(self):
+        self.request(
+            "POST",
+            "/api/auth/register",
+            json={
+                "email": "demo@example.com",
+                "password": "password123",
+                "display_name": "演示用户",
+            },
+        )
+
+        login_resp = self.request(
+            "POST",
+            "/api/auth/login",
+            json={
+                "email": "demo@example.com",
+                "password": "wrong-pass",
+            },
+        )
+        self.assertEqual(login_resp.status_code, 401)
+        self.assert_error_envelope(login_resp, "unauthorized")
 
     def test_ai_chat_unavailable_returns_503(self):
         with patch("main.llm_helper.is_available", return_value=False):

@@ -1,4 +1,6 @@
 (function () {
+    var AUTH_TOKEN_KEY = 'xuanxue_auth_token';
+
     function getBaseUrl() {
         if (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) {
             return window.APP_CONFIG.API_BASE_URL;
@@ -28,10 +30,21 @@
         var method = opts.method || 'GET';
         var headers = Object.assign({}, opts.headers || {});
         var body = opts.body;
+        var token = '';
+
+        try {
+            token = window.localStorage.getItem(AUTH_TOKEN_KEY) || '';
+        } catch (_err) {
+            token = '';
+        }
 
         if (opts.json !== undefined) {
             headers['Content-Type'] = 'application/json';
             body = JSON.stringify(opts.json);
+        }
+
+        if (token && !headers.Authorization && !headers.authorization) {
+            headers.Authorization = 'Bearer ' + token;
         }
 
         var response = await fetch(buildUrl(path, opts.query), {

@@ -55,6 +55,8 @@ class TestSystemEngine(unittest.TestCase):
         self.assertIn("奇门", result["trace"]["mermaid"])
         self.assertTrue(any(step["id"] == "bazi_year" for step in result["trace"]["steps"]))
         self.assertTrue(any(step["id"] == "ziwei_mingpan" for step in result["trace"]["steps"]))
+        self.assertIn('subgraph bazi_pillars["四柱"]', result["trace"]["mermaid"])
+        self.assertIn("direction LR", result["trace"]["mermaid"])
         bazi_year = next(step for step in result["trace"]["steps"] if step["id"] == "bazi_year")
         self.assertTrue(bazi_year["formulas"])
         self.assertEqual(bazi_year["derivation"]["result"], result["modules"]["bazi"]["bazi"]["year"])

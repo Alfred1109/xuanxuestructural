@@ -1,12 +1,14 @@
+import base64
 from datetime import datetime
 from typing import Optional
 
-from fastapi import APIRouter, Body, HTTPException, Path, Query, Request
+from fastapi import APIRouter, Body, Form, HTTPException, Path, Query, Request, UploadFile
 from pydantic import BaseModel, Field
 
 from core.bazi_advanced import get_advanced_analysis
 from core.bazi_core import BaZiChart
 from core.consult.summarizers import generate_simple_analysis
+from core.decision.kernel import build_visual_rule_scores
 from core.llm_helper import llm_helper
 from core.qimen import divine_qimen
 from core.zeri import get_today_fortune
@@ -23,6 +25,134 @@ router = APIRouter()
 class AIChatRequest(BaseModel):
     question: Optional[str] = Field(None, min_length=1, max_length=500)
     context: Optional[str] = Field("", max_length=2000)
+
+
+@router.post("/api/ai/visual-insight")
+async def ai_visual_insight(
+    request: Request,
+    mode: str = Form(...),
+    question: str = Form(""),
+    location: str = Form(""),
+    scene_type: str = Form("generic"),
+    consent: bool = Form(False),
+):
+    """图片辅助分析：空间/风水观察、手相参考、面相参考。"""
+    try:
+        normalized_mode = (mode or "").strip().lower()
+        if normalized_mode not in {"space", "palm", "face"}:
+            raise HTTPException(status_code=400, detail="mode 仅支持 space / palm / face")
+
+        if normalized_mode in {"palm", "face"} and not consent:
+            raise HTTPException(status_code=400, detail="手相/面相分析前需要明确勾选授权与免责声明")
+
+        if not llm_helper.is_available():
+            raise HTTPException(
+                status_code=503,
+                detail={
+                    "code": "ai_unconfigured",
+                    "message": "AI服务未配置，请设置ARK_API_KEY，必要时可额外设置ARK_VISION_MODEL",
+                    "retryable": False,
+                },
+            )
+
+        uploaded_files: list[UploadFile] = []
+        form = await request.form()
+        maybe_multi = form.getlist("images")
+        maybe_single = form.get("image")
+
+        for item in maybe_multi:
+            if isinstance(item, UploadFile):
+                uploaded_files.append(item)
+        if isinstance(maybe_single, UploadFile):
+            uploaded_files.append(maybe_single)
+
+        uploaded_files = [item for item in uploaded_files if item is not None]
+        if not uploaded_files:
+            raise HTTPException(status_code=400, detail="请至少上传一张图片")
+
+        if normalized_mode == "space":
+            if len(uploaded_files) > 4:
+                raise HTTPException(status_code=400, detail="空间观察最多支持 4 张图片")
+        else:
+            uploaded_files = uploaded_files[:1]
+
+        image_data_urls: list[str] = []
+        image_names: list[str] = []
+        for uploaded in uploaded_files:
+            content_type = uploaded.content_type or ""
+            if not content_type.startswith("image/"):
+                raise HTTPException(status_code=400, detail="仅支持上传图片文件")
+
+            raw = await uploaded.read()
+            if not raw:
+                raise HTTPException(status_code=400, detail="上传的图片为空")
+            if len(raw) > 8 * 1024 * 1024:
+                raise HTTPException(status_code=413, detail="图片过大，请控制在 8MB 以内")
+
+            image_data_urls.append("data:{mime};base64,{payload}".format(
+                mime=content_type,
+                payload=base64.b64encode(raw).decode("ascii"),
+            ))
+            image_names.append(uploaded.filename or "uploaded-image")
+
+        structure = llm_helper.extract_visual_structure(
+            image_data_urls=image_data_urls,
+            mode=normalized_mode,
+            question=question,
+            location=location,
+            scene_type=scene_type,
+        )
+        analysis = llm_helper.analyze_visual_insight(
+            image_data_urls=image_data_urls,
+            mode=normalized_mode,
+            question=question,
+            location=location,
+            scene_type=scene_type,
+        )
+        if not analysis:
+            mark_ai_failure("visual_insight_empty")
+            raise HTTPException(
+                status_code=502,
+                detail={
+                    "code": "ai_upstream_empty",
+                    "message": "视觉分析暂时不可用，请检查 ARK_VISION_MODEL 是否支持图片理解",
+                    "retryable": True,
+                },
+            )
+
+        mark_ai_success()
+        mode_labels = {
+            "space": "空间 / 风水观察",
+            "palm": "手相参考",
+            "face": "面相参考",
+        }
+        visual_summary = {
+            "mode": normalized_mode,
+            "structure": structure or {},
+        }
+        rule_scores = build_visual_rule_scores(visual_summary)
+        return success_response(
+            {
+                "mode": normalized_mode,
+                "mode_label": mode_labels[normalized_mode],
+                "analysis": analysis,
+                "disclaimer": "结果仅作文化娱乐与环境观察参考，不构成身份识别、医疗、法律或确定性人生判断。",
+                "image_name": f"{len(image_names)} 张图片" if len(image_names) > 1 else image_names[0],
+                "image_names": image_names,
+                "location": location.strip(),
+                "scene_type": scene_type.strip(),
+                "structure": structure or {},
+                "rule_scores": rule_scores,
+            },
+            request=request,
+            ai_enabled=True,
+            ai_enhanced=True,
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        mark_ai_failure(f"visual_insight_exception: {str(exc)}")
+        raise HTTPException(status_code=500, detail=f"图片分析失败: {str(exc)}")
 
 
 @router.post("/api/ai/enhance-liuyao")

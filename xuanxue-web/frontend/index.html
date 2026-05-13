@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hermes 玄学系统 - 统一问事中心</title>
-    <link rel="stylesheet" href="common-header.css?v=20260511-zen">
-    <link rel="stylesheet" href="common-theme.css?v=20260511-zen">
+    <link rel="stylesheet" href="common-header.css?v=20260513-home-cleanup">
+    <link rel="stylesheet" href="common-theme.css?v=20260513-home-cleanup">
     <style>
         .page-title {
             margin-bottom: var(--spacing-lg);
@@ -20,76 +20,211 @@
             background: transparent;
             border: none;
             box-shadow: none;
-            max-width: 880px;
+            max-width: 1080px;
             margin: 0 auto;
         }
 
         .entry-top {
             margin-bottom: var(--spacing-3xl);
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(380px, 0.94fr);
+            gap: 24px;
+            align-items: start;
         }
 
         .entry-kicker {
-            display: block;
-            color: var(--color-text-tertiary);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--color-primary-dark);
+            background: rgba(44, 91, 79, 0.08);
+            border: 1px solid rgba(44, 91, 79, 0.08);
+            border-radius: 999px;
+            padding: 8px 12px;
             font-size: var(--font-size-xs);
             font-weight: var(--font-weight-medium);
             line-height: var(--line-height-normal);
             margin-bottom: var(--spacing-lg);
-            letter-spacing: 1px;
+            letter-spacing: 0.8px;
             text-transform: uppercase;
         }
 
         .entry-title {
-            margin: 0 0 var(--spacing-lg);
+            margin: 0 0 18px;
             color: var(--color-text);
-            font-size: var(--font-size-3xl);
-            font-weight: var(--font-weight-medium);
-            line-height: var(--line-height-tight);
+            font-size: clamp(1.6rem, 2.5vw, 2.2rem);
+            font-weight: 700;
+            line-height: 1.16;
             letter-spacing: -0.02em;
+            max-width: none;
         }
 
         .entry-copy p {
             margin: 0 0 var(--spacing-xl);
             color: var(--color-text-secondary);
-            font-size: var(--font-size-base);
+            font-size: 1rem;
             font-weight: var(--font-weight-normal);
             line-height: var(--line-height-loose);
-            max-width: 640px;
+            max-width: 560px;
+        }
+
+        .entry-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .entry-tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: #ffffff;
+            border: 1px solid rgba(44, 91, 79, 0.1);
+            color: var(--color-primary-dark);
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+        .entry-callout {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            border-radius: 16px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(247, 248, 245, 0.96) 100%);
+            border: 1px solid rgba(44, 91, 79, 0.08);
+            color: var(--color-primary-dark);
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .entry-callout strong {
+            font-size: 1rem;
+            line-height: 1;
+        }
+
+        .entry-aside {
+            display: grid;
+            gap: 14px;
+            align-content: start;
+        }
+
+        .entry-guide {
+            padding: 22px 22px 18px;
+            border-radius: 24px;
+            background: linear-gradient(155deg, rgba(248, 242, 229, 0.98) 0%, rgba(243, 247, 244, 0.98) 100%);
+            border: 1px solid rgba(44, 91, 79, 0.09);
+            box-shadow: 0 18px 32px rgba(23, 45, 62, 0.05);
+        }
+
+        .entry-guide .eyebrow {
+            display: block;
+            margin-bottom: 10px;
+            color: var(--color-accent);
+            font-size: 0.74rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .entry-guide h3 {
+            margin: 0 0 12px;
+            font-size: 1.18rem;
+            line-height: 1.38;
+            max-width: 15em;
+        }
+
+        .entry-guide p {
+            margin: 0 0 16px;
+            font-size: 0.9rem;
+            line-height: 1.72;
+        }
+
+        .entry-guide-points {
+            display: grid;
+            gap: 6px;
+        }
+
+        .entry-guide-point {
+            display: grid;
+            grid-template-columns: 38px minmax(0, 1fr);
+            gap: 12px;
+            align-items: start;
+            padding: 12px 0;
+            border-top: 1px solid rgba(44, 91, 79, 0.08);
+        }
+
+        .entry-guide-point:first-child {
+            border-top: none;
+            padding-top: 0;
+        }
+
+        .entry-guide-point .num {
+            width: 38px;
+            height: 38px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            background: rgba(44, 91, 79, 0.1);
+            color: var(--color-primary-dark);
+            font-size: 0.84rem;
+            font-weight: 700;
+        }
+
+        .entry-guide-point strong {
+            display: block;
+            margin-bottom: 4px;
+            color: var(--color-text);
+            font-size: 0.9rem;
+        }
+
+        .entry-guide-point span {
+            color: var(--color-text-secondary);
+            font-size: 0.84rem;
+            line-height: 1.65;
         }
 
         .entry-stats {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 0;
-            background: #ffffff;
-            border: 1px solid var(--color-line);
-            border-radius: var(--radius-sm);
-            overflow: hidden;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 0;
         }
 
         .entry-stat {
-            padding: var(--spacing-lg);
-            text-align: center;
-            border-right: 1px solid var(--color-line);
-        }
-
-        .entry-stat:last-child {
-            border-right: none;
+            padding: 12px 12px 11px;
+            text-align: left;
+            border: 1px solid rgba(44, 91, 79, 0.08);
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: none;
         }
 
         .entry-stat .label {
-            font-size: var(--font-size-xs);
+            font-size: 0.74rem;
             font-weight: var(--font-weight-medium);
             color: var(--color-text-tertiary);
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: var(--spacing-sm);
+            letter-spacing: 0.08em;
+            margin-bottom: 10px;
         }
 
         .entry-stat .value {
-            font-size: var(--font-size-base);
-            font-weight: var(--font-weight-semibold);
+            font-size: 1rem;
+            font-weight: 700;
             color: var(--color-text);
+            line-height: 1.1;
+        }
+
+        .entry-stat .note {
+            margin-top: 6px;
+            color: var(--color-text-secondary);
+            font-size: 0.74rem;
+            line-height: 1.5;
         }
 
         .consult-form {
@@ -130,6 +265,390 @@
             color: var(--color-text-tertiary);
         }
 
+        .scenario-preset-block {
+            margin: 0 0 var(--spacing-xl);
+            display: grid;
+            gap: 12px;
+        }
+
+        .saved-preset-block {
+            margin: 0 0 var(--spacing-xl);
+            display: grid;
+            gap: 12px;
+            padding: 16px;
+            border-radius: 20px;
+            background: linear-gradient(180deg, rgba(248, 242, 229, 0.46) 0%, rgba(255, 255, 255, 0.96) 100%);
+            border: 1px solid rgba(44, 91, 79, 0.08);
+        }
+
+        .saved-preset-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .saved-preset-item {
+            position: relative;
+            display: grid;
+            gap: 8px;
+            padding: 14px;
+            border-radius: 16px;
+            border: 1px solid rgba(44, 91, 79, 0.1);
+            background: #ffffff;
+        }
+
+        .saved-preset-item .title {
+            font-size: 0.94rem;
+            font-weight: 700;
+            color: var(--color-text);
+            padding-right: 34px;
+        }
+
+        .saved-preset-item .meta {
+            font-size: 0.8rem;
+            color: var(--color-text-secondary);
+            line-height: 1.6;
+        }
+
+        .saved-preset-item .actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .saved-preset-item .mini-btn {
+            appearance: none;
+            border: 1px solid rgba(44, 91, 79, 0.12);
+            background: rgba(44, 91, 79, 0.04);
+            color: var(--color-primary-dark);
+            border-radius: 999px;
+            padding: 7px 10px;
+            font-size: 0.76rem;
+            cursor: pointer;
+        }
+
+        .saved-preset-item .mini-btn:hover {
+            background: rgba(44, 91, 79, 0.08);
+        }
+
+        .saved-preset-item .mini-btn.default {
+            background: rgba(168, 116, 60, 0.08);
+            border-color: rgba(168, 116, 60, 0.16);
+            color: #8b5c26;
+        }
+
+        .saved-preset-item .mini-btn.default.active {
+            background: rgba(168, 116, 60, 0.18);
+            border-color: rgba(168, 116, 60, 0.28);
+        }
+
+        .saved-preset-item .danger-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            appearance: none;
+            border: none;
+            background: transparent;
+            color: var(--color-text-tertiary);
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .saved-preset-empty {
+            padding: 14px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.78);
+            border: 1px dashed rgba(44, 91, 79, 0.14);
+            color: var(--color-text-secondary);
+            font-size: 0.88rem;
+            line-height: 1.7;
+        }
+
+        .visual-context-banner {
+            display: none;
+            gap: 12px;
+            padding: 18px;
+            border-radius: 22px;
+            background:
+                radial-gradient(circle at top right, rgba(214, 188, 143, 0.16) 0%, transparent 26%),
+                linear-gradient(145deg, rgba(23, 58, 52, 0.98) 0%, rgba(44, 91, 79, 0.95) 58%, rgba(139, 104, 62, 0.9) 100%);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 16px 30px rgba(20, 32, 28, 0.12);
+        }
+
+        .visual-context-banner.show {
+            display: grid;
+        }
+
+        .visual-context-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .visual-context-kicker {
+            display: inline-flex;
+            width: fit-content;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            font-size: 0.76rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .visual-context-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            color: #ffffff;
+            font-size: 0.82rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .visual-context-title {
+            font-size: 1.02rem;
+            font-weight: 700;
+            line-height: 1.55;
+        }
+
+        .visual-context-meta {
+            color: rgba(255, 248, 236, 0.78);
+            font-size: 0.84rem;
+            line-height: 1.75;
+        }
+
+        .visual-context-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .visual-context-btn {
+            appearance: none;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            border-radius: 999px;
+            padding: 9px 14px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .visual-context-btn:hover {
+            background: rgba(255, 255, 255, 0.16);
+        }
+
+        .preset-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 20, 18, 0.46);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 10001;
+        }
+
+        .preset-modal.show {
+            display: flex;
+        }
+
+        .preset-dialog {
+            width: min(100%, 520px);
+            background: #fbfaf7;
+            border-radius: 24px;
+            border: 1px solid rgba(44, 91, 79, 0.08);
+            box-shadow: 0 26px 60px rgba(10, 20, 18, 0.22);
+            padding: 22px;
+        }
+
+        .visual-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 20, 18, 0.58);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 22px;
+            z-index: 10002;
+        }
+
+        .visual-modal.show {
+            display: flex;
+        }
+
+        .visual-modal-dialog {
+            width: min(100%, 1220px);
+            height: min(92vh, 920px);
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr);
+            border-radius: 28px;
+            overflow: hidden;
+            background: #fbfaf7;
+            border: 1px solid rgba(44, 91, 79, 0.08);
+            box-shadow: 0 28px 70px rgba(10, 20, 18, 0.28);
+        }
+
+        .visual-modal-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 18px 20px;
+            border-bottom: 1px solid rgba(44, 91, 79, 0.08);
+            background: linear-gradient(180deg, rgba(249, 244, 235, 0.96) 0%, rgba(255, 255, 255, 0.98) 100%);
+        }
+
+        .visual-modal-copy strong {
+            display: block;
+            color: var(--color-primary-dark);
+            font-size: 1rem;
+        }
+
+        .visual-modal-copy span {
+            display: block;
+            margin-top: 4px;
+            color: var(--color-text-secondary);
+            font-size: 0.84rem;
+        }
+
+        .visual-modal-close {
+            appearance: none;
+            border: 1px solid rgba(44, 91, 79, 0.12);
+            background: rgba(44, 91, 79, 0.04);
+            color: var(--color-primary-dark);
+            border-radius: 999px;
+            padding: 10px 14px;
+            font-size: 0.84rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .visual-modal-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: #f5f7f5;
+        }
+
+        .preset-dialog-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .preset-dialog-head h3 {
+            margin: 0;
+        }
+
+        .preset-dialog-copy {
+            margin-bottom: 14px;
+            color: var(--color-text-secondary);
+            font-size: 0.92rem;
+            line-height: 1.7;
+        }
+
+        .preset-check {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 18px;
+            color: var(--color-text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .preset-check input {
+            width: 16px;
+            height: 16px;
+        }
+
+        .scenario-preset-head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .scenario-preset-head strong {
+            color: var(--color-text);
+            font-size: var(--font-size-sm);
+        }
+
+        .scenario-preset-head span {
+            color: var(--color-text-tertiary);
+            font-size: 0.8rem;
+        }
+
+        .scenario-preset-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .scenario-preset {
+            appearance: none;
+            text-align: left;
+            width: 100%;
+            border: 1px solid rgba(44, 91, 79, 0.1);
+            border-radius: 16px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(246, 248, 245, 0.96) 100%);
+            padding: 14px;
+            cursor: pointer;
+            transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .scenario-preset:hover {
+            transform: translateY(-1px);
+            border-color: rgba(44, 91, 79, 0.26);
+            box-shadow: 0 10px 18px rgba(23, 45, 62, 0.05);
+        }
+
+        .scenario-preset.active {
+            border-color: rgba(44, 91, 79, 0.42);
+            box-shadow: 0 0 0 3px rgba(44, 91, 79, 0.08);
+            background: linear-gradient(180deg, rgba(249, 243, 230, 0.96) 0%, rgba(255, 255, 255, 0.98) 100%);
+        }
+
+        .scenario-preset .kicker {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 8px;
+            border-radius: 999px;
+            background: rgba(44, 91, 79, 0.08);
+            color: var(--color-primary-dark);
+            font-size: 0.72rem;
+            margin-bottom: 10px;
+        }
+
+        .scenario-preset .title {
+            display: block;
+            color: var(--color-text);
+            font-size: 0.94rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .scenario-preset .desc {
+            display: block;
+            color: var(--color-text-secondary);
+            font-size: 0.82rem;
+            line-height: 1.65;
+        }
+
         .consult-form .form-row {
             display: grid;
             grid-template-columns: repeat(6, 1fr);
@@ -153,6 +672,58 @@
             outline: none;
             border-color: var(--color-primary);
             box-shadow: 0 0 0 3px rgba(44, 91, 79, 0.1);
+        }
+
+        .location-field {
+            display: grid;
+            gap: 8px;
+        }
+
+        .location-input-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto auto;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .location-ghost-btn {
+            appearance: none;
+            border: 1px solid rgba(44, 91, 79, 0.14);
+            background: rgba(44, 91, 79, 0.05);
+            color: var(--color-primary-dark);
+            border-radius: 12px;
+            padding: 10px 14px;
+            font-size: 0.84rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .location-ghost-btn:hover {
+            background: rgba(44, 91, 79, 0.1);
+        }
+
+        .visual-entry-btn {
+            appearance: none;
+            border: 1px solid rgba(168, 116, 60, 0.18);
+            background: rgba(168, 116, 60, 0.08);
+            color: #8b5c26;
+            border-radius: 12px;
+            padding: 10px 14px;
+            font-size: 0.84rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .visual-entry-btn:hover {
+            background: rgba(168, 116, 60, 0.14);
+        }
+
+        .field-help {
+            font-size: 0.8rem;
+            color: var(--color-text-tertiary);
+            line-height: 1.6;
         }
 
         .consult-actions {
@@ -316,6 +887,174 @@
             height: 100%;
             border-radius: inherit;
             background: linear-gradient(90deg, var(--color-primary) 0%, #5b9472 100%);
+        }
+
+        .header-account {
+            margin-top: 18px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .header-account-card {
+            width: min(100%, 780px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 14px 18px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+        }
+
+        .header-account-copy {
+            display: grid;
+            gap: 4px;
+            text-align: left;
+        }
+
+        .header-account-copy strong {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .header-account-copy span {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.72);
+        }
+
+        .header-account-actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .header-ghost-btn {
+            appearance: none;
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            background: rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+            border-radius: 999px;
+            padding: 10px 16px;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .header-ghost-btn:hover {
+            background: rgba(255, 255, 255, 0.16);
+        }
+
+        .auth-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 20, 18, 0.48);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 10000;
+        }
+
+        .auth-modal.show {
+            display: flex;
+        }
+
+        .auth-dialog {
+            width: min(100%, 920px);
+            display: grid;
+            grid-template-columns: minmax(260px, 0.95fr) minmax(320px, 1.05fr);
+            background: #fbfaf7;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 26px 60px rgba(10, 20, 18, 0.22);
+        }
+
+        .auth-aside {
+            padding: 28px;
+            background: linear-gradient(160deg, #20473f 0%, #1a3a34 55%, #4b6a4d 100%);
+            color: #ffffff;
+        }
+
+        .auth-aside .kicker {
+            display: inline-block;
+            margin-bottom: 12px;
+            font-size: 0.75rem;
+            opacity: 0.72;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .auth-aside h3 {
+            color: #ffffff;
+            margin-bottom: 12px;
+        }
+
+        .auth-aside p {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .auth-list {
+            display: grid;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .auth-list-item {
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.92);
+            font-size: 0.86rem;
+        }
+
+        .auth-main {
+            padding: 24px;
+            background: #fbfaf7;
+        }
+
+        .auth-main-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .auth-main-head h3 {
+            margin-bottom: 0;
+        }
+
+        .auth-close {
+            appearance: none;
+            border: none;
+            background: transparent;
+            color: var(--color-text-tertiary);
+            font-size: 1.4rem;
+            cursor: pointer;
+        }
+
+        .auth-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .auth-tab {
+            appearance: none;
+            border: 1px solid rgba(44, 91, 79, 0.12);
+            background: rgba(44, 91, 79, 0.04);
+            color: var(--color-text-secondary);
+            border-radius: 999px;
+            padding: 10px 16px;
+            cursor: pointer;
+        }
+
+        .auth-tab.active {
+            background: var(--color-primary);
+            color: #ffffff;
+            border-color: var(--color-primary);
         }
 
         .trace-card-head {
@@ -687,455 +1426,6 @@
             backdrop-filter: blur(20px);
         }
 
-        .workbench {
-            display: none;
-            grid-template-columns: 280px minmax(0, 1fr);
-            gap: 18px;
-            align-items: start;
-        }
-
-        .sidebar {
-            position: sticky;
-            top: 16px;
-            padding: 18px;
-        }
-
-        .sidebar-brand {
-            padding-bottom: 14px;
-            border-bottom: 1px solid #e4ebe4;
-            margin-bottom: 14px;
-        }
-
-        .sidebar-brand .kicker {
-            font-size: 0.78rem;
-            color: var(--color-accent);
-            letter-spacing: 0.4px;
-            text-transform: uppercase;
-        }
-
-        .sidebar-brand h2 {
-            margin: 6px 0 6px;
-            color: var(--color-primary-strong);
-            font-size: 1.4rem;
-        }
-
-        .sidebar-brand p {
-            margin: 0;
-            color: var(--color-text-soft);
-            font-size: 0.92rem;
-        }
-
-        .sidebar-nav {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .sidebar-item {
-            appearance: none;
-            border: 1px solid rgba(217, 226, 220, 0.92);
-            background: rgba(255, 255, 255, 0.8);
-            color: var(--color-text);
-            padding: 12px 14px;
-            border-radius: 14px;
-            text-align: left;
-            cursor: pointer;
-            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
-            backdrop-filter: blur(10px);
-        }
-
-        .sidebar-item:hover {
-            transform: translateY(-1px);
-            border-color: rgba(44, 91, 79, 0.26);
-            box-shadow: 0 10px 20px rgba(23, 45, 62, 0.05);
-        }
-
-        .sidebar-item.active {
-            background: linear-gradient(135deg, var(--color-primary) 0%, #3f7263 100%);
-            color: #fff;
-            border-color: transparent;
-            box-shadow: 0 12px 24px rgba(36, 59, 52, 0.2);
-        }
-
-        .sidebar-item .title {
-            display: block;
-            font-weight: 700;
-        }
-
-        .sidebar-item .desc {
-            display: block;
-            margin-top: 4px;
-            font-size: 0.84rem;
-            opacity: 0.85;
-            line-height: 1.45;
-        }
-
-        .sidebar-link {
-            display: block;
-            margin-top: 12px;
-            padding: 12px 14px;
-            border-radius: 14px;
-            border: 1px solid rgba(217, 226, 220, 0.92);
-            text-decoration: none;
-            color: var(--color-text);
-            background: rgba(250, 246, 238, 0.92);
-            font-weight: 600;
-        }
-
-        .sidebar-link small {
-            display: block;
-            margin-top: 4px;
-            font-weight: 400;
-            color: var(--color-text-soft);
-        }
-
-        .sidebar-note {
-            margin-top: 14px;
-            padding: 12px 14px;
-            border-radius: 14px;
-            background: linear-gradient(180deg, rgba(244, 236, 220, 0.92) 0%, rgba(249, 244, 236, 0.94) 100%);
-            border: 1px solid rgba(168, 116, 60, 0.14);
-            color: var(--color-primary-strong);
-            font-size: 0.9rem;
-        }
-
-        .workspace {
-            min-width: 0;
-        }
-
-        .workspace-head {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            gap: 14px;
-            margin-bottom: 14px;
-        }
-
-        .workspace-kicker {
-            font-size: 0.8rem;
-            color: var(--color-accent);
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-        }
-
-        .workspace-head h2 {
-            margin: 6px 0 6px;
-            font-size: clamp(1.4rem, 2.6vw, 2rem);
-            color: var(--color-primary-strong);
-        }
-
-        .workspace-head p {
-            margin: 0;
-            color: var(--color-text-soft);
-        }
-
-        .workspace-pill {
-            align-self: center;
-            padding: 8px 12px;
-            border-radius: 999px;
-            background: rgba(44, 91, 79, 0.08);
-            border: 1px solid rgba(44, 91, 79, 0.12);
-            color: var(--color-primary-strong);
-            font-weight: 600;
-            white-space: nowrap;
-        }
-
-        .overview-panel {
-            display: block;
-        }
-
-        .overview-panel .module-grid {
-            display: none;
-        }
-
-        .module-frame {
-            display: none;
-            width: 100%;
-            min-height: 78vh;
-            border: none;
-            border-radius: 18px;
-            background: rgba(255, 255, 255, 0.9);
-            box-shadow: 0 14px 34px rgba(23, 45, 62, 0.06);
-        }
-
-        .module-frame.show {
-            display: block;
-        }
-
-        .overview-panel.hide {
-            display: none;
-        }
-
-        .hero-panel {
-            position: relative;
-            overflow: hidden;
-            margin-bottom: 20px;
-            padding: 22px;
-            border-radius: 20px;
-            background: linear-gradient(135deg, rgba(23, 58, 52, 0.98) 0%, rgba(44, 91, 79, 0.95) 52%, rgba(168, 116, 60, 0.9) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            color: #fff;
-            box-shadow: 0 20px 42px rgba(20, 32, 28, 0.2);
-        }
-
-        .hero-panel-inner {
-            position: relative;
-            z-index: 1;
-        }
-
-        .hero-grid {
-            display: grid;
-            grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.9fr);
-            gap: 18px;
-            align-items: start;
-        }
-
-        .hero-kicker {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 5px 12px;
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            font-size: 0.82rem;
-            letter-spacing: 0.4px;
-        }
-
-        .hero-panel h2 {
-            margin: 12px 0 10px;
-            color: #fff;
-            font-size: clamp(1.55rem, 3vw, 2.2rem);
-        }
-
-        .hero-panel p {
-            color: rgba(255, 248, 236, 0.88);
-            margin-bottom: 0;
-        }
-
-        .hero-summary {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 10px;
-        }
-
-        .hero-summary-card {
-            background: rgba(255, 255, 255, 0.12);
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            border-radius: 14px;
-            padding: 12px 13px;
-            backdrop-filter: blur(10px);
-        }
-
-        .hero-summary-card .label {
-            font-size: 0.8rem;
-            opacity: 0.82;
-        }
-
-        .hero-summary-card .value {
-            display: block;
-            margin-top: 4px;
-            font-size: 1.02rem;
-            font-weight: 700;
-        }
-
-        .module-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-            gap: 12px;
-            margin-top: 18px;
-        }
-
-        .module-card {
-            display: block;
-            text-decoration: none;
-            color: var(--color-text);
-            background: rgba(255, 255, 255, 0.9);
-            border: 1px solid rgba(217, 226, 220, 0.94);
-            border-radius: 18px;
-            padding: 16px;
-            box-shadow: 0 10px 22px rgba(23, 45, 62, 0.05);
-            backdrop-filter: blur(12px);
-            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
-        }
-
-        .module-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 14px 28px rgba(23, 45, 62, 0.1);
-            border-color: rgba(44, 91, 79, 0.25);
-        }
-
-        .module-card.primary {
-            border-top: 4px solid var(--color-primary);
-        }
-
-        .module-card.accent {
-            border-top: 4px solid var(--color-accent);
-        }
-
-        .module-card.info {
-            border-top: 4px solid var(--color-info);
-        }
-
-        .module-card.success {
-            border-top: 4px solid var(--color-success);
-        }
-
-        .module-card .kicker {
-            font-size: 0.8rem;
-            color: var(--color-text-soft);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 6px;
-        }
-
-        .module-card .title {
-            font-size: 1.08rem;
-            font-weight: 700;
-            color: var(--color-primary-strong);
-            margin-bottom: 8px;
-        }
-
-        .module-card .desc {
-            color: var(--color-text-soft);
-            font-size: 0.94rem;
-        }
-
-        .module-card .meta {
-            margin-top: 10px;
-            font-size: 0.82rem;
-            color: var(--color-accent);
-            font-weight: 600;
-        }
-
-        .system-flow {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-            gap: 10px;
-            margin-top: 18px;
-        }
-
-        .flow-item {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 14px;
-            padding: 12px 13px;
-            backdrop-filter: blur(10px);
-        }
-
-        .flow-item .step {
-            font-size: 0.8rem;
-            opacity: 0.82;
-            letter-spacing: 0.4px;
-        }
-
-        .flow-item .name {
-            font-size: 1rem;
-            font-weight: 700;
-            margin: 4px 0 5px;
-        }
-
-        .flow-item .note {
-            font-size: 0.9rem;
-            opacity: 0.86;
-        }
-
-        .btn-row .btn {
-            flex: 1;
-        }
-
-        .bazi-display {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-            margin: 14px 0;
-        }
-
-        .pillar {
-            background: linear-gradient(135deg, var(--color-primary-strong) 0%, var(--color-primary) 58%, #4f7b6f 100%);
-            padding: 16px;
-            border-radius: 12px;
-            text-align: center;
-            color: #fff;
-            box-shadow: 0 10px 22px rgba(23, 45, 62, 0.08);
-        }
-
-        .pillar-title {
-            font-size: 13px;
-            opacity: 0.9;
-            margin-bottom: 8px;
-        }
-
-        .pillar-content {
-            font-size: 29px;
-            font-weight: bold;
-        }
-
-        .wuxing-chart {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 10px;
-            margin: 12px 0;
-        }
-
-        .wuxing-item {
-            text-align: center;
-            padding: 12px;
-            border-radius: 8px;
-            color: white;
-            font-weight: bold;
-        }
-
-        .wuxing-item .count {
-            font-size: 23px;
-            margin-top: 4px;
-        }
-
-        .wuxing-wood { background: #4f7b55; }
-        .wuxing-fire { background: #a95a49; }
-        .wuxing-earth { background: #b78843; }
-        .wuxing-metal { background: #74808a; }
-        .wuxing-water { background: #4d7285; }
-
-        .dayun-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 10px;
-        }
-
-        .dayun-item {
-            background: rgba(249, 250, 246, 0.94);
-            padding: 12px;
-            border-radius: 8px;
-            text-align: center;
-            border: 1px solid rgba(217, 226, 220, 0.92);
-        }
-
-        .dayun-ganzhi {
-            font-size: 19px;
-            font-weight: 700;
-            margin-bottom: 4px;
-            color: var(--color-primary-strong);
-        }
-
-        .dayun-age {
-            color: var(--color-text-soft);
-            font-size: 13px;
-        }
-
-        .shishen-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 8px;
-        }
-
-        .shishen-item {
-            background: rgba(255, 255, 255, 0.86);
-            border: 1px solid rgba(217, 226, 220, 0.92);
-            border-radius: 8px;
-            padding: 10px 12px;
-        }
-
         .ai-status-inline {
             justify-content: space-between;
             display: none;
@@ -1159,6 +1449,10 @@
         }
 
         @media (max-width: 900px) {
+            .entry-top {
+                grid-template-columns: 1fr;
+            }
+
             .entry-stats {
                 grid-template-columns: repeat(2, 1fr);
             }
@@ -1176,19 +1470,15 @@
                 border-bottom: none;
             }
 
-            .workbench {
-                grid-template-columns: 1fr;
-            }
-
-            .sidebar {
-                position: static;
-            }
-
-            .hero-grid {
-                grid-template-columns: 1fr;
-            }
-
             .consult-result-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .scenario-preset-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .saved-preset-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -1199,6 +1489,14 @@
             .trace-summary-chips {
                 justify-content: flex-start;
             }
+
+            .auth-dialog {
+                grid-template-columns: 1fr;
+            }
+
+            .auth-aside {
+                display: none;
+            }
         }
 
         @media (max-width: 768px) {
@@ -1207,7 +1505,7 @@
             }
 
             .entry-title {
-                font-size: 1.5rem;
+                font-size: 1.85rem;
             }
 
             .entry-stats {
@@ -1218,6 +1516,19 @@
                 grid-template-columns: repeat(3, 1fr);
             }
 
+            .scenario-preset-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .visual-modal {
+                padding: 12px;
+            }
+
+            .visual-modal-dialog {
+                height: min(94vh, 980px);
+                border-radius: 22px;
+            }
+
             .consult-actions {
                 flex-direction: column;
             }
@@ -1226,23 +1537,9 @@
                 width: 100%;
             }
 
-            .workspace-head {
-                flex-direction: column;
+            .visual-context-head,
+            .visual-modal-head {
                 align-items: flex-start;
-            }
-
-            .sidebar-nav {
-                display: grid;
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-
-            .hero-panel {
-                padding: var(--spacing-lg);
-            }
-
-            .hero-summary,
-            .system-flow {
-                grid-template-columns: 1fr;
             }
 
             .trace-step summary {
@@ -1307,7 +1604,8 @@
             }
 
             .entry-title {
-                font-size: 1.375rem;
+                font-size: 1.55rem;
+                max-width: none;
             }
 
             .consult-form .form-row {
@@ -1315,26 +1613,18 @@
             }
 
             .entry-stats {
-                grid-template-columns: repeat(4, 1fr);
+                grid-template-columns: 1fr;
             }
 
-            .entry-stat {
-                padding: var(--spacing-md);
-                border-right: 1px solid var(--color-line);
-                border-bottom: none;
+            .header-account-card {
+                flex-direction: column;
+                align-items: stretch;
             }
 
-            .entry-stat:last-child {
-                border-right: none;
+            .header-account-actions {
+                justify-content: flex-start;
             }
 
-            .entry-stat .label {
-                font-size: 0.6875rem;
-            }
-
-            .entry-stat .value {
-                font-size: 0.875rem;
-            }
         }
     </style>
 </head>
@@ -1343,8 +1633,21 @@
     <div class="unified-header">
         <div class="container">
             <div class="site-title">
-                <h1>🔮 玄学预测系统</h1>
+                <h1>☯ 玄学预测系统</h1>
                 <p>传统命理学 · 现代科技 · 智能分析</p>
+            </div>
+            <div class="header-account">
+                <div class="header-account-card">
+                    <div class="header-account-copy">
+                        <strong id="headerAccountName">未登录</strong>
+                        <span id="headerAccountMeta">请先登录，统一问事功能仅对账号开放</span>
+                    </div>
+                    <div class="header-account-actions">
+                        <button type="button" class="header-ghost-btn" id="openAuthModalBtn">登录 / 注册</button>
+                        <a class="header-ghost-btn" id="openAccountCenterBtn" href="account.html" style="display:none; text-decoration:none;">账号中心</a>
+                        <button type="button" class="header-ghost-btn" id="logoutBtn" style="display:none;">退出登录</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -1355,32 +1658,136 @@
                 <div class="entry-copy">
                     <div class="entry-kicker">统一问事中心</div>
                     <h2 class="entry-title">一个入口，自动编排多种术数</h2>
-                    <p>说清楚「我是谁」和「我想问什么」，系统自动选择相关模块，汇总成统一结论。</p>
+                    <p>登录后再说清楚「我是谁」和「我想问什么」，系统会自动选择相关模块，汇总成统一结论。</p>
+                    <div class="entry-tags">
+                        <span class="entry-tag">多术数统一编排</span>
+                        <span class="entry-tag">先登录后问事</span>
+                        <span class="entry-tag">自动归档历史记录</span>
+                    </div>
+                    <div class="entry-callout">
+                        <strong>↓</strong>
+                        <span>继续向下，先选一个场景模板，再开始问事。</span>
+                    </div>
+
                     <div class="entry-stats">
                         <div class="entry-stat">
                             <div class="label">入口</div>
-                            <div class="value">1</div>
+                            <div class="value">1 个</div>
+                            <div class="note">不用手动切换多个系统页</div>
                         </div>
                         <div class="entry-stat">
                             <div class="label">编排</div>
                             <div class="value">自动</div>
+                            <div class="note">根据问题语义智能匹配模块</div>
                         </div>
                         <div class="entry-stat">
                             <div class="label">输出</div>
                             <div class="value">统一</div>
+                            <div class="note">结论、依据、流程图集中展示</div>
                         </div>
                         <div class="entry-stat">
                             <div class="label">辅助</div>
-                            <div class="value">AI</div>
+                            <div class="value">AI + 规则</div>
+                            <div class="note">兼顾自动综合与可解释推演链</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="entry-aside">
+                    <div class="entry-guide">
+                        <span class="eyebrow">How It Works</span>
+                        <h3>系统会把“问题、命理、时机、空间”压成一条可回看的推演链</h3>
+                        <p>你不用自己选模块。只要把问题说清楚，系统会自动判断该调哪些术数视角，再把结果汇成统一结论。</p>
+                        <div class="entry-guide-points">
+                            <div class="entry-guide-point">
+                                <span class="num">01</span>
+                                <div>
+                                    <strong>先定问题</strong>
+                                    <span>职业、感情、求财、考试、搬动，都可以从同一个入口进入。</span>
+                                </div>
+                            </div>
+                            <div class="entry-guide-point">
+                                <span class="num">02</span>
+                                <div>
+                                    <strong>自动选术数</strong>
+                                    <span>系统会按出生信息与问题语义，自动调用八字、六爻、奇门、择日等模块。</span>
+                                </div>
+                            </div>
+                            <div class="entry-guide-point">
+                                <span class="num">03</span>
+                                <div>
+                                    <strong>统一出结论</strong>
+                                    <span>结果不是碎片化菜单，而是一份可执行、可回看、可追踪的统一判断。</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <form id="consultForm" class="consult-form">
+                <div class="saved-preset-block">
+                    <div class="scenario-preset-head">
+                        <strong>我的常用条件</strong>
+                        <span>把本次问事的基础条件保存下来，下次可直接套用</span>
+                    </div>
+                    <div id="savedPresetGrid" class="saved-preset-grid">
+                        <div class="saved-preset-empty">登录后保存过的常用问事条件，会显示在这里。</div>
+                    </div>
+                </div>
+
+                <div class="scenario-preset-block">
+                    <div class="scenario-preset-head">
+                        <strong>代表性场景</strong>
+                        <span>先选一个贴近的问题模板，再按你的实际情况微调</span>
+                    </div>
+                    <div class="scenario-preset-grid" id="scenarioPresetGrid">
+                        <button type="button" class="scenario-preset" data-scenario="career_switch">
+                            <span class="kicker">事业决策</span>
+                            <span class="title">换工作 / 跳槽</span>
+                            <span class="desc">适合判断当前是否该换岗、如何选时机、该稳还是该冲。</span>
+                        </button>
+                        <button type="button" class="scenario-preset" data-scenario="relationship">
+                            <span class="kicker">关系判断</span>
+                            <span class="title">感情能否继续</span>
+                            <span class="desc">适合看关系走势、复合可能性，以及接下来该怎么相处。</span>
+                        </button>
+                        <button type="button" class="scenario-preset" data-scenario="startup_date">
+                            <span class="kicker">时间选择</span>
+                            <span class="title">开业 / 启动项目</span>
+                            <span class="desc">适合看近期局势、启动风险，以及是否要配合择日与布局。</span>
+                        </button>
+                        <button type="button" class="scenario-preset" data-scenario="exam">
+                            <span class="kicker">学业考试</span>
+                            <span class="title">考试能否顺利</span>
+                            <span class="desc">适合看考试状态、临场发挥、复习重点和短期策略。</span>
+                        </button>
+                        <button type="button" class="scenario-preset" data-scenario="investment">
+                            <span class="kicker">财务决策</span>
+                            <span class="title">投资 / 求财</span>
+                            <span class="desc">适合看当前财运节奏、进退时机，以及该稳守还是试探出手。</span>
+                        </button>
+                        <button type="button" class="scenario-preset" data-scenario="relocation">
+                            <span class="kicker">空间与变动</span>
+                            <span class="title">搬家 / 入宅</span>
+                            <span class="desc">适合看是否适合搬动、当前居住支持度，以及择日配合。</span>
+                        </button>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label for="consultQuestion">你想问什么</label>
                     <textarea id="consultQuestion" class="consult-question" placeholder="例如：我现在适合换工作吗？这段感情还能继续吗？今年开业合不合适？"></textarea>
+                </div>
+
+                <div class="form-group location-field">
+                    <label for="consultLocation">当前位置 / 常用地点</label>
+                    <div class="location-input-row">
+                        <input type="text" id="consultLocation" maxlength="80" placeholder="例如：上海浦东 / 陆家嘴办公区 / 家中书房">
+                        <button type="button" class="location-ghost-btn" id="detectConsultLocationBtn">定位当前城市</button>
+                        <button type="button" class="visual-entry-btn" id="openVisualInsightModalBtn">拍照辅助</button>
+                    </div>
+                    <div class="field-help">可先自动识别当前位置，再手动补充到更精确的楼宇、工位、房间或户型描述，便于风水/空间判断。</div>
                 </div>
 
                 <div class="form-row">
@@ -1415,8 +1822,9 @@
                 </div>
 
                 <div class="consult-actions">
-                    <button type="submit" class="btn">🔮 开始系统分析</button>
-                    <button type="button" class="btn btn-ai" id="fillDemoBtn">✨ 填入示例</button>
+                    <button type="submit" class="btn">☯ 开始系统分析</button>
+                    <button type="button" class="btn btn-ai" id="saveCurrentConditionBtn">保存当前条件</button>
+                    <button type="button" class="btn btn-ai" id="fillDemoBtn">一键填入个人信息</button>
                     <button type="button" class="btn btn-accent" id="clearConsultBtn">清空</button>
                 </div>
             </form>
@@ -1462,189 +1870,6 @@
             </div>
         </div>
 
-        <div class="workbench">
-            <aside class="card sidebar">
-                <div class="sidebar-brand">
-                    <div class="kicker">统一工作台</div>
-                    <h2>左侧边栏</h2>
-                    <p>点选模块，右侧展示对应内容。</p>
-                </div>
-
-                <nav class="sidebar-nav" id="sidebarNav">
-                    <button class="sidebar-item active" type="button" data-view="overview">
-                        <span class="title">总览</span>
-                        <span class="desc">整体入口与八字基础分析</span>
-                    </button>
-                    <button class="sidebar-item" type="button" data-view="bazi">
-                        <span class="title">八字排盘</span>
-                        <span class="desc">直接跳到出生信息与命盘结果</span>
-                    </button>
-                    <button class="sidebar-item" type="button" data-view="ziwei">
-                        <span class="title">紫微斗数</span>
-                        <span class="desc">从命宫、主星与四化补强长期结构</span>
-                    </button>
-                    <button class="sidebar-item" type="button" data-view="fengshui">
-                        <span class="title">风水 / 空间</span>
-                        <span class="desc">评估朝向、布局与环境支持度</span>
-                    </button>
-                    <button class="sidebar-item" type="button" data-view="liuyao">
-                        <span class="title">六爻占卜</span>
-                        <span class="desc">围绕具体问题做即时判断</span>
-                    </button>
-                    <button class="sidebar-item" type="button" data-view="meihua">
-                        <span class="title">梅花易数</span>
-                        <span class="desc">适合快速起卦与轻量问事</span>
-                    </button>
-                    <button class="sidebar-item" type="button" data-view="qimen">
-                        <span class="title">奇门遁甲</span>
-                        <span class="desc">从时空格局看局势与方向</span>
-                    </button>
-                    <button class="sidebar-item" type="button" data-view="zeri">
-                        <span class="title">择日学</span>
-                        <span class="desc">查看运势并寻找合适时机</span>
-                    </button>
-                    <button class="sidebar-item" type="button" data-view="ai-chat">
-                        <span class="title">AI助手</span>
-                        <span class="desc">统一问答与辅助解释</span>
-                    </button>
-                </nav>
-
-                <div class="sidebar-note">
-                    右侧内容会保留原页面逻辑，适合一边切换、一边查看结果。
-                </div>
-            </aside>
-
-            <main class="workspace">
-                <div class="workspace-head">
-                    <div>
-                        <div class="workspace-kicker">玄学一体化工作台</div>
-                        <h2 id="viewTitle">总览</h2>
-                        <p id="viewDesc">先在左侧选模块，右侧会显示对应页面信息。</p>
-                    </div>
-                    <div class="workspace-pill" id="viewPill">总览</div>
-                </div>
-
-                <section id="overviewPanel" class="overview-panel">
-                    <div class="hero-panel">
-            <div class="hero-panel-inner">
-                <div class="hero-grid">
-                    <div>
-                        <span class="hero-kicker">玄学一体化工作台</span>
-                        <h2>把八字、六爻、奇门、择日和 AI 统一到同一张命理图谱里</h2>
-                        <p>先定命理根基，再看具体问题与时机，让每个模块都成为同一体系中的不同视角，而不是彼此割裂的菜单。</p>
-
-                        <div class="system-flow">
-                            <div class="flow-item">
-                                <div class="step">01</div>
-                                <div class="name">八字排盘</div>
-                                <div class="note">看本命结构与五行根基</div>
-                            </div>
-                            <div class="flow-item">
-                                <div class="step">02</div>
-                                <div class="name">紫微斗数</div>
-                                <div class="note">补充命宫、主星与长期运势结构</div>
-                            </div>
-                            <div class="flow-item">
-                                <div class="step">03</div>
-                                <div class="name">风水空间</div>
-                                <div class="note">把朝向、布局和环境纳入判断</div>
-                            </div>
-                            <div class="flow-item">
-                                <div class="step">04</div>
-                                <div class="name">六爻占卜</div>
-                                <div class="note">聚焦单一问题做即时判断</div>
-                            </div>
-                            <div class="flow-item">
-                                <div class="step">05</div>
-                                <div class="name">梅花易数</div>
-                                <div class="note">轻量起卦，快速取象定趋势</div>
-                            </div>
-                            <div class="flow-item">
-                                <div class="step">06</div>
-                                <div class="name">奇门遁甲</div>
-                                <div class="note">从时空格局看局势走向</div>
-                            </div>
-                            <div class="flow-item">
-                                <div class="step">07</div>
-                                <div class="name">择日学</div>
-                                <div class="note">把关键动作落到合适时间</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="hero-summary">
-                        <div class="hero-summary-card">
-                            <span class="label">核心主轴</span>
-                            <span class="value">命理合一</span>
-                        </div>
-                        <div class="hero-summary-card">
-                            <span class="label">辅助判断</span>
-                            <span class="value">AI 辅助</span>
-                        </div>
-                        <div class="hero-summary-card">
-                            <span class="label">适用场景</span>
-                            <span class="value">问事 · 看局 · 择时</span>
-                        </div>
-                        <div class="hero-summary-card">
-                            <span class="label">知识补充</span>
-                            <span class="value">文档与配置指南</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="module-grid">
-                    <a class="module-card primary" href="#baziForm">
-                        <div class="kicker">命理基底</div>
-                        <div class="title">八字排盘</div>
-                        <div class="desc">出生盘、五行、十神、大运与综合分析。</div>
-                        <div class="meta">进入本命分析</div>
-                    </a>
-                    <a class="module-card primary" href="ziwei.html">
-                        <div class="kicker">命理补核</div>
-                        <div class="title">紫微斗数</div>
-                        <div class="desc">从命宫、身宫、主星与四化补强长期结构判断。</div>
-                        <div class="meta">进入紫微页面</div>
-                    </a>
-                    <a class="module-card success" href="fengshui.html">
-                        <div class="kicker">空间评估</div>
-                        <div class="title">风水 / 空间</div>
-                        <div class="desc">把朝向、布局、办公位和住宅环境接入统一判断。</div>
-                        <div class="meta">进入风水页面</div>
-                    </a>
-                    <a class="module-card accent" href="liuyao.html">
-                        <div class="kicker">即时问事</div>
-                        <div class="title">六爻占卜</div>
-                        <div class="desc">围绕具体问题做快速、清晰的卦象解读。</div>
-                        <div class="meta">打开占卜页面</div>
-                    </a>
-                    <a class="module-card info" href="meihua.html">
-                        <div class="kicker">快速起卦</div>
-                        <div class="title">梅花易数</div>
-                        <div class="desc">通过时间或数字快速取卦，适合即时轻问事。</div>
-                        <div class="meta">进入梅花页面</div>
-                    </a>
-                    <a class="module-card info" href="qimen.html">
-                        <div class="kicker">时空布局</div>
-                        <div class="title">奇门遁甲</div>
-                        <div class="desc">观察局势、宫位与出入方向的综合关系。</div>
-                        <div class="meta">查看奇门盘</div>
-                    </a>
-                    <a class="module-card success" href="zeri.html">
-                        <div class="kicker">择时落地</div>
-                        <div class="title">择日学</div>
-                        <div class="desc">选吉日、看当日运势，把动作放到合适时间。</div>
-                        <div class="meta">进入择日工具</div>
-                    </a>
-                    <a class="module-card primary" href="ai-chat.html">
-                        <div class="kicker">统一问答</div>
-                        <div class="title">AI 助手</div>
-                        <div class="desc">把各模块结果串起来，补充解释和交叉验证。</div>
-                        <div class="meta">开始对话</div>
-                    </a>
-                </div>
-            </div>
-        </div>
-
         <div id="aiStatusBanner" class="ai-status-inline">
             <div class="ai-status-main">
                 <span id="aiStatusDot" class="ai-status-dot"></span>
@@ -1653,147 +1878,130 @@
             <a href="../../AI配置指南.md" target="_blank" class="inline-help" data-ai-guide-link>配置指南</a>
         </div>
 
-        <div class="card">
-            <h2 class="page-title">📅 八字入口 · 输入出生信息</h2>
-            <form id="baziForm">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>出生年份</label>
-                        <input type="number" id="year" min="1900" max="2100" value="1990" required>
-                    </div>
-                    <div class="form-group">
-                        <label>出生月份</label>
-                        <input type="number" id="month" min="1" max="12" value="1" required>
-                    </div>
-                    <div class="form-group">
-                        <label>出生日期</label>
-                        <input type="number" id="day" min="1" max="31" value="1" required>
-                    </div>
+    </div>
+
+    <div id="authModal" class="auth-modal">
+        <div class="auth-dialog">
+            <aside class="auth-aside">
+                <span class="kicker">Hermes Account</span>
+                <h3>先登录，再开始统一问事</h3>
+                <p>账号不仅用于保存历史，更是统一问事的使用门槛。登录后才能发起问事、累计资料并追踪结果。</p>
+                <div class="auth-list">
+                    <div class="auth-list-item">自动保存每次统一问事的完整结论</div>
+                    <div class="auth-list-item">按账号查看历史记录和模块摘要</div>
+                    <div class="auth-list-item">维护出生信息，减少重复填写</div>
                 </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>出生时辰</label>
-                        <input type="number" id="hour" min="0" max="23" value="12" required>
-                    </div>
-                    <div class="form-group">
-                        <label>出生分钟</label>
-                        <input type="number" id="minute" min="0" max="59" value="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label>性别</label>
-                        <select id="gender" required>
-                            <option value="男">男</option>
-                            <option value="女">女</option>
-                        </select>
-                    </div>
+            </aside>
+            <div class="auth-main">
+                <div class="auth-main-head">
+                    <h3>登录与注册</h3>
+                    <button type="button" class="auth-close" id="authModalClose">×</button>
                 </div>
-
-                <div class="btn-row">
-                    <button type="submit" class="btn">🔍 开始排盘</button>
-                    <button type="button" class="btn btn-ai" onclick="calculateWithAI()">🤖 AI深度分析</button>
+                <div class="auth-tabs">
+                    <button type="button" class="auth-tab active" id="authTabLogin">登录</button>
+                    <button type="button" class="auth-tab" id="authTabRegister">注册</button>
                 </div>
-            </form>
-        </div>
-
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <p class="loading-text">正在计算中...</p>
-        </div>
-
-        <div class="result" id="result">
-            <div class="card">
-                <h2 class="page-title">📊 八字命盘</h2>
-                
-                <div id="birthInfo" class="info-section">
-                    <h3>出生信息</h3>
-                    <p id="birthInfoText"></p>
+                <div id="authLoginPanel">
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label for="loginEmail">邮箱</label>
+                            <input id="loginEmail" type="email" maxlength="120" required placeholder="name@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="loginPassword">密码</label>
+                            <input id="loginPassword" type="password" minlength="8" maxlength="120" required placeholder="至少 8 位">
+                        </div>
+                        <div class="consult-actions">
+                            <button type="submit" class="btn">登录</button>
+                        </div>
+                    </form>
                 </div>
-
-                <div class="bazi-display" id="baziDisplay"></div>
-
-                <div class="info-section">
-                    <h3>五行分布</h3>
-                    <div class="wuxing-chart" id="wuxingChart"></div>
-                </div>
-
-                <div class="info-section">
-                    <h3>十神关系</h3>
-                    <div id="shishenInfo"></div>
-                </div>
-
-                <div class="info-section">
-                    <h3>大运流程</h3>
-                    <div class="dayun-list" id="dayunList"></div>
-                </div>
-
-                <div class="info-section">
-                    <h3>命理分析</h3>
-                    <div id="analysisContent"></div>
-                </div>
-
-                <div class="info-section">
-                    <h3>📌 基础解读补充</h3>
-                    <div id="baseInsightContent"></div>
-                </div>
-
-                <div class="info-section">
-                    <h3>🎯 格局分析（高级）</h3>
-                    <div id="gejuContent"></div>
-                </div>
-
-                <div class="info-section">
-                    <h3>✨ 神煞吉凶</h3>
-                    <div id="shenshaContent"></div>
-                </div>
-
-                <div class="info-section">
-                    <h3>👨‍👩‍👧‍👦 六亲关系</h3>
-                    <div id="liuqinContent"></div>
-                </div>
-
-                <div class="info-section" id="aiAnalysisSection" style="display: none;">
-                    <h3>🤖 AI深度分析</h3>
-                    <div id="aiAnalysisContent" class="analysis-box ai ai-analysis-content"></div>
-                </div>
-
-                <div class="disclaimer">
-                    ⚠️ 免责声明：本系统仅供参考和娱乐，不应作为人生重大决策的唯一依据。命运掌握在自己手中，积极努力才是改变人生的关键。
+                <div id="authRegisterPanel" style="display:none;">
+                    <form id="registerForm">
+                        <div class="form-group">
+                            <label for="registerDisplayName">昵称</label>
+                            <input id="registerDisplayName" type="text" maxlength="40" placeholder="例如：阿明">
+                        </div>
+                        <div class="form-group">
+                            <label for="registerEmail">邮箱</label>
+                            <input id="registerEmail" type="email" maxlength="120" required placeholder="name@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="registerPassword">密码</label>
+                            <input id="registerPassword" type="password" minlength="8" maxlength="120" required placeholder="至少 8 位">
+                        </div>
+                        <div class="consult-actions">
+                            <button type="submit" class="btn">创建账号</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
-                </section>
+    </div>
 
-                <iframe id="moduleFrame" class="module-frame" title="模块页面"></iframe>
-            </main>
+    <div id="presetSaveModal" class="preset-modal">
+        <div class="preset-dialog">
+            <div class="preset-dialog-head">
+                <h3>保存常用条件</h3>
+                <button type="button" class="auth-close" id="presetModalClose">×</button>
+            </div>
+            <div class="preset-dialog-copy">给当前这组问事基础条件起个名字。保存后，下次登录可以直接一键套用。</div>
+            <form id="presetSaveForm">
+                <div class="form-group">
+                    <label for="presetNameInput">条件名称</label>
+                    <input id="presetNameInput" type="text" maxlength="40" placeholder="例如：事业决策常用条件">
+                </div>
+                <label class="preset-check" for="presetDefaultInput">
+                    <input id="presetDefaultInput" type="checkbox">
+                    <span>设为默认条件，下次登录后自动填入</span>
+                </label>
+                <div class="consult-actions">
+                    <button type="submit" class="btn">保存常用条件</button>
+                    <button type="button" class="btn btn-accent" id="presetModalCancel">取消</button>
+                </div>
+            </form>
         </div>
     </div>
 
-    <script src="config.js"></script>
-    <script src="common-links.js"></script>
-    <script src="common-ui.js"></script>
-    <script src="markdown.js"></script>
-    <script src="api-client.js"></script>
-    <script src="ai-status.js"></script>
-    <script src="common-renderers.js"></script>
-    <script src="decision-panel.js"></script>
-    <script src="trace-panel.js"></script>
-    <script src="workspace-shell.js"></script>
-    <script src="consult-panel.js"></script>
-    <script src="index-bazi-panel.js"></script>
+    <div id="visualInsightModal" class="visual-modal">
+        <div class="visual-modal-dialog">
+            <div class="visual-modal-head">
+                <div class="visual-modal-copy">
+                    <strong>拍照辅助分析</strong>
+                    <span>拍完或上传后，结果会自动纳入当前这次统一问事。</span>
+                </div>
+                <button type="button" class="visual-modal-close" id="closeVisualInsightModalBtn">关闭</button>
+            </div>
+            <iframe
+                id="visualInsightFrame"
+                class="visual-modal-frame"
+                src="visual-insight.html?embed=1"
+                title="拍照辅助分析"
+            ></iframe>
+        </div>
+    </div>
+
+    <script src="config.js?v=20260513-home-cleanup-2"></script>
+    <script src="common-links.js?v=20260513-home-cleanup-2"></script>
+    <script src="common-ui.js?v=20260513-home-cleanup-2"></script>
+    <script src="markdown.js?v=20260513-home-cleanup-2"></script>
+    <script src="api-client.js?v=20260513-home-cleanup-2"></script>
+    <script src="auth-client.js?v=20260513-home-cleanup-2"></script>
+    <script src="ai-status.js?v=20260513-home-cleanup-2"></script>
+    <script src="common-renderers.js?v=20260513-home-cleanup-2"></script>
+    <script src="decision-panel.js?v=20260513-home-cleanup-2"></script>
+    <script src="trace-panel.js?v=20260513-home-cleanup-2"></script>
+    <script src="consult-panel.js?v=20260513-home-cleanup-2"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script>
         if (window.applyCommonLinks) {
             window.applyCommonLinks();
         }
-        if (window.initializeWorkspaceShell) {
-            window.initializeWorkspaceShell();
+        if (window.authClient) {
+            window.authClient.initialize();
         }
         if (window.consultPanel) {
             window.consultPanel.initialize();
-        }
-        if (window.indexBaziPanel) {
-            window.indexBaziPanel.initialize();
         }
     </script>
 </body>

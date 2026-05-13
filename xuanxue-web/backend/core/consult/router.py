@@ -5,6 +5,7 @@ MODULE_LABELS = {
     "bazi": "八字",
     "ziwei": "紫微",
     "fengshui": "风水",
+    "visual": "视觉观察",
     "liuyao": "六爻",
     "meihua": "梅花",
     "qimen": "奇门",

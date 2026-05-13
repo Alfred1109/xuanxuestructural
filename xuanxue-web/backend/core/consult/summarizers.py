@@ -54,6 +54,68 @@ def summarize_fengshui_result(result: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def summarize_visual_result(result: Dict[str, Any]) -> Dict[str, Any]:
+    mode = result.get("mode", "space")
+    items = result.get("items", []) or []
+    if mode == "bundle":
+        item_summaries = []
+        for item in items:
+            item_analysis = str(item.get("analysis", "") or "")
+            item_first_line = ""
+            for raw_line in item_analysis.splitlines():
+                line = raw_line.strip().lstrip("#*-0123456789. ").strip()
+                if line:
+                    item_first_line = line[:100]
+                    break
+            item_summaries.append({
+                "mode": item.get("mode", ""),
+                "mode_label": item.get("mode_label", ""),
+                "summary": item_first_line or "已纳入图片观察结果。",
+                "location": item.get("location", ""),
+                "image_name": item.get("image_name", ""),
+                "structure": item.get("structure", {}) or {},
+                "rule_scores": item.get("rule_scores", {}) or {},
+            })
+        return {
+            "mode": "bundle",
+            "mode_label": "多维视觉观察",
+            "summary": "已纳入 {count} 类图片信号。".format(count=len(item_summaries)),
+            "analysis": "\n".join(
+                [
+                    (entry.get("mode_label") or entry.get("mode") or "观察") + "："
+                    + (entry.get("summary") or "")
+                    for entry in item_summaries
+                ]
+            ),
+            "items": item_summaries,
+            "disclaimer": result.get("disclaimer", ""),
+            "image_name": result.get("image_name", ""),
+        }
+
+    analysis = str(result.get("analysis", "") or "")
+    structure = result.get("structure", {}) or {}
+    first_line = ""
+    for raw_line in analysis.splitlines():
+        line = raw_line.strip().lstrip("#*-0123456789. ").strip()
+        if line:
+            first_line = line[:120]
+            break
+
+    return {
+        "mode": mode,
+        "mode_label": result.get("mode_label", ""),
+        "question": result.get("question", ""),
+        "location": result.get("location", ""),
+        "scene_type": result.get("scene_type", ""),
+        "image_name": result.get("image_name", ""),
+        "summary": first_line or "已纳入图片观察结果。",
+        "analysis": analysis,
+        "disclaimer": result.get("disclaimer", ""),
+        "structure": structure,
+        "rule_scores": result.get("rule_scores", {}) or {},
+    }
+
+
 def summarize_liuyao_result(result: Dict[str, Any]) -> Dict[str, Any]:
     gua_info = result.get("gua_info", {})
     interpretation = result.get("interpretation", {})

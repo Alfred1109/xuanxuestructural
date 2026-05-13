@@ -6,6 +6,7 @@ from ..bazi_advanced import get_advanced_analysis
 from ..bazi_core import BaZiChart
 from ..decision_log import append_decision_log
 from ..decision.kernel import build_unified_world_model
+from ..decision.kernel import build_visual_rule_scores
 from ..fengshui import FengShuiReading
 from ..decision.weight_tuning import resolve_effective_weight_presets
 from ..liuyao import divine
@@ -23,6 +24,7 @@ from .summarizers import (
     summarize_liuyao_result,
     summarize_meihua_result,
     summarize_qimen_result,
+    summarize_visual_result,
     summarize_ziwei_result,
     summarize_zeri_result,
 )
@@ -60,6 +62,12 @@ def fallback_consultation_summary(question: str, module_summaries: Dict[str, Any
     fengshui = module_summaries.get("fengshui")
     if fengshui:
         lines.append(f"风水提示：{fengshui.get('summary', '')} 建议优先处理 {fengshui.get('recommended_direction', '')} 与空间动线。")
+    visual = module_summaries.get("visual")
+    if visual:
+        if visual.get("mode") == "space":
+            lines.append(f"现场观察：{visual.get('summary', '')} 该图片观察结果已并入空间层判断。")
+        else:
+            lines.append(f"微观参考：{visual.get('summary', '')} 仅作传统文化参考，不替代主命理结论。")
     zeri = module_summaries.get("zeri")
     if zeri:
         lines.append(f"择日提示：{zeri.get('level', '')}，评分 {zeri.get('score', 0)}，{zeri.get('fortune_advice', '')}")
@@ -90,6 +98,7 @@ class ConsultationEngine:
             "purpose": purpose,
             "matter_type": matter_type,
             "location": payload.location or "",
+            "visual_context": payload.visual_context.model_dump() if payload.visual_context else None,
         }
 
         module_results: Dict[str, Any] = {}
@@ -134,6 +143,121 @@ class ConsultationEngine:
             ).to_dict()
             module_results["fengshui"] = fengshui_result
             module_summaries["fengshui"] = summarize_fengshui_result(fengshui_result)
+
+        if payload.visual_context:
+            visual_context = payload.visual_context.model_dump()
+            if visual_context.get("mode") == "bundle":
+                items = []
+                for item in visual_context.get("items", []) or []:
+                    item_rule_scores = item.get("rule_scores", {}) or build_visual_rule_scores({
+                        "mode": item.get("mode"),
+                        "structure": item.get("structure", {}),
+                    })
+                    items.append({
+                        "mode": item.get("mode"),
+                        "mode_label": {
+                            "space": "空间 / 风水观察",
+                            "palm": "手相参考",
+                            "face": "面相参考",
+                        }.get(item.get("mode"), "视觉观察"),
+                        "question": item.get("question", ""),
+                        "location": item.get("location", ""),
+                        "scene_type": item.get("scene_type", ""),
+                        "image_name": item.get("image_name", ""),
+                        "analysis": item.get("analysis", ""),
+                        "structure": item.get("structure", {}),
+                        "rule_scores": item_rule_scores,
+                    })
+                visual_result = {
+                    "mode": "bundle",
+                    "mode_label": "多维视觉观察",
+                    "question": visual_context.get("question", ""),
+                    "location": visual_context.get("location", ""),
+                    "scene_type": visual_context.get("scene_type", ""),
+                    "image_name": visual_context.get("image_name", ""),
+                    "analysis": visual_context.get("analysis", ""),
+                    "disclaimer": visual_context.get("disclaimer", ""),
+                    "items": items,
+                    "calc_trace": {
+                        "structure": {
+                            "formula": "对三类图片分别做结构化提取，抽取可见空间/掌纹/面部特征，再汇总入统一问事。",
+                            "input": {
+                                "count": len(items),
+                                "modes": [item.get("mode", "") for item in items],
+                            },
+                            "result": {item.get("mode", ""): item.get("structure", {}) for item in items},
+                        },
+                        "rule_scores": {
+                            "formula": "将每类图片的结构提取结果映射成对应规则分表，再供统一决策核吸收。",
+                            "input": {item.get("mode", ""): item.get("structure", {}) for item in items},
+                            "result": {item.get("mode", ""): item.get("rule_scores", {}) for item in items},
+                        },
+                        "image": {
+                            "formula": "图片观察结果由多模态模型基于可见特征生成，作为统一问事的补充输入。",
+                            "input": {
+                                "modes": [item.get("mode", "") for item in items],
+                                "image_names": [item.get("image_name", "") for item in items],
+                            },
+                            "result": {
+                                "summary": visual_context.get("analysis", "")[:240],
+                            },
+                        }
+                    },
+                }
+            else:
+                visual_result = {
+                    "mode": visual_context.get("mode"),
+                    "mode_label": {
+                        "space": "空间 / 风水观察",
+                        "palm": "手相参考",
+                        "face": "面相参考",
+                    }.get(visual_context.get("mode"), "视觉观察"),
+                    "question": visual_context.get("question", ""),
+                    "location": visual_context.get("location", ""),
+                    "scene_type": visual_context.get("scene_type", ""),
+                    "image_name": visual_context.get("image_name", ""),
+                    "analysis": visual_context.get("analysis", ""),
+                    "disclaimer": visual_context.get("disclaimer", ""),
+                    "structure": visual_context.get("structure", {}),
+                    "rule_scores": visual_context.get("rule_scores", {}) or build_visual_rule_scores({
+                        "mode": visual_context.get("mode"),
+                        "structure": visual_context.get("structure", {}),
+                    }),
+                    "calc_trace": {
+                        "structure": {
+                            "formula": "先对图片做结构化提取，抽取可见空间/掌纹/面部特征，再供统一问事吸收。",
+                            "input": {
+                                "mode": visual_context.get("mode", ""),
+                                "image_name": visual_context.get("image_name", ""),
+                            },
+                            "result": visual_context.get("structure", {}),
+                        },
+                        "rule_scores": {
+                            "formula": "将结构提取结果映射为空间支持度、风险暴露或参考可信度等规则分表。",
+                            "input": visual_context.get("structure", {}),
+                            "result": visual_context.get("rule_scores", {}) or build_visual_rule_scores({
+                                "mode": visual_context.get("mode"),
+                                "structure": visual_context.get("structure", {}),
+                            }),
+                        },
+                        "image": {
+                            "formula": "图片观察结果由多模态模型基于可见特征生成，作为统一问事的补充输入。",
+                            "input": {
+                                "mode": visual_context.get("mode", ""),
+                                "image_name": visual_context.get("image_name", ""),
+                                "location": visual_context.get("location", ""),
+                                "scene_type": visual_context.get("scene_type", ""),
+                            },
+                            "result": {
+                                "summary": visual_context.get("analysis", "")[:200],
+                            },
+                        }
+                    },
+                }
+            module_results["visual"] = visual_result
+            module_summaries["visual"] = summarize_visual_result(visual_result)
+            if "visual" not in modules:
+                modules.append("visual")
 
         if "liuyao" in modules:
             liuyao_result = divine(question)

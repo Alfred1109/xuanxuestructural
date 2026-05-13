@@ -8,6 +8,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 
 from api.ai import router as ai_router
+from api.auth import router as auth_router
 from api.bazi import router as bazi_router
 from api.common import (
     AI_RUNTIME_STATE,
@@ -18,6 +19,7 @@ from api.common import (
 )
 from api.divination import router as divination_router
 from api.fengshui import router as fengshui_router
+from api.location import router as location_router
 from api.system import router as system_router
 from api.ziwei import router as ziwei_router
 from core.llm_helper import llm_helper
@@ -46,9 +48,11 @@ app.add_exception_handler(HTTPException, http_exception_handler)
 app.add_exception_handler(Exception, unhandled_exception_handler)
 
 app.include_router(system_router)
+app.include_router(auth_router)
 app.include_router(bazi_router)
 app.include_router(ziwei_router)
 app.include_router(fengshui_router)
+app.include_router(location_router)
 app.include_router(divination_router)
 app.include_router(ai_router)
 

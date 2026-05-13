@@ -1,7 +1,32 @@
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field, field_validator
+
+
+class VisualInsightItem(BaseModel):
+    mode: Literal["space", "palm", "face"]
+    analysis: str = Field(..., min_length=1, max_length=12000)
+    question: Optional[str] = Field("", max_length=500)
+    location: Optional[str] = Field("", max_length=80)
+    scene_type: Optional[str] = Field("generic", max_length=20)
+    image_name: Optional[str] = Field("", max_length=200)
+    disclaimer: Optional[str] = Field("", max_length=500)
+    structure: Dict[str, Any] = Field(default_factory=dict)
+    rule_scores: Dict[str, Any] = Field(default_factory=dict)
+
+
+class VisualContext(BaseModel):
+    mode: Literal["space", "palm", "face", "bundle"]
+    analysis: Optional[str] = Field("", max_length=12000)
+    question: Optional[str] = Field("", max_length=500)
+    location: Optional[str] = Field("", max_length=80)
+    scene_type: Optional[str] = Field("generic", max_length=20)
+    image_name: Optional[str] = Field("", max_length=200)
+    disclaimer: Optional[str] = Field("", max_length=500)
+    structure: Dict[str, Any] = Field(default_factory=dict)
+    rule_scores: Dict[str, Any] = Field(default_factory=dict)
+    items: List[VisualInsightItem] = Field(default_factory=list)
 
 
 class UnifiedConsultRequest(BaseModel):
@@ -15,6 +40,7 @@ class UnifiedConsultRequest(BaseModel):
     purpose: Optional[str] = Field(None, max_length=20)
     matter_type: Optional[str] = Field(None, max_length=20)
     location: Optional[str] = Field(None, max_length=80)
+    visual_context: Optional[VisualContext] = None
 
     @field_validator("gender")
     @classmethod

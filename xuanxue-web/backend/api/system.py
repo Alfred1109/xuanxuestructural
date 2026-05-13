@@ -3,6 +3,8 @@ from typing import Any, Dict, Optional
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, Field, field_validator
 
+from core.auth import resolve_authenticated_user
+from core.consult_history import append_consult_history
 from core.decision.weight_tuning import (
     DEFAULT_WEIGHT_PRESETS,
     read_weight_tuning_events,
@@ -65,8 +67,12 @@ async def root(request: Request):
 async def system_consult(payload: UnifiedConsultRequest, request: Request):
     """统一玄学问事接口。"""
     try:
+        user = resolve_authenticated_user(request, required=True)
         consultation = consultation_engine.consult(payload)
+        consultation["account_history"] = append_consult_history(str(user.get("user_id")), consultation)
         return success_response(consultation, request=request)
+    except HTTPException:
+        raise
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=f"请求参数错误: {str(exc)}")
     except Exception as exc:

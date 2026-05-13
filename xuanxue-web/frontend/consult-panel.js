@@ -2,9 +2,22 @@
     // Unified consult entry: submit, fallback, assemble view-model, and hydrate page sections.
     var renderers = window.commonRenderers || {};
     var esc = renderers.esc || function (value) { return String(value ?? ''); };
+    var VISUAL_CONTEXT_STORAGE_KEY = 'xuanxue_visual_context';
 
     function renderMarkdown(text) {
         return window.renderMarkdownSimple(text, '#173a34');
+    }
+
+    function readVisualContext() {
+        try {
+            var raw = window.localStorage.getItem(VISUAL_CONTEXT_STORAGE_KEY);
+            if (!raw) {
+                return null;
+            }
+            return JSON.parse(raw);
+        } catch (_error) {
+            return null;
+        }
     }
 
     function buildBriefAnswer(answer) {
@@ -37,11 +50,267 @@
         return value === '' ? null : parseInt(value, 10);
     }
 
+    var scenarioPresets = {
+        career_switch: {
+            question: '我现在适合换工作吗？应该怎么做更稳？',
+            year: '1990',
+            month: '1',
+            day: '1',
+            hour: '12',
+            minute: '0',
+            gender: '男'
+        },
+        relationship: {
+            question: '我和现在这段感情还有继续发展的可能吗？接下来应该主动还是先观察？',
+            year: '1994',
+            month: '8',
+            day: '16',
+            hour: '21',
+            minute: '15',
+            gender: '女'
+        },
+        startup_date: {
+            question: '我准备在近期启动新项目，现在适合推进吗？如果要开始，应该注意哪些时机和风险？',
+            year: '1988',
+            month: '5',
+            day: '22',
+            hour: '9',
+            minute: '30',
+            gender: '男'
+        },
+        exam: {
+            question: '我这次考试能顺利通过吗？接下来复习重点应该放在哪里？',
+            year: '2001',
+            month: '11',
+            day: '3',
+            hour: '7',
+            minute: '45',
+            gender: '女'
+        },
+        investment: {
+            question: '我最近这笔投资适合继续加码吗？应该偏稳守还是阶段性获利了结？',
+            year: '1986',
+            month: '3',
+            day: '12',
+            hour: '14',
+            minute: '20',
+            gender: '男'
+        },
+        relocation: {
+            question: '我最近适合搬家吗？这次搬动对我的生活和运势是提升还是消耗？',
+            year: '1992',
+            month: '6',
+            day: '28',
+            hour: '18',
+            minute: '10',
+            gender: '女'
+        }
+    };
+
+    function applyScenarioPreset(scenarioKey) {
+        var preset = scenarioPresets[scenarioKey];
+        if (!preset) {
+            return;
+        }
+
+        document.getElementById('consultQuestion').value = preset.question;
+        document.getElementById('consultYear').value = preset.year;
+        document.getElementById('consultMonth').value = preset.month;
+        document.getElementById('consultDay').value = preset.day;
+        document.getElementById('consultHour').value = preset.hour;
+        document.getElementById('consultMinute').value = preset.minute;
+        document.getElementById('consultGender').value = preset.gender;
+
+        Array.prototype.forEach.call(document.querySelectorAll('[data-scenario]'), function (button) {
+            button.classList.toggle('active', button.getAttribute('data-scenario') === scenarioKey);
+        });
+    }
+
+    function readConsultFormState() {
+        return {
+            question: document.getElementById('consultQuestion').value.trim(),
+            year: readOptionalInt('consultYear'),
+            month: readOptionalInt('consultMonth'),
+            day: readOptionalInt('consultDay'),
+            hour: readOptionalInt('consultHour'),
+            minute: readOptionalInt('consultMinute'),
+            gender: document.getElementById('consultGender').value || null,
+            location: document.getElementById('consultLocation').value.trim()
+        };
+    }
+
+    function applyConsultCondition(condition) {
+        var payload = condition || {};
+        document.getElementById('consultQuestion').value = payload.question || '';
+        document.getElementById('consultYear').value = payload.year || '';
+        document.getElementById('consultMonth').value = payload.month || '';
+        document.getElementById('consultDay').value = payload.day || '';
+        document.getElementById('consultHour').value = payload.hour || '';
+        document.getElementById('consultMinute').value = payload.minute || '';
+        document.getElementById('consultGender').value = payload.gender || '';
+        document.getElementById('consultLocation').value = payload.location || '';
+        Array.prototype.forEach.call(document.querySelectorAll('[data-scenario]'), function (button) {
+            button.classList.remove('active');
+        });
+    }
+
+    function fillPersonalProfile() {
+        if (!window.authClient || !window.authClient.isAuthenticated || !window.authClient.isAuthenticated()) {
+            showToast('请先登录后再一键填入个人信息。', 'warn');
+            if (window.authClient && window.authClient.openAuthModal) {
+                window.authClient.openAuthModal('login');
+            }
+            return;
+        }
+
+        var profile = window.authClient.getCurrentUserProfile ? window.authClient.getCurrentUserProfile() : null;
+        var birth = profile && profile.birth ? profile.birth : null;
+        var hasAnyValue = false;
+
+        if (profile && profile.gender) {
+            document.getElementById('consultGender').value = profile.gender;
+            hasAnyValue = true;
+        }
+        if (profile && profile.location) {
+            document.getElementById('consultLocation').value = profile.location;
+            hasAnyValue = true;
+        }
+        if (birth) {
+            if (birth.year !== null && birth.year !== undefined) {
+                document.getElementById('consultYear').value = birth.year;
+                hasAnyValue = true;
+            }
+            if (birth.month !== null && birth.month !== undefined) {
+                document.getElementById('consultMonth').value = birth.month;
+                hasAnyValue = true;
+            }
+            if (birth.day !== null && birth.day !== undefined) {
+                document.getElementById('consultDay').value = birth.day;
+                hasAnyValue = true;
+            }
+            if (birth.hour !== null && birth.hour !== undefined) {
+                document.getElementById('consultHour').value = birth.hour;
+                hasAnyValue = true;
+            }
+            if (birth.minute !== null && birth.minute !== undefined) {
+                document.getElementById('consultMinute').value = birth.minute;
+                hasAnyValue = true;
+            }
+        }
+
+        if (!hasAnyValue) {
+            showToast('你的账号资料里还没有可填入的个人信息。', 'warn');
+            return;
+        }
+
+        Array.prototype.forEach.call(document.querySelectorAll('[data-scenario]'), function (button) {
+            button.classList.remove('active');
+        });
+        showToast('已填入你的个人资料。', 'success');
+    }
+
+    function parseCoordinate(raw) {
+        if (typeof raw !== 'number' || !isFinite(raw)) {
+            return '';
+        }
+        return raw.toFixed(5);
+    }
+
+    function buildApproxLocationLabel(position) {
+        if (!position || !position.coords) {
+            return '';
+        }
+        var latitude = parseCoordinate(position.coords.latitude);
+        var longitude = parseCoordinate(position.coords.longitude);
+        if (!latitude || !longitude) {
+            return '';
+        }
+        return '定位坐标(' + latitude + ', ' + longitude + ')';
+    }
+
+    async function resolveHumanReadableLocation(position) {
+        var fallback = buildApproxLocationLabel(position);
+        if (!position || !position.coords || !window.apiClient || !window.apiClient.postJson) {
+            return fallback;
+        }
+
+        try {
+            var response = await window.apiClient.postJson('/api/location/reverse-geocode', {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude
+            });
+            var data = response && response.data ? response.data : {};
+            return data.human_readable || data.formatted_address || fallback;
+        } catch (_error) {
+            return fallback;
+        }
+    }
+
+    function detectConsultLocation() {
+        var input = document.getElementById('consultLocation');
+        if (!input) {
+            return;
+        }
+        if (!navigator.geolocation) {
+            showToast('当前浏览器不支持地理定位。', 'warn');
+            return;
+        }
+        navigator.geolocation.getCurrentPosition(async function (position) {
+            var suggested = await resolveHumanReadableLocation(position);
+            if (!suggested) {
+                showToast('定位成功，但未能生成可用地点描述。', 'warn');
+                return;
+            }
+            input.value = suggested;
+            input.focus();
+            if (suggested.indexOf('定位坐标(') === 0) {
+                showToast('已获取定位坐标。若配置逆地理编码服务，可自动转成城市/街区名称。你也可以继续手动补充。', 'success');
+            } else {
+                showToast('已填入可读地点名称，你仍可以继续手动补充更精确的位置描述。', 'success');
+            }
+        }, function (error) {
+            if (error && error.code === 1) {
+                showToast('你拒绝了定位权限，请允许浏览器定位后再试。', 'warn');
+                return;
+            }
+            if (error && error.code === 2) {
+                showToast('无法获取当前位置，请检查网络或系统定位设置。', 'warn');
+                return;
+            }
+            if (error && error.code === 3) {
+                showToast('定位超时，请稍后再试。', 'warn');
+                return;
+            }
+            showToast('定位失败，请稍后再试。', 'warn');
+        }, {
+            enableHighAccuracy: false,
+            timeout: 10000,
+            maximumAge: 300000
+        });
+    }
+
+    function togglePresetSaveModal(show, suggestedName) {
+        var modal = document.getElementById('presetSaveModal');
+        var input = document.getElementById('presetNameInput');
+        var defaultInput = document.getElementById('presetDefaultInput');
+        if (!modal || !input || !defaultInput) {
+            return;
+        }
+        modal.classList.toggle('show', !!show);
+        if (show) {
+            input.value = suggestedName || '';
+            defaultInput.checked = false;
+            input.focus();
+            input.select();
+        }
+    }
+
     function moduleNameLabel(moduleName) {
         var labels = {
             bazi: '八字底盘',
             ziwei: '紫微命盘',
             fengshui: '风水空间',
+            visual: '视觉观察',
             liuyao: '六爻问事',
             meihua: '梅花起卦',
             qimen: '奇门时空',
@@ -100,6 +369,48 @@
                 typeof summary.space_support === 'number' ? '空间支持：' + summary.space_support + '分' : '',
                 typeof summary.layout_risk === 'number' ? '布局风险：' + summary.layout_risk + '分' : '',
                 summary.adjustment_advice ? '调整：' + summary.adjustment_advice : ''
+            ].filter(Boolean).join('\n');
+        }
+        if (moduleName === 'visual') {
+            if (summary.mode === 'bundle' && Array.isArray(summary.items)) {
+                return [
+                    '模式：多维视觉观察',
+                    summary.summary || '',
+                    summary.items.map(function (item) {
+                        return (item.mode_label || item.mode || '观察') + '：' + (item.summary || '已纳入');
+                    }).join('\n')
+                ].filter(Boolean).join('\n');
+            }
+            var structure = summary.structure || {};
+            var structureHints = [];
+            if (summary.mode === 'space') {
+                if (structure.lighting && structure.lighting.level) {
+                    structureHints.push('采光：' + structure.lighting.level);
+                }
+                if (structure.clutter_level && structure.clutter_level.level) {
+                    structureHints.push('杂物：' + structure.clutter_level.level);
+                }
+                if (structure.seat_backing && structure.seat_backing.level) {
+                    structureHints.push('背靠：' + structure.seat_backing.level);
+                }
+                if (structure.compression_feeling && structure.compression_feeling.level) {
+                    structureHints.push('压迫感：' + structure.compression_feeling.level);
+                }
+            } else {
+                if (structure.image_quality && structure.image_quality.clarity) {
+                    structureHints.push('清晰度：' + structure.image_quality.clarity);
+                }
+                if (structure.confidence !== undefined && structure.confidence !== null && structure.confidence !== '') {
+                    structureHints.push('结构可信度：' + structure.confidence);
+                }
+            }
+            return [
+                summary.mode_label ? '模式：' + summary.mode_label : '',
+                summary.location ? '地点：' + summary.location : '',
+                summary.scene_type ? '场景：' + summary.scene_type : '',
+                summary.summary || '',
+                structureHints.length ? ('结构提取：' + structureHints.join(' ｜ ')) : '',
+                summary.disclaimer ? '说明：' + summary.disclaimer : ''
             ].filter(Boolean).join('\n');
         }
         if (moduleName === 'meihua') {
@@ -292,6 +603,69 @@
             }
         ];
 
+        if (summaries.visual) {
+            var visualSummary = summaries.visual || {};
+            if (visualSummary.mode === 'bundle' && Array.isArray(visualSummary.items)) {
+                steps.push({
+                    id: 'visual_structure',
+                    label: '视觉结构提取',
+                    detail: '对风水图、手相图、面相图分别做结构提取并汇总。',
+                    inputs: { visual: visualSummary.items },
+                    rule: '多类图片先拆开提取可见特征，再统一汇总进视觉上下文。',
+                    outputs: { items: visualSummary.items.map(function (item) { return item.structure || {}; }) },
+                    evidence: ['已纳入 ' + visualSummary.items.length + ' 类图片条件']
+                });
+                steps.push({
+                    id: 'visual_score',
+                    label: '视觉规则吸收',
+                    detail: '将结构提取结果映射为环境支持度、风险或参考可信度。',
+                    inputs: { visual: visualSummary.items },
+                    rule: '空间图进入环境层；手相和面相进入微观文化参考层。',
+                    outputs: { summary: visualSummary.summary || '' },
+                    evidence: ['视觉规则分已并入统一问事上下文']
+                });
+                steps.push({
+                    id: 'visual_observe',
+                    label: '视觉观察补充',
+                    detail: visualSummary.summary || '已纳入图片观察结果。',
+                    inputs: { visual: visualSummary.items },
+                    rule: '将图片中可见的空间与微观线索并入统一问事。',
+                    outputs: { summary: visualSummary.summary || '' },
+                    evidence: (visualSummary.items || []).map(function (item) {
+                        return (item.mode_label || item.mode || '观察') + '：' + (item.summary || '已纳入');
+                    })
+                });
+            } else {
+                steps.push({
+                    id: 'visual_structure',
+                    label: '视觉结构提取',
+                    detail: '对图片做结构化可见特征提取。',
+                    inputs: { visual: visualSummary },
+                    rule: '先提取空间/手掌/面部中的稳定结构特征。',
+                    outputs: { structure: visualSummary.structure || {} },
+                    evidence: ['视觉结构字段已生成']
+                });
+                steps.push({
+                    id: 'visual_score',
+                    label: '视觉规则吸收',
+                    detail: '将结构提取结果映射成规则分表。',
+                    inputs: { visual: visualSummary.structure || {} },
+                    rule: '结构提取结果会转为空间支持度、风险或参考可信度。',
+                    outputs: { rule_scores: visualSummary.rule_scores || {} },
+                    evidence: ['视觉规则分已生成']
+                });
+                steps.push({
+                    id: 'visual_observe',
+                    label: '视觉观察补充',
+                    detail: visualSummary.summary || '已纳入图片观察结果。',
+                    inputs: { visual: visualSummary },
+                    rule: '将图片中可见的空间线索或微观文化参考信息并入统一问事上下文。',
+                    outputs: { summary: visualSummary.summary || '' },
+                    evidence: [visualSummary.summary || '已纳入图片观察结果。']
+                });
+            }
+        }
+
         modules.forEach(function (moduleName) {
             var summary = summaries[moduleName] || {};
             steps.push({
@@ -356,6 +730,9 @@
             fengshui_orientation: '风水定朝向',
             fengshui_layout: '风水看布局',
             fengshui_judge: '风水综合判断',
+            visual_structure: '视觉结构提取',
+            visual_score: '视觉规则吸收',
+            visual_observe: '视觉观察补充',
             liuyao_cast: '六爻起卦',
             liuyao_judge: '六爻解读',
             meihua_cast: '梅花起卦',
@@ -400,6 +777,10 @@
                 title: '风水空间线',
                 chain: ['fengshui_orientation', 'fengshui_layout', 'fengshui_judge']
             },
+            visual: {
+                title: '视觉观察线',
+                chain: ['visual_structure', 'visual_score', 'visual_observe']
+            },
             liuyao: {
                 title: '六爻占断线',
                 chain: ['liuyao_cast', 'liuyao_judge']
@@ -436,17 +817,40 @@
             var config = moduleConfigs[moduleName];
             mermaidLines.push('    subgraph ' + moduleName + '_lane["' + esc(config.title) + '"]');
             mermaidLines.push('      direction TB');
-            config.chain.forEach(function (id) {
-                addNode(mermaidLines, id, id, '      ');
-            });
-            for (var i = 0; i < config.chain.length - 1; i += 1) {
-                mermaidLines.push('      ' + config.chain[i] + ' --> ' + config.chain[i + 1]);
+            if (moduleName === 'bazi') {
+                mermaidLines.push('      subgraph bazi_pillars["四柱"]');
+                mermaidLines.push('        direction LR');
+                ['bazi_year', 'bazi_month', 'bazi_day', 'bazi_hour'].forEach(function (id) {
+                    addNode(mermaidLines, id, id, '        ');
+                });
+                mermaidLines.push('      end');
+                ['bazi_wuxing', 'bazi_shishen', 'bazi_dayun', 'bazi_judge'].forEach(function (id) {
+                    addNode(mermaidLines, id, id, '      ');
+                });
+                mermaidLines.push('      bazi_year --> bazi_wuxing');
+                mermaidLines.push('      bazi_month --> bazi_wuxing');
+                mermaidLines.push('      bazi_day --> bazi_wuxing');
+                mermaidLines.push('      bazi_hour --> bazi_wuxing');
+                mermaidLines.push('      bazi_wuxing --> bazi_shishen --> bazi_dayun --> bazi_judge');
+            } else {
+                config.chain.forEach(function (id) {
+                    addNode(mermaidLines, id, id, '      ');
+                });
+                for (var i = 0; i < config.chain.length - 1; i += 1) {
+                    mermaidLines.push('      ' + config.chain[i] + ' --> ' + config.chain[i + 1]);
+                }
             }
             mermaidLines.push('    end');
         });
         mermaidLines.push('  end');
         Object.keys(moduleConfigs).forEach(function (moduleName) {
-            mermaidLines.push('  module_bus --> ' + moduleConfigs[moduleName].chain[0]);
+            if (moduleName === 'bazi') {
+                ['bazi_year', 'bazi_month', 'bazi_day', 'bazi_hour'].forEach(function (stepId) {
+                    mermaidLines.push('  module_bus --> ' + stepId);
+                });
+            } else {
+                mermaidLines.push('  module_bus --> ' + moduleConfigs[moduleName].chain[0]);
+            }
         });
 
         mermaidLines.push('  subgraph decision["统一决策集成层"]');
@@ -481,6 +885,7 @@
             'bazi_year', 'bazi_month', 'bazi_day', 'bazi_hour', 'bazi_wuxing', 'bazi_shishen', 'bazi_dayun', 'bazi_judge',
             'ziwei_mingpan', 'ziwei_minggong', 'ziwei_sihua', 'ziwei_judge',
             'fengshui_orientation', 'fengshui_layout', 'fengshui_judge',
+            'visual_structure', 'visual_score', 'visual_observe',
             'liuyao_cast', 'liuyao_judge',
             'meihua_cast', 'meihua_judge',
             'qimen_dun', 'qimen_chart', 'qimen_judge',
@@ -611,8 +1016,122 @@
             consultTraceSummary: document.getElementById('consultTraceSummary')
         };
 
+        var visualContextBanner = document.createElement('div');
+        visualContextBanner.className = 'visual-context-banner';
+        visualContextBanner.id = 'visualContextBanner';
+        consultForm.insertBefore(visualContextBanner, consultForm.firstChild);
+
+        function renderVisualContextBanner() {
+            var context = readVisualContext();
+            if (!context) {
+                visualContextBanner.innerHTML = '';
+                visualContextBanner.classList.remove('show');
+                return;
+            }
+            visualContextBanner.classList.add('show');
+            var modePill = context.mode === 'bundle'
+                ? ('已纳入 ' + ((context.items && context.items.length) || 0) + ' 类图片')
+                : (context.mode_label || '视觉观察');
+            var title = context.mode === 'bundle'
+                ? '本次问事将自动带入已保存的多类图片条件'
+                : '本次问事将自动带入最近一次图片观察结果';
+            var meta = '';
+            if (context.mode === 'bundle' && Array.isArray(context.items)) {
+                meta = context.items.map(function (item) {
+                    return (item.mode_label || item.mode || '观察') + ' · ' + (item.image_name || '未命名图片');
+                }).join(' ｜ ');
+            } else {
+                meta = (context.location ? ('地点：' + context.location + ' · ') : '') + (context.image_name || '未命名图片');
+            }
+            visualContextBanner.innerHTML = [
+                '<div class="visual-context-head">',
+                '  <span class="visual-context-kicker">Visual Context</span>',
+                '  <span class="visual-context-pill">' + esc(modePill) + '</span>',
+                '</div>',
+                '<div class="visual-context-title">' + esc(title) + '</div>',
+                '<div class="visual-context-meta">' + esc(context.summary || '已带入最近一次图片分析结果') + '</div>',
+                '<div class="visual-context-meta">' + esc(meta) + '</div>',
+                '<div class="visual-context-actions">',
+                '  <button type="button" class="visual-context-btn" id="reopenVisualContextBtn">继续拍照/上传</button>',
+                '  <button type="button" class="visual-context-btn" id="clearVisualContextBtn">移除图片上下文</button>',
+                '  </div>',
+            ].join('');
+            var reopenBtn = document.getElementById('reopenVisualContextBtn');
+            var clearBtn = document.getElementById('clearVisualContextBtn');
+            if (reopenBtn) {
+                reopenBtn.addEventListener('click', function () {
+                    openVisualInsightModal();
+                });
+            }
+            if (clearBtn) {
+                clearBtn.addEventListener('click', function () {
+                    try {
+                        window.localStorage.removeItem(VISUAL_CONTEXT_STORAGE_KEY);
+                    } catch (_error) {}
+                    renderVisualContextBanner();
+                    showToast('已移除本次问事的图片上下文。', 'success');
+                });
+            }
+        }
+
+        var visualInsightModal = document.getElementById('visualInsightModal');
+        var closeVisualInsightModalBtn = document.getElementById('closeVisualInsightModalBtn');
+        var openVisualInsightModalBtn = document.getElementById('openVisualInsightModalBtn');
+
+        function openVisualInsightModal() {
+            if (!visualInsightModal) {
+                return;
+            }
+            visualInsightModal.classList.add('show');
+        }
+
+        function closeVisualInsightModal() {
+            if (!visualInsightModal) {
+                return;
+            }
+            visualInsightModal.classList.remove('show');
+            renderVisualContextBanner();
+        }
+
+        if (openVisualInsightModalBtn) {
+            openVisualInsightModalBtn.addEventListener('click', function () {
+                openVisualInsightModal();
+            });
+        }
+        if (closeVisualInsightModalBtn) {
+            closeVisualInsightModalBtn.addEventListener('click', function () {
+                closeVisualInsightModal();
+            });
+        }
+        if (visualInsightModal) {
+            visualInsightModal.addEventListener('click', function (event) {
+                if (event.target === visualInsightModal) {
+                    closeVisualInsightModal();
+                }
+            });
+        }
+        window.addEventListener('message', function (event) {
+            var data = event && event.data ? event.data : {};
+            if (data.type === 'visual-context-updated') {
+                renderVisualContextBanner();
+                return;
+            }
+            if (data.type === 'visual-context-close') {
+                closeVisualInsightModal();
+            }
+        });
+
+        renderVisualContextBanner();
+
         consultForm.addEventListener('submit', async function (event) {
             event.preventDefault();
+            if (!window.authClient || !window.authClient.isAuthenticated || !window.authClient.isAuthenticated()) {
+                showToast('统一问事需要先登录账号。', 'warn');
+                if (window.authClient && window.authClient.openAuthModal) {
+                    window.authClient.openAuthModal('login');
+                }
+                return;
+            }
             var question = document.getElementById('consultQuestion').value.trim();
             if (!question) {
                 showToast('请先输入你想问的事情。', 'warn');
@@ -626,7 +1145,9 @@
                 day: readOptionalInt('consultDay'),
                 hour: readOptionalInt('consultHour'),
                 minute: readOptionalInt('consultMinute'),
-                gender: document.getElementById('consultGender').value || null
+                gender: document.getElementById('consultGender').value || null,
+                location: document.getElementById('consultLocation').value.trim() || null,
+                visual_context: readVisualContext()
             };
 
             elements.consultLoading.classList.add('show');
@@ -635,6 +1156,11 @@
             try {
                 var response = await requestConsultation(payload);
                 renderConsultation(response.data, elements);
+                if (response.data && response.data.account_history && response.data.account_history.saved && window.authClient) {
+                    window.authClient.refreshHistory({ openLatest: true }).catch(function () {
+                        // Ignore history refresh failures after a successful consult.
+                    });
+                }
             } catch (error) {
                 showToast('系统分析失败：' + error.message, 'error');
             } finally {
@@ -643,24 +1169,124 @@
         });
 
         document.getElementById('fillDemoBtn').addEventListener('click', function () {
-            document.getElementById('consultQuestion').value = '我现在适合换工作吗？应该怎么做更稳？';
-            document.getElementById('consultYear').value = '1990';
-            document.getElementById('consultMonth').value = '1';
-            document.getElementById('consultDay').value = '1';
-            document.getElementById('consultHour').value = '12';
-            document.getElementById('consultMinute').value = '0';
-            document.getElementById('consultGender').value = '男';
+            fillPersonalProfile();
+        });
+
+        var detectConsultLocationBtn = document.getElementById('detectConsultLocationBtn');
+        if (detectConsultLocationBtn) {
+            detectConsultLocationBtn.addEventListener('click', function () {
+                detectConsultLocation();
+            });
+        }
+
+        Array.prototype.forEach.call(document.querySelectorAll('[data-scenario]'), function (button) {
+            button.addEventListener('click', function () {
+                applyScenarioPreset(button.getAttribute('data-scenario'));
+            });
         });
 
         document.getElementById('clearConsultBtn').addEventListener('click', function () {
             consultForm.reset();
             elements.consultResult.classList.remove('show');
+            Array.prototype.forEach.call(document.querySelectorAll('[data-scenario]'), function (button) {
+                button.classList.remove('active');
+            });
         });
+
+        document.getElementById('saveCurrentConditionBtn').addEventListener('click', async function () {
+            if (!window.authClient || !window.authClient.isAuthenticated || !window.authClient.isAuthenticated()) {
+                showToast('请先登录后再保存常用条件。', 'warn');
+                if (window.authClient && window.authClient.openAuthModal) {
+                    window.authClient.openAuthModal('login');
+                }
+                return;
+            }
+            var current = readConsultFormState();
+            var defaultName = current.question ? current.question.slice(0, 18) : '我的常用问事条件';
+            togglePresetSaveModal(true, defaultName);
+        });
+
+        var presetSaveForm = document.getElementById('presetSaveForm');
+        var presetModal = document.getElementById('presetSaveModal');
+        var presetModalClose = document.getElementById('presetModalClose');
+        var presetModalCancel = document.getElementById('presetModalCancel');
+
+        if (presetSaveForm) {
+            presetSaveForm.addEventListener('submit', async function (event) {
+                event.preventDefault();
+                var presetName = document.getElementById('presetNameInput').value.trim();
+                if (!presetName) {
+                    showToast('常用条件名称不能为空。', 'warn');
+                    return;
+                }
+                var current = readConsultFormState();
+                try {
+                    await window.authClient.saveConsultPreset({
+                        name: presetName,
+                        question: current.question,
+                        year: current.year,
+                        month: current.month,
+                        day: current.day,
+                        hour: current.hour,
+                        minute: current.minute,
+                        gender: current.gender,
+                        location: current.location,
+                        is_default: !!document.getElementById('presetDefaultInput').checked
+                    });
+                    togglePresetSaveModal(false);
+                    showToast('已保存到“我的常用条件”。', 'success');
+                } catch (error) {
+                    showToast('保存失败：' + error.message, 'error');
+                }
+            });
+        }
+
+        if (presetModalClose) {
+            presetModalClose.addEventListener('click', function () {
+                togglePresetSaveModal(false);
+            });
+        }
+        if (presetModalCancel) {
+            presetModalCancel.addEventListener('click', function () {
+                togglePresetSaveModal(false);
+            });
+        }
+        if (presetModal) {
+            presetModal.addEventListener('click', function (event) {
+                if (event.target === presetModal) {
+                    togglePresetSaveModal(false);
+                }
+            });
+        }
     }
 
     window.consultPanel = {
         initialize: initializeConsultPanel,
         buildSyntheticTrace: buildSyntheticTrace,
-        moduleNameLabel: moduleNameLabel
+        moduleNameLabel: moduleNameLabel,
+        applyDefaultSavedCondition: function () {
+            if (!window.authClient || !window.authClient.getDefaultConsultPreset) {
+                return;
+            }
+            var preset = window.authClient.getDefaultConsultPreset();
+            if (!preset) {
+                return;
+            }
+            applyConsultCondition(preset);
+        },
+        applySavedCondition: function (presetId) {
+            if (!window.authClient || !window.authClient.getConsultPresets) {
+                return;
+            }
+            var preset = (window.authClient.getConsultPresets() || []).find(function (item) {
+                return item.preset_id === presetId;
+            });
+            if (!preset) {
+                showToast('未找到该常用条件。', 'warn');
+                return;
+            }
+            applyConsultCondition(preset);
+            showToast('已套用常用条件：' + (preset.name || '未命名条件'), 'success');
+        }
     };
 })();

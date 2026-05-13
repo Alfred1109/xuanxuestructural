@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>拍照辅助 - 玄学预测系统</title>
+    <link rel="stylesheet" href="common-header.css?v=20260513-visual-insight">
+    <link rel="stylesheet" href="common-theme.css?v=20260513-visual-insight">
+    <style>
+        body {
+            background:
+                linear-gradient(180deg, rgba(246, 247, 244, 0.98) 0%, rgba(239, 242, 238, 0.98) 100%);
+        }
+
+        .page-shell {
+            padding: 18px 0 24px;
+        }
+
+        body.embed-page {
+            padding: 0;
+            background: transparent;
+        }
+
+        body.embed-page .page-shell {
+            padding: 0;
+        }
+
+        .visual-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 14px;
+            align-items: start;
+        }
+
+        .visual-grid > .card {
+            margin-bottom: 0;
+            border-radius: 24px;
+            border: 1px solid rgba(30, 58, 52, 0.12);
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 247, 0.98) 100%);
+            box-shadow:
+                0 18px 34px rgba(20, 33, 28, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.75);
+            overflow: hidden;
+        }
+
+        body.embed-page .visual-grid > .card {
+            border-radius: 0;
+            box-shadow: none;
+            border: none;
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 247, 0.98) 100%);
+        }
+
+        .page-title {
+            margin-bottom: 10px;
+            color: var(--color-primary-dark);
+            font-size: 1.18rem;
+            letter-spacing: -0.01em;
+        }
+
+        .panel-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            padding: 5px 10px;
+            border-radius: 999px;
+            background: rgba(30, 58, 52, 0.06);
+            border: 1px solid rgba(30, 58, 52, 0.08);
+            color: var(--color-primary-dark);
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .panel-note {
+            margin: 0 0 14px;
+            color: var(--color-text-secondary);
+            font-size: 0.86rem;
+            line-height: 1.65;
+            max-width: 60rem;
+        }
+
+        .capture-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .capture-card {
+            border: 1px solid rgba(44, 91, 79, 0.12);
+            background:
+                linear-gradient(180deg, rgba(249, 250, 248, 0.96) 0%, rgba(241, 244, 240, 0.96) 100%);
+            color: var(--color-text);
+            border-radius: 20px;
+            padding: 12px;
+            min-height: 100%;
+            display: grid;
+            gap: 9px;
+            position: relative;
+        }
+
+        .capture-card.active {
+            border-color: rgba(44, 91, 79, 0.22);
+            box-shadow:
+                inset 0 0 0 1px rgba(44, 91, 79, 0.05),
+                0 10px 22px rgba(20, 33, 28, 0.06);
+        }
+
+        .capture-card::after {
+            content: "";
+            position: absolute;
+            inset: 0 auto 0 0;
+            width: 4px;
+            border-radius: 20px 0 0 20px;
+            background: transparent;
+        }
+
+        .capture-card.active::after {
+            background: linear-gradient(180deg, #2c5b4f 0%, #8b6b43 100%);
+        }
+
+        .capture-card .kicker {
+            display: inline-flex;
+            width: fit-content;
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: rgba(44, 91, 79, 0.07);
+            color: var(--color-primary-dark);
+            font-size: 0.68rem;
+            letter-spacing: 0.04em;
+        }
+
+        .capture-card .title {
+            font-weight: 700;
+            color: var(--color-primary-dark);
+            font-size: 0.98rem;
+        }
+
+        .capture-card .desc {
+            color: var(--color-text-secondary);
+            font-size: 0.8rem;
+            line-height: 1.55;
+        }
+
+        .capture-head-top {
+            display: flex;
+            align-items: start;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .capture-index {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 34px;
+            height: 34px;
+            border-radius: 12px;
+            background: rgba(30, 58, 52, 0.06);
+            border: 1px solid rgba(30, 58, 52, 0.08);
+            color: var(--color-primary-dark);
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .capture-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 9px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.78);
+            border: 1px solid rgba(44, 91, 79, 0.1);
+            color: var(--color-text-tertiary);
+            font-size: 0.72rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .capture-status::before {
+            content: "";
+            width: 7px;
+            height: 7px;
+            border-radius: 999px;
+            background: rgba(120, 136, 126, 0.8);
+        }
+
+        .capture-status.ready {
+            color: var(--color-primary-dark);
+        }
+
+        .capture-status.ready::before {
+            background: #2c5b4f;
+        }
+
+        .capture-head {
+            display: grid;
+            gap: 6px;
+        }
+
+        .capture-divider {
+            height: 1px;
+            background: linear-gradient(90deg, rgba(44, 91, 79, 0.12) 0%, rgba(44, 91, 79, 0.02) 100%);
+            margin: 2px 0;
+        }
+
+        .visual-form-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr);
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .visual-form-grid .span-2 {
+            grid-column: span 2;
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+        }
+
+        .form-group label {
+            margin-bottom: 6px;
+            font-size: 0.8rem;
+            letter-spacing: 0.02em;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            border-radius: 14px;
+            padding: 10px 12px;
+            background:
+                linear-gradient(180deg, rgba(253, 253, 251, 0.98) 0%, rgba(246, 248, 245, 0.98) 100%);
+            border: 1px solid rgba(44, 91, 79, 0.12);
+        }
+
+        .form-group textarea {
+            min-height: 92px;
+        }
+
+        .upload-box {
+            display: grid;
+            gap: 10px;
+            padding: 14px;
+            border-radius: 20px;
+            border: 1px solid rgba(44, 91, 79, 0.12);
+            background:
+                linear-gradient(180deg, rgba(244, 247, 243, 0.92) 0%, rgba(251, 251, 249, 0.98) 100%);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.74);
+        }
+
+        .upload-box.compact {
+            padding: 10px;
+            gap: 8px;
+            border-radius: 16px;
+        }
+
+        .upload-meta {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: center;
+            color: var(--color-text-tertiary);
+            font-size: 0.74rem;
+            line-height: 1.5;
+        }
+
+        .upload-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .ghost-action {
+            appearance: none;
+            border: 1px solid rgba(44, 91, 79, 0.12);
+            background: rgba(255, 255, 255, 0.76);
+            color: var(--color-primary-dark);
+            border-radius: 12px;
+            padding: 9px 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .ghost-action:hover {
+            background: rgba(255, 255, 255, 0.96);
+        }
+
+        .ghost-action.primary {
+            background: rgba(44, 91, 79, 0.08);
+            border-color: rgba(44, 91, 79, 0.14);
+        }
+
+        .preview-frame {
+            display: grid;
+            place-items: center;
+            min-height: 236px;
+            border-radius: 18px;
+            overflow: hidden;
+            background:
+                linear-gradient(180deg, rgba(236, 240, 236, 0.96) 0%, rgba(247, 249, 246, 0.98) 100%);
+            border: 1px solid rgba(44, 91, 79, 0.1);
+        }
+
+        .preview-frame.compact {
+            min-height: 150px;
+            border-radius: 14px;
+        }
+
+        .preview-frame img {
+            max-width: 100%;
+            max-height: 360px;
+            display: block;
+            object-fit: contain;
+        }
+
+        .preview-empty {
+            padding: 20px;
+            color: var(--color-text-tertiary);
+            text-align: center;
+            line-height: 1.7;
+            font-size: 0.88rem;
+        }
+
+        .preview-grid {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 10px;
+        }
+
+        .preview-tile {
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.82);
+            border: 1px solid rgba(44, 91, 79, 0.08);
+            padding: 10px;
+        }
+
+        .preview-tile-label {
+            font-size: 0.74rem;
+            color: var(--color-text-tertiary);
+            margin-bottom: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .include-box {
+            display: grid;
+            gap: 10px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(44, 91, 79, 0.08);
+        }
+
+        .include-head {
+            display: flex;
+            align-items: start;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .include-title {
+            color: var(--color-primary-dark);
+            font-size: 0.96rem;
+            font-weight: 700;
+        }
+
+        .include-subtitle {
+            color: var(--color-text-secondary);
+            font-size: 0.82rem;
+            line-height: 1.6;
+            margin-top: 4px;
+        }
+
+        .include-summary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 11px;
+            border-radius: 999px;
+            background: rgba(44, 91, 79, 0.06);
+            border: 1px solid rgba(44, 91, 79, 0.1);
+            color: var(--color-primary-dark);
+            font-size: 0.76rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .include-check {
+            display: flex;
+            align-items: start;
+            gap: 10px;
+            color: var(--color-text-secondary);
+            font-size: 0.86rem;
+            line-height: 1.65;
+        }
+
+        .include-check input {
+            margin-top: 4px;
+        }
+
+        .consent-box {
+            display: none;
+            gap: 8px;
+            padding: 12px 14px;
+            border-radius: 16px;
+            background: linear-gradient(180deg, rgba(255, 247, 232, 0.94) 0%, rgba(255, 251, 242, 0.98) 100%);
+            border: 1px solid rgba(194, 124, 26, 0.16);
+            margin-top: 12px;
+        }
+
+        .consent-box.show {
+            display: grid;
+        }
+
+        .consent-check {
+            display: flex;
+            align-items: start;
+            gap: 10px;
+            color: #7a5a2f;
+            font-size: 0.84rem;
+            line-height: 1.62;
+        }
+
+        .consent-check input {
+            margin-top: 4px;
+        }
+
+        .disclaimer-card {
+            margin-top: 14px;
+            padding: 12px 14px;
+            border-radius: 16px;
+            background: linear-gradient(180deg, rgba(255, 247, 232, 0.9) 0%, rgba(255, 251, 242, 0.98) 100%);
+            border: 1px solid rgba(194, 124, 26, 0.16);
+            color: #7a5a2f;
+            font-size: 0.82rem;
+            line-height: 1.68;
+        }
+
+        @media (max-width: 980px) {
+            .visual-form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .visual-form-grid .span-2 {
+                grid-column: span 1;
+            }
+
+            .capture-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .page-shell {
+                padding: 12px 0 16px;
+            }
+
+            .upload-actions,
+            .consult-actions {
+                flex-direction: column;
+            }
+
+            .capture-head-top,
+            .upload-meta,
+            .include-head {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .consult-actions .btn,
+            .ghost-action {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="unified-header">
+        <div class="container">
+            <div class="site-title">
+                <h1>☯ 玄学预测系统</h1>
+                <p>传统命理学 · 现代科技 · 智能分析</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container page-shell">
+        <div class="visual-grid">
+            <div class="card">
+                <div class="panel-kicker">Capture Console</div>
+                <h2 class="page-title">拍照与上传</h2>
+                <p class="panel-note">三类图像条件会在这里统一采集、暂存，并作为补充信号带回本次统一问事。布局上优先强调状态、输入完整度与操作效率。</p>
+
+                <div class="capture-grid" id="captureGrid">
+                    <div class="capture-card active" data-mode="space">
+                        <div class="capture-head">
+                            <div class="capture-head-top">
+                                <div>
+                                    <span class="kicker">空间观察</span>
+                                    <div class="title">风水 / 场景</div>
+                                </div>
+                                <div class="capture-index">01</div>
+                            </div>
+                            <div class="desc">上传办公室、工位、卧室、书房、店铺等环境照片。</div>
+                            <div class="capture-status" id="captureStatusSpace">未上传</div>
+                        </div>
+                        <div class="capture-divider"></div>
+                        <div class="form-group">
+                            <label for="visualQuestionSpace">你想重点看什么</label>
+                            <textarea id="visualQuestionSpace" placeholder="例如：这个工位适合我长期坐吗？"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="visualLocation">地点 / 场景补充</label>
+                            <input id="visualLocation" type="text" maxlength="80" placeholder="例如：上海浦东办公室 / 家中书房 / 店铺收银台">
+                        </div>
+                        <div class="form-group">
+                            <label for="visualSceneType">场景类型</label>
+                            <select id="visualSceneType">
+                                <option value="generic">通用空间</option>
+                                <option value="home">住宅</option>
+                                <option value="office">办公</option>
+                                <option value="shop">经营场所</option>
+                            </select>
+                        </div>
+                        <div class="upload-box compact">
+                            <div class="upload-meta">
+                                <span>建议角度：入口 / 主位 / 窗边 / 全景</span>
+                                <span>上限 4 张</span>
+                            </div>
+                            <div class="upload-actions">
+                                <input id="visualImageInputSpace" type="file" accept="image/*" capture="environment" multiple style="display:none;">
+                                <button type="button" class="ghost-action primary" data-pick-mode="space">选择图片</button>
+                                <button type="button" class="ghost-action" data-camera-mode="space">拍照上传</button>
+                            </div>
+                            <div class="preview-frame compact" id="previewFrameSpace">
+                                <div class="preview-empty">最多 4 张图，建议拍入口、主位、窗边、全景。</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="capture-card" data-mode="palm">
+                        <div class="capture-head">
+                            <div class="capture-head-top">
+                                <div>
+                                    <span class="kicker">文化参考</span>
+                                    <div class="title">手相</div>
+                                </div>
+                                <div class="capture-index">02</div>
+                            </div>
+                            <div class="desc">上传掌纹清晰、光线均匀的手掌照片。</div>
+                            <div class="capture-status" id="captureStatusPalm">未上传</div>
+                        </div>
+                        <div class="capture-divider"></div>
+                        <div class="form-group">
+                            <label for="visualQuestionPalm">你想重点看什么</label>
+                            <textarea id="visualQuestionPalm" placeholder="例如：这张手掌照片能看出哪些传统手相特征？"></textarea>
+                        </div>
+                        <div class="upload-box compact">
+                            <div class="upload-meta">
+                                <span>建议角度：掌心正面</span>
+                                <span>单张采集</span>
+                            </div>
+                            <div class="upload-actions">
+                                <input id="visualImageInputPalm" type="file" accept="image/*" capture="user" style="display:none;">
+                                <button type="button" class="ghost-action primary" data-pick-mode="palm">选择图片</button>
+                                <button type="button" class="ghost-action" data-camera-mode="palm">拍照上传</button>
+                            </div>
+                            <div class="preview-frame compact" id="previewFramePalm">
+                                <div class="preview-empty">建议正面展开手掌，掌纹清晰无遮挡。</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="capture-card" data-mode="face">
+                        <div class="capture-head">
+                            <div class="capture-head-top">
+                                <div>
+                                    <span class="kicker">文化参考</span>
+                                    <div class="title">面相</div>
+                                </div>
+                                <div class="capture-index">03</div>
+                            </div>
+                            <div class="desc">上传无遮挡、正脸、光线自然的人像照片。</div>
+                            <div class="capture-status" id="captureStatusFace">未上传</div>
+                        </div>
+                        <div class="capture-divider"></div>
+                        <div class="form-group">
+                            <label for="visualQuestionFace">你想重点看什么</label>
+                            <textarea id="visualQuestionFace" placeholder="例如：这张照片能提取哪些传统面相中的可见结构特征？"></textarea>
+                        </div>
+                        <div class="upload-box compact">
+                            <div class="upload-meta">
+                                <span>建议角度：正脸无遮挡</span>
+                                <span>单张采集</span>
+                            </div>
+                            <div class="upload-actions">
+                                <input id="visualImageInputFace" type="file" accept="image/*" capture="user" style="display:none;">
+                                <button type="button" class="ghost-action primary" data-pick-mode="face">选择图片</button>
+                                <button type="button" class="ghost-action" data-camera-mode="face">拍照上传</button>
+                            </div>
+                            <div class="preview-frame compact" id="previewFrameFace">
+                                <div class="preview-empty">建议正脸、无遮挡、自然光线下拍摄。</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="include-box">
+                    <div class="include-head">
+                        <div>
+                            <div class="include-title">统一纳入设置</div>
+                            <div class="include-subtitle">确认后，已上传的三类图片条件会作为补充信号进入本次统一问事。</div>
+                        </div>
+                        <div class="include-summary" id="includeSummary">0 / 3 已准备</div>
+                    </div>
+                </div>
+
+                <div class="consent-box show">
+                    <label class="consent-check" for="includeVisualContextCheck">
+                        <input id="includeVisualContextCheck" type="checkbox" checked>
+                        <span>将以上已上传的风水图、手相图、面相图作为补充条件纳入本次统一问事。</span>
+                    </label>
+                    <label class="consent-check" for="consentCheck">
+                        <input id="consentCheck" type="checkbox">
+                        <span>若纳入手相/面相图片，我理解其仅作传统文化娱乐参考，不用于身份识别、医学判断、法律用途或任何确定性结论。</span>
+                    </label>
+                </div>
+
+                <div class="consult-actions" style="margin-top:16px;">
+                    <button type="button" class="btn" id="saveVisualBundleBtn">保存本次拍照条件</button>
+                    <a class="btn btn-accent" href="index.html" style="text-decoration:none; text-align:center;" id="visualInsightBackLink">返回首页</a>
+                </div>
+
+                <div class="disclaimer-card" id="disclaimerCard">
+                    所有图片分析结果仅作文化娱乐与环境观察参考，不构成身份识别、医疗、法律、财务或确定性人生判断。
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js?v=20260513-visual-insight"></script>
+    <script src="common-links.js?v=20260513-visual-insight"></script>
+    <script src="common-ui.js?v=20260513-visual-insight"></script>
+    <script src="markdown.js?v=20260513-visual-insight"></script>
+    <script src="api-client.js?v=20260513-visual-insight"></script>
+    <script>
+        if (window.applyCommonLinks) {
+            window.applyCommonLinks();
+        }
+
+        const VISUAL_CONTEXT_STORAGE_KEY = 'xuanxue_visual_context';
+        const modeLabels = {
+            space: '空间 / 风水观察',
+            palm: '手相参考',
+            face: '面相参考'
+        };
+        const selectedFiles = {
+            space: [],
+            palm: null,
+            face: null
+        };
+
+        const captureGrid = document.getElementById('captureGrid');
+        const consentCheck = document.getElementById('consentCheck');
+        const includeVisualContextCheck = document.getElementById('includeVisualContextCheck');
+        const includeSummary = document.getElementById('includeSummary');
+        const disclaimerCard = document.getElementById('disclaimerCard');
+
+        function buildBriefSummary(text) {
+            const lines = String(text || '').split('\n').map((line) => line.trim()).filter(Boolean);
+            for (const line of lines) {
+                const normalized = line.replace(/^[#*\-\d.\s]+/, '').trim();
+                if (!normalized) continue;
+                return normalized.slice(0, 100);
+            }
+            return '已生成图片观察结果。';
+        }
+
+        function previewFrameFor(mode) {
+            return document.getElementById('previewFrame' + mode.charAt(0).toUpperCase() + mode.slice(1));
+        }
+
+        function imageInputFor(mode) {
+            return document.getElementById('visualImageInput' + mode.charAt(0).toUpperCase() + mode.slice(1));
+        }
+
+        function syncSelectedFilesFromInputs() {
+            ['space', 'palm', 'face'].forEach((mode) => {
+                const input = imageInputFor(mode);
+                if (!input || !input.files) {
+                    return;
+                }
+                const files = Array.from(input.files);
+                if (mode === 'space') {
+                    if ((!Array.isArray(selectedFiles.space) || !selectedFiles.space.length) && files.length) {
+                        selectedFiles.space = files.slice(0, 4);
+                    }
+                } else if (!selectedFiles[mode] && files.length) {
+                    selectedFiles[mode] = files[0] || null;
+                }
+            });
+        }
+
+        function questionFor(mode) {
+            if (mode === 'space') return document.getElementById('visualQuestionSpace').value.trim();
+            if (mode === 'palm') return document.getElementById('visualQuestionPalm').value.trim();
+            return document.getElementById('visualQuestionFace').value.trim();
+        }
+
+        function updateCardHighlight() {
+            let readyCount = 0;
+            Array.from(captureGrid.querySelectorAll('.capture-card')).forEach((card) => {
+                const mode = card.getAttribute('data-mode');
+                const hasFiles = Array.isArray(selectedFiles[mode]) ? selectedFiles[mode].length > 0 : !!selectedFiles[mode];
+                card.classList.toggle('active', hasFiles);
+                const statusEl = document.getElementById('captureStatus' + mode.charAt(0).toUpperCase() + mode.slice(1));
+                if (statusEl) {
+                    statusEl.classList.toggle('ready', hasFiles);
+                    statusEl.textContent = hasFiles
+                        ? (mode === 'space' ? (selectedFiles.space.length + ' 张已上传') : '已上传')
+                        : '未上传';
+                }
+                if (hasFiles) {
+                    readyCount += 1;
+                }
+            });
+            if (includeSummary) {
+                includeSummary.textContent = readyCount + ' / 3 已准备';
+            }
+        }
+
+        function renderPreview(mode) {
+            const frame = previewFrameFor(mode);
+            const files = selectedFiles[mode];
+            if (!frame) return;
+
+            if (mode === 'space') {
+                if (!Array.isArray(files) || !files.length) {
+                    frame.innerHTML = '<div class="preview-empty">最多 4 张图，建议拍入口、主位、窗边、全景。</div>';
+                    return;
+                }
+                frame.innerHTML = '<div class="preview-grid">' + files.map((file) => {
+                    const url = URL.createObjectURL(file);
+                    return [
+                        '<div class="preview-tile">',
+                        '  <div class="preview-tile-label">' + file.name + '</div>',
+                        '  <div><img src="' + url + '" alt="图片预览" style="width:100%; max-height:180px; object-fit:contain; display:block;"></div>',
+                        '</div>'
+                    ].join('');
+                }).join('') + '</div>';
+                return;
+            }
+
+            if (!files) {
+                frame.innerHTML = mode === 'palm'
+                    ? '<div class="preview-empty">建议正面展开手掌，掌纹清晰无遮挡。</div>'
+                    : '<div class="preview-empty">建议正脸、无遮挡、自然光线下拍摄。</div>';
+                return;
+            }
+
+            const url = URL.createObjectURL(files);
+            frame.innerHTML = '<img src="' + url + '" alt="图片预览">';
+        }
+
+        async function saveBundleContext() {
+            const saveBtn = document.getElementById('saveVisualBundleBtn');
+            syncSelectedFilesFromInputs();
+            updateCardHighlight();
+            if (!includeVisualContextCheck.checked) {
+                window.showToast('请先勾选“将以上图片条件纳入本次统一问事”。', 'warn');
+                return;
+            }
+
+            const hasSpace = Array.isArray(selectedFiles.space) && selectedFiles.space.length > 0;
+            const hasPalm = !!selectedFiles.palm;
+            const hasFace = !!selectedFiles.face;
+            if (!hasSpace && !hasPalm && !hasFace) {
+                window.showToast('请至少上传一张照片后再保存。', 'warn');
+                return;
+            }
+            if ((hasPalm || hasFace) && !consentCheck.checked) {
+                window.showToast('纳入手相/面相图片前，请先勾选对应授权与免责声明。', 'warn');
+                return;
+            }
+
+            const items = [];
+            const spaceLocation = document.getElementById('visualLocation').value.trim();
+            const sceneType = document.getElementById('visualSceneType').value;
+
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.textContent = '保存中...';
+            }
+
+            async function analyzeMode(mode, files, extra) {
+                const formData = new FormData();
+                formData.append('mode', mode);
+                formData.append('question', questionFor(mode));
+                formData.append('location', extra.location || '');
+                formData.append('scene_type', extra.scene_type || 'generic');
+                formData.append('consent', consentCheck.checked ? 'true' : 'false');
+                if (Array.isArray(files)) {
+                    files.forEach((file) => formData.append('images', file));
+                } else {
+                    formData.append('image', files);
+                }
+                const response = await window.apiClient.request('/api/ai/visual-insight', {
+                    method: 'POST',
+                    body: formData
+                });
+                return response.data || {};
+            }
+
+            try {
+                if (hasSpace) {
+                    items.push(await analyzeMode('space', selectedFiles.space, {
+                        location: spaceLocation,
+                        scene_type: sceneType
+                    }));
+                }
+                if (hasPalm) {
+                    items.push(await analyzeMode('palm', selectedFiles.palm, {
+                        location: '',
+                        scene_type: 'generic'
+                    }));
+                }
+                if (hasFace) {
+                    items.push(await analyzeMode('face', selectedFiles.face, {
+                        location: '',
+                        scene_type: 'generic'
+                    }));
+                }
+
+                const storedContext = {
+                    mode: 'bundle',
+                    mode_label: '多维视觉观察',
+                    summary: '已保存 ' + items.length + ' 类图片条件，并会在统一问事时自动纳入。',
+                    location: spaceLocation,
+                    image_name: items.map((item) => item.mode_label || item.mode || '观察').join(' / '),
+                    disclaimer: '结果仅作文化娱乐与环境观察参考，不构成身份识别、医疗、法律、财务或确定性人生判断。',
+                    items: items.map((item) => ({
+                        mode: item.mode,
+                        mode_label: item.mode_label,
+                        question: questionFor(item.mode),
+                        location: item.location || '',
+                        scene_type: item.scene_type || 'generic',
+                        image_name: item.image_name || '',
+                        analysis: item.analysis || '',
+                        summary: buildBriefSummary(item.analysis || ''),
+                        disclaimer: item.disclaimer || '',
+                        structure: item.structure || {},
+                        rule_scores: item.rule_scores || {}
+                    }))
+                };
+                window.localStorage.setItem(VISUAL_CONTEXT_STORAGE_KEY, JSON.stringify(storedContext));
+                if (window.parent && window.parent !== window) {
+                    window.parent.postMessage({
+                        type: 'visual-context-updated',
+                        context: storedContext
+                    }, '*');
+                }
+                disclaimerCard.textContent = storedContext.disclaimer;
+                window.showToast('三类拍照条件已保存，并会在统一问事时自动纳入。', 'success');
+                if (document.body.classList.contains('embed-page') && window.parent && window.parent !== window) {
+                    window.setTimeout(() => {
+                        window.parent.postMessage({ type: 'visual-context-close' }, '*');
+                    }, 400);
+                }
+            } catch (error) {
+                window.showToast(error.message || '保存拍照条件失败', 'error');
+            } finally {
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = '保存本次拍照条件';
+                }
+            }
+        }
+
+        Array.from(document.querySelectorAll('[data-pick-mode]')).forEach((button) => {
+            button.addEventListener('click', function () {
+                const mode = button.getAttribute('data-pick-mode');
+                const input = imageInputFor(mode);
+                if (!input) return;
+                input.value = '';
+                input.removeAttribute('capture');
+                input.click();
+            });
+        });
+
+        Array.from(document.querySelectorAll('[data-camera-mode]')).forEach((button) => {
+            button.addEventListener('click', function () {
+                const mode = button.getAttribute('data-camera-mode');
+                const input = imageInputFor(mode);
+                if (!input) return;
+                input.value = '';
+                input.setAttribute('capture', mode === 'space' ? 'environment' : 'user');
+                input.click();
+            });
+        });
+
+        ['space', 'palm', 'face'].forEach((mode) => {
+            const input = imageInputFor(mode);
+            if (!input) return;
+            input.addEventListener('change', function (event) {
+                const files = event.target.files ? Array.from(event.target.files) : [];
+                if (mode === 'space') {
+                    selectedFiles.space = files.slice(0, 4);
+                } else {
+                    selectedFiles[mode] = files[0] || null;
+                }
+                renderPreview(mode);
+                updateCardHighlight();
+            });
+        });
+
+        document.getElementById('saveVisualBundleBtn').addEventListener('click', saveBundleContext);
+        if (document.body.classList.contains('embed-page')) {
+            var backLink = document.getElementById('visualInsightBackLink');
+            if (backLink) {
+                backLink.style.display = 'none';
+            }
+        }
+        ['space', 'palm', 'face'].forEach(renderPreview);
+    </script>
+</body>
+</html>

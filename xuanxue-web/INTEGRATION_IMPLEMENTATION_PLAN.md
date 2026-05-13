@@ -56,9 +56,9 @@
 ### 2.2 前端主干
 
 - `frontend/index.html`
-  工作台总容器与总览页
-- `frontend/workspace-shell.js`
-  侧边栏模块入口
+  首页结构、账号中心与统一问事入口
+- `frontend/auth-client.js`
+  登录态、账号中心入口与资料/历史联动
 - `frontend/consult-panel.js`
   统一问事请求、模块元信息、全景图兜底
 - `frontend/trace-panel.js`
@@ -110,14 +110,12 @@
 
 - `frontend/<module>.html`
   独立模块页面
-- `frontend/workspace-shell.js`
-  加入侧边栏入口
+- `frontend/index.html`
+  如需首页可达入口，可增加对应入口卡片或说明
 - `frontend/consult-panel.js`
   加入模块中文名、全景图 lane、摘要展示
 - `frontend/trace-panel.js`
   无需大改，依赖统一 trace 结构即可
-- `frontend/index.html`
-  如果需要首页卡片，可增加入口卡片
 
 ### 3.3 测试层
 
@@ -207,8 +205,8 @@
 ### 前端实施项
 
 - [x] 新增 `frontend/ziwei.html`
-- [x] 更新 `frontend/workspace-shell.js`
-  - 增加“紫微斗数”入口
+- [x] 更新首页入口结构
+  - 增加“紫微斗数”可达入口
 - [x] 更新 `frontend/consult-panel.js`
   - 增加 `ziwei` 的中文名、摘要、全景图 lane
 - [x] 更新 `frontend/index.html`
@@ -286,8 +284,8 @@
 ### 前端实施项
 
 - [x] 新增 `frontend/fengshui.html`
-- [x] 更新 `frontend/workspace-shell.js`
-  - 增加“风水 / 阳宅”入口
+- [x] 更新首页入口结构
+  - 增加“风水 / 阳宅”可达入口
 - [x] 更新 `frontend/consult-panel.js`
   - 加入 `fengshui` 模块 lane
 - [x] 更新 `frontend/index.html`
@@ -354,8 +352,8 @@
 ### 前端实施项
 
 - 新增 `frontend/liuren.html`
-- 更新 `frontend/workspace-shell.js`
-  - 增加“六壬神课”入口
+- 更新首页入口结构
+  - 增加“六壬神课”可达入口
 - 更新 `frontend/consult-panel.js`
   - 加入 `liuren` lane 与摘要
 
