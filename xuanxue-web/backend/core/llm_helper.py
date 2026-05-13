@@ -38,7 +38,7 @@ class LLMHelper:
             )
         
         self.model = "deepseek-v3-2-251201"
-        self.vision_model = os.getenv('ARK_VISION_MODEL') or "doubao-1.5-vision-pro-32k"
+        self.vision_model = os.getenv('ARK_VISION_MODEL') or "doubao-seed-2-0-lite-260428"
     
     def is_available(self) -> bool:
         """检查LLM是否可用"""

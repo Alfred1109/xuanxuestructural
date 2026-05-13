@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, Body, Form, HTTPException, Path, Query, Request, UploadFile
+from starlette.datastructures import UploadFile as StarletteUploadFile
 from pydantic import BaseModel, Field
 
 from core.bazi_advanced import get_advanced_analysis
@@ -61,9 +62,9 @@ async def ai_visual_insight(
         maybe_single = form.get("image")
 
         for item in maybe_multi:
-            if isinstance(item, UploadFile):
+            if isinstance(item, (UploadFile, StarletteUploadFile)):
                 uploaded_files.append(item)
-        if isinstance(maybe_single, UploadFile):
+        if isinstance(maybe_single, (UploadFile, StarletteUploadFile)):
             uploaded_files.append(maybe_single)
 
         uploaded_files = [item for item in uploaded_files if item is not None]

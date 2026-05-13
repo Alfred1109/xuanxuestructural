@@ -468,6 +468,32 @@ class TestApiValidation(unittest.TestCase):
         self.assertEqual(payload.get("data", {}).get("context"), "上下文")
         self.assertEqual(payload.get("data", {}).get("answer"), "Body回复")
 
+    def test_ai_visual_insight_accepts_uploaded_image(self):
+        with patch("main.llm_helper.is_available", return_value=True), patch(
+            "main.llm_helper.extract_visual_structure",
+            return_value={"lighting": "balanced"},
+        ), patch(
+            "main.llm_helper.analyze_visual_insight",
+            return_value="视觉分析结果",
+        ):
+            resp = self.request(
+                "POST",
+                "/api/ai/visual-insight",
+                data={
+                    "mode": "face",
+                    "question": "看看气色",
+                    "consent": "true",
+                },
+                files={
+                    "image": ("face.png", b"fake-image-bytes", "image/png"),
+                },
+            )
+        self.assertEqual(resp.status_code, 200)
+        payload = self.assert_success_envelope(resp)
+        self.assertEqual(payload.get("data", {}).get("mode"), "face")
+        self.assertEqual(payload.get("data", {}).get("analysis"), "视觉分析结果")
+        self.assertEqual(payload.get("data", {}).get("image_name"), "face.png")
+
     def test_ai_status_available_enum(self):
         main.AI_RUNTIME_STATE["last_error"] = None
         main.AI_RUNTIME_STATE["last_error_at"] = None

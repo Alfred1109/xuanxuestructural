@@ -9,6 +9,9 @@
     }
 
     function readVisualContext() {
+        if (window.visualContextStore && window.visualContextStore.readManifest) {
+            return window.visualContextStore.readManifest();
+        }
         try {
             var raw = window.localStorage.getItem(VISUAL_CONTEXT_STORAGE_KEY);
             if (!raw) {
@@ -18,6 +21,89 @@
         } catch (_error) {
             return null;
         }
+    }
+
+    async function resolveVisualContextForConsult() {
+        var manifest = readVisualContext();
+        if (!manifest) {
+            return null;
+        }
+        if (manifest.kind !== 'draft') {
+            return manifest;
+        }
+        if (!window.visualContextStore || !window.visualContextStore.loadDraft) {
+            throw new Error('本地拍照条件草稿不可用，请重新上传图片后再试');
+        }
+
+        var draft = await window.visualContextStore.loadDraft();
+        if (!draft || !Array.isArray(draft.items) || !draft.items.length) {
+            throw new Error('未找到可用的拍照条件，请重新上传图片后再试');
+        }
+
+        async function analyzeDraftItem(item) {
+            var mode = item.mode;
+            var files = mode === 'space'
+                ? (draft.files && Array.isArray(draft.files.space) ? draft.files.space : [])
+                : (draft.files ? draft.files[mode] : null);
+            var formData = new FormData();
+            formData.append('mode', mode);
+            formData.append('question', item.question || '');
+            formData.append('location', item.location || '');
+            formData.append('scene_type', item.scene_type || 'generic');
+            formData.append('consent', draft.consent_required ? 'true' : 'false');
+
+            if (Array.isArray(files)) {
+                if (!files.length) {
+                    throw new Error('缺少' + (item.mode_label || mode) + '图片，请重新上传后再试');
+                }
+                files.forEach(function (file) {
+                    formData.append('images', file);
+                });
+            } else {
+                if (!files) {
+                    throw new Error('缺少' + (item.mode_label || mode) + '图片，请重新上传后再试');
+                }
+                formData.append('image', files);
+            }
+
+            return window.apiClient.request('/api/ai/visual-insight', {
+                method: 'POST',
+                body: formData
+            }).then(function (response) {
+                return response.data || {};
+            });
+        }
+
+        var resolvedItems = [];
+        for (var i = 0; i < draft.items.length; i += 1) {
+            resolvedItems.push(await analyzeDraftItem(draft.items[i]));
+        }
+
+        return {
+            mode: 'bundle',
+            mode_label: '多维视觉观察',
+            summary: '已纳入 ' + resolvedItems.length + ' 类图片识别结果。',
+            location: draft.location || '',
+            scene_type: draft.scene_type || 'generic',
+            image_name: resolvedItems.map(function (item) {
+                return item.mode_label || item.mode || '观察';
+            }).join(' / '),
+            disclaimer: draft.disclaimer || '',
+            items: resolvedItems.map(function (item) {
+                return {
+                    mode: item.mode,
+                    mode_label: item.mode_label,
+                    question: item.question || '',
+                    location: item.location || '',
+                    scene_type: item.scene_type || 'generic',
+                    image_name: item.image_name || '',
+                    analysis: item.analysis || '',
+                    disclaimer: item.disclaimer || '',
+                    structure: item.structure || {},
+                    rule_scores: item.rule_scores || {}
+                };
+            })
+        };
     }
 
     function buildBriefAnswer(answer) {
@@ -1035,6 +1121,10 @@
             var title = context.mode === 'bundle'
                 ? '本次问事将自动带入已保存的多类图片条件'
                 : '本次问事将自动带入最近一次图片观察结果';
+            var summaryText = context.summary || '已带入最近一次图片分析结果';
+            if (context.kind === 'draft') {
+                summaryText = context.summary || '已保存图片条件，提交统一问事时会自动完成视觉识别。';
+            }
             var meta = '';
             if (context.mode === 'bundle' && Array.isArray(context.items)) {
                 meta = context.items.map(function (item) {
@@ -1049,7 +1139,7 @@
                 '  <span class="visual-context-pill">' + esc(modePill) + '</span>',
                 '</div>',
                 '<div class="visual-context-title">' + esc(title) + '</div>',
-                '<div class="visual-context-meta">' + esc(context.summary || '已带入最近一次图片分析结果') + '</div>',
+                '<div class="visual-context-meta">' + esc(summaryText) + '</div>',
                 '<div class="visual-context-meta">' + esc(meta) + '</div>',
                 '<div class="visual-context-actions">',
                 '  <button type="button" class="visual-context-btn" id="reopenVisualContextBtn">继续拍照/上传</button>',
@@ -1065,11 +1155,18 @@
             }
             if (clearBtn) {
                 clearBtn.addEventListener('click', function () {
-                    try {
-                        window.localStorage.removeItem(VISUAL_CONTEXT_STORAGE_KEY);
-                    } catch (_error) {}
-                    renderVisualContextBanner();
-                    showToast('已移除本次问事的图片上下文。', 'success');
+                    Promise.resolve(
+                        window.visualContextStore && window.visualContextStore.clear
+                            ? window.visualContextStore.clear()
+                            : (function () {
+                                try {
+                                    window.localStorage.removeItem(VISUAL_CONTEXT_STORAGE_KEY);
+                                } catch (_error) {}
+                            })()
+                    ).finally(function () {
+                        renderVisualContextBanner();
+                        showToast('已移除本次问事的图片上下文。', 'success');
+                    });
                 });
             }
         }
@@ -1147,13 +1244,14 @@
                 minute: readOptionalInt('consultMinute'),
                 gender: document.getElementById('consultGender').value || null,
                 location: document.getElementById('consultLocation').value.trim() || null,
-                visual_context: readVisualContext()
+                visual_context: null
             };
 
             elements.consultLoading.classList.add('show');
             elements.consultResult.classList.remove('show');
 
             try {
+                payload.visual_context = await resolveVisualContextForConsult();
                 var response = await requestConsultation(payload);
                 renderConsultation(response.data, elements);
                 if (response.data && response.data.account_history && response.data.account_history.saved && window.authClient) {

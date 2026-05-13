@@ -32,6 +32,7 @@
 
 ```bash
 export ARK_API_KEY="your_api_key_here"
+export ARK_VISION_MODEL="doubao-seed-2-0-lite-260428"
 ```
 
 然后启动系统：
@@ -45,6 +46,7 @@ export ARK_API_KEY="your_api_key_here"
 
 ```bash
 echo 'export ARK_API_KEY="your_api_key_here"' >> ~/.bashrc
+echo 'export ARK_VISION_MODEL="doubao-seed-2-0-lite-260428"' >> ~/.bashrc
 source ~/.bashrc
 ```
 
@@ -56,6 +58,7 @@ nano ~/.bashrc
 添加这一行：
 ```bash
 export ARK_API_KEY="your_api_key_here"
+export ARK_VISION_MODEL="doubao-seed-2-0-lite-260428"
 ```
 
 保存后重新加载：
@@ -96,6 +99,18 @@ echo $ARK_API_KEY
 启动系统后，访问：
 ```bash
 curl http://localhost:8002/api/ai/status
+```
+
+如果你要用图片分析，还可以检查：
+
+```bash
+echo $ARK_VISION_MODEL
+```
+
+建议输出：
+
+```bash
+doubao-seed-2-0-lite-260428
 ```
 
 返回示例：

@@ -652,12 +652,12 @@
     <script src="common-ui.js?v=20260513-visual-insight"></script>
     <script src="markdown.js?v=20260513-visual-insight"></script>
     <script src="api-client.js?v=20260513-visual-insight"></script>
+    <script src="visual-context-store.js?v=20260513-visual-draft"></script>
     <script>
         if (window.applyCommonLinks) {
             window.applyCommonLinks();
         }
 
-        const VISUAL_CONTEXT_STORAGE_KEY = 'xuanxue_visual_context';
         const modeLabels = {
             space: '空间 / 风水观察',
             palm: '手相参考',
@@ -792,7 +792,6 @@
                 return;
             }
 
-            const items = [];
             const spaceLocation = document.getElementById('visualLocation').value.trim();
             const sceneType = document.getElementById('visualSceneType').value;
 
@@ -801,67 +800,56 @@
                 saveBtn.textContent = '保存中...';
             }
 
-            async function analyzeMode(mode, files, extra) {
-                const formData = new FormData();
-                formData.append('mode', mode);
-                formData.append('question', questionFor(mode));
-                formData.append('location', extra.location || '');
-                formData.append('scene_type', extra.scene_type || 'generic');
-                formData.append('consent', consentCheck.checked ? 'true' : 'false');
-                if (Array.isArray(files)) {
-                    files.forEach((file) => formData.append('images', file));
-                } else {
-                    formData.append('image', files);
-                }
-                const response = await window.apiClient.request('/api/ai/visual-insight', {
-                    method: 'POST',
-                    body: formData
-                });
-                return response.data || {};
-            }
-
             try {
+                const items = [];
                 if (hasSpace) {
-                    items.push(await analyzeMode('space', selectedFiles.space, {
+                    items.push({
+                        mode: 'space',
+                        mode_label: modeLabels.space,
+                        question: questionFor('space'),
                         location: spaceLocation,
-                        scene_type: sceneType
-                    }));
+                        scene_type: sceneType,
+                        image_name: selectedFiles.space.map((file) => file.name || '未命名图片').join(' / ')
+                    });
                 }
                 if (hasPalm) {
-                    items.push(await analyzeMode('palm', selectedFiles.palm, {
+                    items.push({
+                        mode: 'palm',
+                        mode_label: modeLabels.palm,
+                        question: questionFor('palm'),
                         location: '',
-                        scene_type: 'generic'
-                    }));
+                        scene_type: 'generic',
+                        image_name: selectedFiles.palm.name || '未命名图片'
+                    });
                 }
                 if (hasFace) {
-                    items.push(await analyzeMode('face', selectedFiles.face, {
+                    items.push({
+                        mode: 'face',
+                        mode_label: modeLabels.face,
+                        question: questionFor('face'),
                         location: '',
-                        scene_type: 'generic'
-                    }));
+                        scene_type: 'generic',
+                        image_name: selectedFiles.face.name || '未命名图片'
+                    });
                 }
 
-                const storedContext = {
+                const draftContext = {
                     mode: 'bundle',
                     mode_label: '多维视觉观察',
-                    summary: '已保存 ' + items.length + ' 类图片条件，并会在统一问事时自动纳入。',
+                    summary: '已保存 ' + items.length + ' 类图片条件，将在统一问事时再触发视觉识别。',
                     location: spaceLocation,
+                    scene_type: sceneType,
                     image_name: items.map((item) => item.mode_label || item.mode || '观察').join(' / '),
                     disclaimer: '结果仅作文化娱乐与环境观察参考，不构成身份识别、医疗、法律、财务或确定性人生判断。',
-                    items: items.map((item) => ({
-                        mode: item.mode,
-                        mode_label: item.mode_label,
-                        question: questionFor(item.mode),
-                        location: item.location || '',
-                        scene_type: item.scene_type || 'generic',
-                        image_name: item.image_name || '',
-                        analysis: item.analysis || '',
-                        summary: buildBriefSummary(item.analysis || ''),
-                        disclaimer: item.disclaimer || '',
-                        structure: item.structure || {},
-                        rule_scores: item.rule_scores || {}
-                    }))
+                    consent_required: hasPalm || hasFace,
+                    items: items,
+                    files: {
+                        space: hasSpace ? selectedFiles.space : [],
+                        palm: hasPalm ? selectedFiles.palm : null,
+                        face: hasFace ? selectedFiles.face : null
+                    }
                 };
-                window.localStorage.setItem(VISUAL_CONTEXT_STORAGE_KEY, JSON.stringify(storedContext));
+                const storedContext = await window.visualContextStore.saveDraft(draftContext);
                 if (window.parent && window.parent !== window) {
                     window.parent.postMessage({
                         type: 'visual-context-updated',
@@ -869,7 +857,7 @@
                     }, '*');
                 }
                 disclaimerCard.textContent = storedContext.disclaimer;
-                window.showToast('三类拍照条件已保存，并会在统一问事时自动纳入。', 'success');
+                window.showToast('拍照条件已保存，统一问事时才会调用视觉识别。', 'success');
                 if (document.body.classList.contains('embed-page') && window.parent && window.parent !== window) {
                     window.setTimeout(() => {
                         window.parent.postMessage({ type: 'visual-context-close' }, '*');
