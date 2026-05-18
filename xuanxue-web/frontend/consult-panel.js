@@ -3,9 +3,46 @@
     var renderers = window.commonRenderers || {};
     var esc = renderers.esc || function (value) { return String(value ?? ''); };
     var VISUAL_CONTEXT_STORAGE_KEY = 'xuanxue_visual_context';
+    var CONSULT_RESULT_STORAGE_KEY = 'xuanxue_latest_consult_result';
+    var CONSULT_RESULT_TIMESTAMP_KEY = 'xuanxue_latest_consult_result_at';
+    var CONSULT_RESULT_URL = 'consult-result.html';
 
     function renderMarkdown(text) {
         return window.renderMarkdownSimple(text, '#173a34');
+    }
+
+    function buildConsultResultUrl() {
+        try {
+            return new URL(CONSULT_RESULT_URL, window.location.href).toString();
+        } catch (_error) {
+            return CONSULT_RESULT_URL;
+        }
+    }
+
+    function saveLatestConsultation(data) {
+        try {
+            window.sessionStorage.setItem(CONSULT_RESULT_STORAGE_KEY, JSON.stringify(data || {}));
+            window.sessionStorage.setItem(CONSULT_RESULT_TIMESTAMP_KEY, new Date().toISOString());
+        } catch (_error) {
+            // Ignore storage failures and let the result page handle the empty state.
+        }
+    }
+
+    function readLatestConsultation() {
+        try {
+            var raw = window.sessionStorage.getItem(CONSULT_RESULT_STORAGE_KEY);
+            return raw ? JSON.parse(raw) : null;
+        } catch (_error) {
+            return null;
+        }
+    }
+
+    function readLatestConsultationTimestamp() {
+        try {
+            return window.sessionStorage.getItem(CONSULT_RESULT_TIMESTAMP_KEY) || '';
+        } catch (_error) {
+            return '';
+        }
     }
 
     function readVisualContext() {
@@ -295,84 +332,12 @@
         showToast('已填入你的个人资料。', 'success');
     }
 
-    function parseCoordinate(raw) {
-        if (typeof raw !== 'number' || !isFinite(raw)) {
-            return '';
-        }
-        return raw.toFixed(5);
-    }
-
-    function buildApproxLocationLabel(position) {
-        if (!position || !position.coords) {
-            return '';
-        }
-        var latitude = parseCoordinate(position.coords.latitude);
-        var longitude = parseCoordinate(position.coords.longitude);
-        if (!latitude || !longitude) {
-            return '';
-        }
-        return '定位坐标(' + latitude + ', ' + longitude + ')';
-    }
-
-    async function resolveHumanReadableLocation(position) {
-        var fallback = buildApproxLocationLabel(position);
-        if (!position || !position.coords || !window.apiClient || !window.apiClient.postJson) {
-            return fallback;
-        }
-
-        try {
-            var response = await window.apiClient.postJson('/api/location/reverse-geocode', {
-                latitude: position.coords.latitude,
-                longitude: position.coords.longitude
-            });
-            var data = response && response.data ? response.data : {};
-            return data.human_readable || data.formatted_address || fallback;
-        } catch (_error) {
-            return fallback;
-        }
-    }
-
     function detectConsultLocation() {
-        var input = document.getElementById('consultLocation');
-        if (!input) {
+        if (window.authClient && window.authClient.requestCurrentLocation) {
+            window.authClient.requestCurrentLocation('consultLocation');
             return;
         }
-        if (!navigator.geolocation) {
-            showToast('当前浏览器不支持地理定位。', 'warn');
-            return;
-        }
-        navigator.geolocation.getCurrentPosition(async function (position) {
-            var suggested = await resolveHumanReadableLocation(position);
-            if (!suggested) {
-                showToast('定位成功，但未能生成可用地点描述。', 'warn');
-                return;
-            }
-            input.value = suggested;
-            input.focus();
-            if (suggested.indexOf('定位坐标(') === 0) {
-                showToast('已获取定位坐标。若配置逆地理编码服务，可自动转成城市/街区名称。你也可以继续手动补充。', 'success');
-            } else {
-                showToast('已填入可读地点名称，你仍可以继续手动补充更精确的位置描述。', 'success');
-            }
-        }, function (error) {
-            if (error && error.code === 1) {
-                showToast('你拒绝了定位权限，请允许浏览器定位后再试。', 'warn');
-                return;
-            }
-            if (error && error.code === 2) {
-                showToast('无法获取当前位置，请检查网络或系统定位设置。', 'warn');
-                return;
-            }
-            if (error && error.code === 3) {
-                showToast('定位超时，请稍后再试。', 'warn');
-                return;
-            }
-            showToast('定位失败，请稍后再试。', 'warn');
-        }, {
-            enableHighAccuracy: false,
-            timeout: 10000,
-            maximumAge: 300000
-        });
+        showToast('当前页面尚未加载定位能力，请稍后刷新后再试。', 'warn');
     }
 
     function togglePresetSaveModal(show, suggestedName) {
@@ -1041,6 +1006,10 @@
         var intent = payload.intent || {};
         var trace = payload.trace && payload.trace.mermaid ? payload.trace : buildSyntheticTrace(payload);
 
+        if (!elements || !elements.consultAnswer || !elements.consultMeta || !elements.consultModuleGrid) {
+            return;
+        }
+
         elements.consultAnswer.innerHTML = renderMarkdown(payload.answer || '系统暂未生成结论。');
         elements.consultMeta.innerHTML = []
             .concat((intent.modules || []).map(function (moduleName) {
@@ -1073,15 +1042,130 @@
                 '</div>'
             ].join('');
 
-        if (window.decisionPanel) {
+        if (window.decisionPanel && elements.consultDecisionGrid) {
             window.decisionPanel.render(payload, elements.consultDecisionGrid);
         }
-        if (window.tracePanel) {
+        if (window.tracePanel && elements.consultTraceDiagram && elements.consultTraceSteps) {
             window.tracePanel.renderDiagram(trace, elements.consultTraceDiagram);
             window.tracePanel.renderSteps(trace, elements.consultTraceSteps);
         }
-        elements.consultResult.classList.add('show');
-        elements.consultResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (elements.consultResult && elements.consultResult.classList) {
+            elements.consultResult.classList.add('show');
+        }
+        if (elements.consultResult && elements.consultResult.scrollIntoView) {
+            elements.consultResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    function renderResultHeader(data, elements) {
+        var payload = data || {};
+        var intent = payload.intent || {};
+        var profile = payload.profile || {};
+        var birth = profile.birth || {};
+        var summaryNode = elements.resultSummary;
+        var questionNode = elements.resultQuestion;
+        var chipsNode = elements.resultChips;
+        var timestampNode = elements.resultTimestamp;
+        var backLink = elements.resultBackLink;
+
+        if (questionNode) {
+            questionNode.textContent = payload.question || '本次统一问事结果';
+        }
+
+        if (summaryNode) {
+            summaryNode.textContent = buildBriefAnswer(payload.answer || '');
+        }
+
+        if (chipsNode) {
+            chipsNode.innerHTML = []
+                .concat((intent.modules || []).map(function (moduleName) {
+                    return '<span class="result-chip">' + esc(moduleNameLabel(moduleName)) + '</span>';
+                }))
+                .concat(intent.matter_type ? ['<span class="result-chip">事项：' + esc(intent.matter_type) + '</span>'] : [])
+                .concat(intent.purpose ? ['<span class="result-chip">用途：' + esc(intent.purpose) + '</span>'] : [])
+                .concat(profile.location ? ['<span class="result-chip">地点：' + esc(profile.location) + '</span>'] : [])
+                .concat(birth.year ? ['<span class="result-chip">生辰：' + esc([birth.year, birth.month, birth.day, birth.hour].filter(Boolean).join('-')) + '</span>'] : [])
+                .filter(Boolean)
+                .join('');
+        }
+
+        if (timestampNode) {
+            var timestamp = readLatestConsultationTimestamp();
+            timestampNode.textContent = timestamp ? ('最近生成：' + timestamp.replace('T', ' ').slice(0, 16)) : '本次结果已暂存到当前浏览器会话';
+        }
+
+        if (backLink) {
+            backLink.setAttribute('href', 'index.html');
+        }
+    }
+
+    function activateResultTab(tabId, tabsRoot, panelsRoot) {
+        if (!tabsRoot || !panelsRoot) {
+            return;
+        }
+
+        Array.prototype.forEach.call(tabsRoot.querySelectorAll('[data-result-tab]'), function (button) {
+            var isActive = button.getAttribute('data-result-tab') === tabId;
+            button.classList.toggle('active', isActive);
+            button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+
+        Array.prototype.forEach.call(panelsRoot.querySelectorAll('[data-result-panel]'), function (panel) {
+            var isActive = panel.getAttribute('data-result-panel') === tabId;
+            panel.classList.toggle('active', isActive);
+            panel.hidden = !isActive;
+        });
+    }
+
+    function initializeResultWorkspace() {
+        var workspace = document.getElementById('consultResultWorkspace');
+        if (!workspace) {
+            return;
+        }
+
+        var data = readLatestConsultation();
+        var emptyState = document.getElementById('consultResultEmpty');
+        var tabsRoot = document.getElementById('resultTabs');
+        var panelsRoot = document.getElementById('resultPanels');
+        var elements = {
+            consultResult: workspace,
+            consultAnswer: document.getElementById('consultAnswer'),
+            consultMeta: document.getElementById('consultMeta'),
+            consultDecisionGrid: document.getElementById('consultDecisionGrid'),
+            consultModuleGrid: document.getElementById('consultModuleGrid'),
+            consultTraceDiagram: document.getElementById('consultTraceDiagram'),
+            consultTraceSteps: document.getElementById('consultTraceSteps'),
+            consultTraceSummary: document.getElementById('consultTraceSummary'),
+            resultSummary: document.getElementById('resultHeroSummary'),
+            resultQuestion: document.getElementById('resultHeroQuestion'),
+            resultChips: document.getElementById('resultHeroChips'),
+            resultTimestamp: document.getElementById('resultHeroTimestamp'),
+            resultBackLink: document.getElementById('resultBackLink')
+        };
+
+        if (!data) {
+            workspace.style.display = 'none';
+            if (emptyState) {
+                emptyState.style.display = '';
+            }
+            return;
+        }
+
+        if (emptyState) {
+            emptyState.style.display = 'none';
+        }
+        workspace.style.display = '';
+        renderResultHeader(data, elements);
+        renderConsultation(data, elements);
+
+        if (tabsRoot && panelsRoot) {
+            Array.prototype.forEach.call(tabsRoot.querySelectorAll('[data-result-tab]'), function (button) {
+                button.addEventListener('click', function () {
+                    activateResultTab(button.getAttribute('data-result-tab'), tabsRoot, panelsRoot);
+                });
+            });
+            activateResultTab('summary', tabsRoot, panelsRoot);
+        }
     }
 
     function initializeConsultPanel() {
@@ -1092,6 +1176,10 @@
 
         var elements = {
             consultLoading: document.getElementById('consultLoading'),
+            consultLoadingFill: document.getElementById('consultLoadingFill'),
+            consultLoadingPercent: document.getElementById('consultLoadingPercent'),
+            consultLoadingText: document.getElementById('consultLoadingText'),
+            consultLoadingLabel: document.getElementById('consultLoadingLabel'),
             consultResult: document.getElementById('consultResult'),
             consultAnswer: document.getElementById('consultAnswer'),
             consultMeta: document.getElementById('consultMeta'),
@@ -1106,6 +1194,94 @@
         visualContextBanner.className = 'visual-context-banner';
         visualContextBanner.id = 'visualContextBanner';
         consultForm.insertBefore(visualContextBanner, consultForm.firstChild);
+
+        var consultLoadingTimer = null;
+        var consultLoadingValue = 0;
+        var consultLoadingSteps = [
+            { threshold: 18, text: '正在整理问题、出生信息与场景条件...' },
+            { threshold: 42, text: '正在生成命理分析所需参数...' },
+            { threshold: 68, text: '正在汇总术数模块结果...' },
+            { threshold: 92, text: '正在收束结论并准备结果页...' }
+        ];
+
+        function updateConsultLoading(progress, text) {
+            if (!elements.consultLoading) {
+                return;
+            }
+            var value = Math.max(0, Math.min(100, Math.round(progress || 0)));
+            consultLoadingValue = value;
+            if (elements.consultLoadingFill) {
+                elements.consultLoadingFill.style.width = value + '%';
+            }
+            if (elements.consultLoadingPercent) {
+                elements.consultLoadingPercent.textContent = value + '%';
+            }
+            if (elements.consultLoadingText) {
+                if (text) {
+                    elements.consultLoadingText.textContent = text;
+                } else {
+                    var fallbackText = consultLoadingSteps[consultLoadingSteps.length - 1].text;
+                    consultLoadingSteps.some(function (step) {
+                        if (value <= step.threshold) {
+                            fallbackText = step.text;
+                            return true;
+                        }
+                        return false;
+                    });
+                    elements.consultLoadingText.textContent = fallbackText;
+                }
+            }
+        }
+
+        function clearConsultLoadingTimer() {
+            if (consultLoadingTimer) {
+                window.clearInterval(consultLoadingTimer);
+                consultLoadingTimer = null;
+            }
+        }
+
+        function showConsultLoading() {
+            if (!elements.consultLoading) {
+                return;
+            }
+            clearConsultLoadingTimer();
+            elements.consultLoading.classList.add('show');
+            elements.consultLoading.setAttribute('aria-hidden', 'false');
+            if (elements.consultLoadingLabel) {
+                elements.consultLoadingLabel.textContent = '正在汇总命理信息';
+            }
+            updateConsultLoading(6, consultLoadingSteps[0].text);
+            consultLoadingTimer = window.setInterval(function () {
+                if (consultLoadingValue >= 92) {
+                    clearConsultLoadingTimer();
+                    return;
+                }
+                var nextValue = consultLoadingValue < 42
+                    ? consultLoadingValue + 7
+                    : consultLoadingValue < 68
+                        ? consultLoadingValue + 5
+                        : consultLoadingValue + 3;
+                updateConsultLoading(nextValue);
+            }, 520);
+        }
+
+        function hideConsultLoading() {
+            clearConsultLoadingTimer();
+            if (!elements.consultLoading) {
+                return;
+            }
+            elements.consultLoading.classList.remove('show');
+            elements.consultLoading.setAttribute('aria-hidden', 'true');
+            updateConsultLoading(0, consultLoadingSteps[0].text);
+        }
+
+        async function finishConsultLoading() {
+            clearConsultLoadingTimer();
+            updateConsultLoading(100, '分析完成，正在打开结果工作台...');
+            await new Promise(function (resolve) {
+                window.setTimeout(resolve, 220);
+            });
+        }
 
         function renderVisualContextBanner() {
             var context = readVisualContext();
@@ -1247,22 +1423,26 @@
                 visual_context: null
             };
 
-            elements.consultLoading.classList.add('show');
-            elements.consultResult.classList.remove('show');
+            showConsultLoading();
+            if (elements.consultResult && elements.consultResult.classList) {
+                elements.consultResult.classList.remove('show');
+            }
 
             try {
                 payload.visual_context = await resolveVisualContextForConsult();
                 var response = await requestConsultation(payload);
-                renderConsultation(response.data, elements);
+                await finishConsultLoading();
+                saveLatestConsultation(response.data);
                 if (response.data && response.data.account_history && response.data.account_history.saved && window.authClient) {
                     window.authClient.refreshHistory({ openLatest: true }).catch(function () {
                         // Ignore history refresh failures after a successful consult.
                     });
                 }
+                window.location.href = buildConsultResultUrl();
             } catch (error) {
                 showToast('系统分析失败：' + error.message, 'error');
             } finally {
-                elements.consultLoading.classList.remove('show');
+                hideConsultLoading();
             }
         });
 
@@ -1285,7 +1465,10 @@
 
         document.getElementById('clearConsultBtn').addEventListener('click', function () {
             consultForm.reset();
-            elements.consultResult.classList.remove('show');
+            hideConsultLoading();
+            if (elements.consultResult && elements.consultResult.classList) {
+                elements.consultResult.classList.remove('show');
+            }
             Array.prototype.forEach.call(document.querySelectorAll('[data-scenario]'), function (button) {
                 button.classList.remove('active');
             });
@@ -1360,8 +1543,10 @@
 
     window.consultPanel = {
         initialize: initializeConsultPanel,
+        initializeResultWorkspace: initializeResultWorkspace,
         buildSyntheticTrace: buildSyntheticTrace,
         moduleNameLabel: moduleNameLabel,
+        readLatestConsultation: readLatestConsultation,
         applyDefaultSavedCondition: function () {
             if (!window.authClient || !window.authClient.getDefaultConsultPreset) {
                 return;

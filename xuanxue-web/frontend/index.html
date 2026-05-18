@@ -16,112 +16,130 @@
         }
 
         .hermes-entry {
-            padding: var(--spacing-3xl) var(--spacing-xl);
+            padding: var(--spacing-xl) 0 0;
             background: transparent;
             border: none;
             box-shadow: none;
-            max-width: 1080px;
+            max-width: none;
             margin: 0 auto;
+            display: grid;
+            gap: 22px;
         }
 
         .entry-top {
-            margin-bottom: var(--spacing-3xl);
+            margin-bottom: 0;
+        }
+
+        .consult-stage {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) minmax(380px, 0.94fr);
-            gap: 24px;
-            align-items: start;
+            grid-template-columns: minmax(0, 1.08fr) minmax(300px, 0.72fr);
+            gap: 22px;
+            align-items: stretch;
         }
 
-        .entry-kicker {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--color-primary-dark);
-            background: rgba(44, 91, 79, 0.08);
-            border: 1px solid rgba(44, 91, 79, 0.08);
-            border-radius: 999px;
-            padding: 8px 12px;
-            font-size: var(--font-size-xs);
-            font-weight: var(--font-weight-medium);
-            line-height: var(--line-height-normal);
-            margin-bottom: var(--spacing-lg);
-            letter-spacing: 0.8px;
-            text-transform: uppercase;
+        .consult-primary-card {
+            padding: 24px;
+            border-radius: 28px;
+            background:
+                radial-gradient(circle at 8% 0%, rgba(168, 116, 60, 0.12) 0%, transparent 30%),
+                radial-gradient(circle at 90% 12%, rgba(44, 91, 79, 0.14) 0%, transparent 30%),
+                linear-gradient(145deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 249, 245, 0.98) 100%);
+            border: 1px solid rgba(44, 91, 79, 0.1);
+            box-shadow: 0 20px 40px rgba(23, 45, 62, 0.05);
         }
 
-        .entry-title {
-            margin: 0 0 18px;
-            color: var(--color-text);
-            font-size: clamp(1.6rem, 2.5vw, 2.2rem);
-            font-weight: 700;
-            line-height: 1.16;
-            letter-spacing: -0.02em;
-            max-width: none;
-        }
-
-        .entry-copy p {
-            margin: 0 0 var(--spacing-xl);
-            color: var(--color-text-secondary);
-            font-size: 1rem;
-            font-weight: var(--font-weight-normal);
-            line-height: var(--line-height-loose);
-            max-width: 560px;
-        }
-
-        .entry-tags {
+        .consult-primary-head {
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
             margin-bottom: 18px;
         }
 
-        .entry-tag {
+        .consult-primary-copy {
+            min-width: 0;
+        }
+
+        .consult-primary-copy h3 {
+            margin: 10px 0 10px;
+            font-size: clamp(1.45rem, 2vw, 1.95rem);
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+        }
+
+        .consult-primary-copy p {
+            margin: 0;
+            max-width: 50ch;
+            color: var(--color-text-secondary);
+            font-size: 0.97rem;
+            line-height: 1.78;
+        }
+
+        .consult-focus-pill {
             display: inline-flex;
             align-items: center;
+            gap: 8px;
             padding: 8px 12px;
             border-radius: 999px;
-            background: #ffffff;
-            border: 1px solid rgba(44, 91, 79, 0.1);
+            background: rgba(44, 91, 79, 0.08);
             color: var(--color-primary-dark);
-            font-size: 0.82rem;
-            font-weight: 600;
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
         }
 
-        .entry-callout {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px 14px;
-            border-radius: 16px;
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(247, 248, 245, 0.96) 100%);
+        .consult-progress-card {
+            min-width: 220px;
+            padding: 16px 16px 14px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.92);
             border: 1px solid rgba(44, 91, 79, 0.08);
-            color: var(--color-primary-dark);
-            font-size: 0.9rem;
-            font-weight: 600;
-            margin-bottom: 16px;
         }
 
-        .entry-callout strong {
-            font-size: 1rem;
-            line-height: 1;
-        }
-
-        .entry-aside {
-            display: grid;
-            gap: 14px;
-            align-content: start;
-        }
-
-        .entry-guide {
-            padding: 22px 22px 18px;
-            border-radius: 24px;
-            background: linear-gradient(155deg, rgba(248, 242, 229, 0.98) 0%, rgba(243, 247, 244, 0.98) 100%);
-            border: 1px solid rgba(44, 91, 79, 0.09);
-            box-shadow: 0 18px 32px rgba(23, 45, 62, 0.05);
-        }
-
-        .entry-guide .eyebrow {
+        .consult-progress-card strong {
             display: block;
+            color: var(--color-primary-dark);
+            font-size: 0.92rem;
+            margin-bottom: 8px;
+        }
+
+        .consult-progress-card span {
+            display: block;
+            color: var(--color-text-secondary);
+            font-size: 0.82rem;
+            line-height: 1.7;
+        }
+
+        .consult-secondary-grid {
+            display: grid;
+            gap: 20px;
+            align-content: start;
+            min-height: 100%;
+            grid-template-columns: 1fr;
+            grid-template-rows: auto minmax(0, 1fr) auto;
+            padding: 24px;
+            border-radius: 28px;
+            background:
+                radial-gradient(circle at 100% 0%, rgba(168, 116, 60, 0.08) 0%, transparent 28%),
+                linear-gradient(145deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 249, 245, 0.98) 100%);
+            border: 1px solid rgba(44, 91, 79, 0.1);
+            box-shadow: 0 20px 40px rgba(23, 45, 62, 0.05);
+        }
+
+        .consult-side-card {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            padding: 0;
+            border-radius: 0;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+        }
+
+        .consult-side-card .eyebrow {
+            display: inline-flex;
             margin-bottom: 10px;
             color: var(--color-accent);
             font-size: 0.74rem;
@@ -130,101 +148,101 @@
             text-transform: uppercase;
         }
 
-        .entry-guide h3 {
+        .consult-side-card h3 {
             margin: 0 0 12px;
             font-size: 1.18rem;
-            line-height: 1.38;
-            max-width: 15em;
+            line-height: 1.4;
         }
 
-        .entry-guide p {
-            margin: 0 0 16px;
+        .consult-side-card p {
+            margin: 0;
+            color: var(--color-text-secondary);
             font-size: 0.9rem;
-            line-height: 1.72;
+            line-height: 1.78;
         }
 
-        .entry-guide-points {
-            display: grid;
-            gap: 6px;
+        .consult-secondary-grid > *:not(:last-child) {
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(44, 91, 79, 0.1);
         }
 
-        .entry-guide-point {
+        .consult-link-list {
             display: grid;
-            grid-template-columns: 38px minmax(0, 1fr);
             gap: 12px;
-            align-items: start;
-            padding: 12px 0;
-            border-top: 1px solid rgba(44, 91, 79, 0.08);
+            margin-top: 16px;
         }
 
-        .entry-guide-point:first-child {
-            border-top: none;
-            padding-top: 0;
-        }
-
-        .entry-guide-point .num {
-            width: 38px;
-            height: 38px;
-            display: inline-flex;
+        .consult-link-item {
+            display: flex;
             align-items: center;
-            justify-content: center;
-            border-radius: 12px;
-            background: rgba(44, 91, 79, 0.1);
-            color: var(--color-primary-dark);
-            font-size: 0.84rem;
-            font-weight: 700;
-        }
-
-        .entry-guide-point strong {
-            display: block;
-            margin-bottom: 4px;
-            color: var(--color-text);
-            font-size: 0.9rem;
-        }
-
-        .entry-guide-point span {
-            color: var(--color-text-secondary);
-            font-size: 0.84rem;
-            line-height: 1.65;
-        }
-
-        .entry-stats {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
+            justify-content: space-between;
             gap: 10px;
-            margin-top: 0;
+            padding: 14px 16px;
+            border-radius: 18px;
+            background: rgba(44, 91, 79, 0.04);
+            color: var(--color-primary-dark);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
         }
 
-        .entry-stat {
-            padding: 12px 12px 11px;
-            text-align: left;
-            border: 1px solid rgba(44, 91, 79, 0.08);
-            border-radius: 14px;
-            background: rgba(255, 255, 255, 0.9);
-            box-shadow: none;
+        .consult-loading {
+            display: none;
+            gap: 10px;
+            margin-top: 18px;
+            padding: 16px 18px;
+            border-radius: 18px;
+            border: 1px solid rgba(44, 91, 79, 0.1);
+            background:
+                radial-gradient(circle at 100% 0%, rgba(168, 116, 60, 0.08) 0%, transparent 28%),
+                linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(247, 249, 246, 0.98) 100%);
         }
 
-        .entry-stat .label {
-            font-size: 0.74rem;
-            font-weight: var(--font-weight-medium);
-            color: var(--color-text-tertiary);
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            margin-bottom: 10px;
+        .consult-loading.show {
+            display: grid;
         }
 
-        .entry-stat .value {
-            font-size: 1rem;
+        .consult-loading-head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .consult-loading-label {
+            color: var(--color-primary-dark);
+            font-size: 0.92rem;
             font-weight: 700;
-            color: var(--color-text);
-            line-height: 1.1;
         }
 
-        .entry-stat .note {
-            margin-top: 6px;
+        .consult-loading-percent {
+            color: var(--color-accent);
+            font-size: 0.88rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .consult-loading-track {
+            position: relative;
+            overflow: hidden;
+            height: 10px;
+            border-radius: 999px;
+            background: rgba(44, 91, 79, 0.1);
+        }
+
+        .consult-loading-fill {
+            width: 0%;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #c9964e 0%, #8eb293 45%, #2c5b4f 100%);
+            box-shadow: 0 6px 16px rgba(44, 91, 79, 0.18);
+            transition: width 0.35s ease, background 0.35s ease;
+        }
+
+        .consult-loading-text {
             color: var(--color-text-secondary);
-            font-size: 0.74rem;
-            line-height: 1.5;
+            font-size: 0.84rem;
+            line-height: 1.7;
         }
 
         .consult-form {
@@ -274,11 +292,15 @@
         .saved-preset-block {
             margin: 0 0 var(--spacing-xl);
             display: grid;
+            align-content: start;
             gap: 12px;
-            padding: 16px;
-            border-radius: 20px;
-            background: linear-gradient(180deg, rgba(248, 242, 229, 0.46) 0%, rgba(255, 255, 255, 0.96) 100%);
-            border: 1px solid rgba(44, 91, 79, 0.08);
+            min-height: 0;
+            padding: 0;
+            border-radius: 0;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            margin-bottom: 0;
         }
 
         .saved-preset-grid {
@@ -362,6 +384,7 @@
             color: var(--color-text-secondary);
             font-size: 0.88rem;
             line-height: 1.7;
+            max-width: 100%;
         }
 
         .visual-context-banner {
@@ -596,7 +619,8 @@
         .scenario-preset-grid {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 10px;
+            gap: 12px;
+            margin-top: 16px;
         }
 
         .scenario-preset {
@@ -639,14 +663,7 @@
             color: var(--color-text);
             font-size: 0.94rem;
             font-weight: 700;
-            margin-bottom: 6px;
-        }
-
-        .scenario-preset .desc {
-            display: block;
-            color: var(--color-text-secondary);
-            font-size: 0.82rem;
-            line-height: 1.65;
+            margin-bottom: 0;
         }
 
         .consult-form .form-row {
@@ -794,7 +811,6 @@
 
         .consult-answer {
             line-height: 1.95;
-            white-space: pre-wrap;
             color: var(--color-text);
             font-size: 1.02rem;
         }
@@ -890,21 +906,22 @@
         }
 
         .header-account {
-            margin-top: 18px;
-            display: flex;
-            justify-content: center;
+            margin-top: 4px;
+            display: block;
         }
 
         .header-account-card {
-            width: min(100%, 780px);
+            width: 100%;
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 18px;
-            padding: 14px 18px;
-            border-radius: 18px;
-            background: rgba(255, 255, 255, 0.12);
-            border: 1px solid rgba(255, 255, 255, 0.16);
+            padding: 16px 18px;
+            border-radius: 22px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.08) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow: 0 14px 30px rgba(7, 20, 17, 0.12);
+            backdrop-filter: blur(14px);
         }
 
         .header-account-copy {
@@ -914,14 +931,14 @@
         }
 
         .header-account-copy strong {
-            font-size: 0.95rem;
+            font-size: 1rem;
             font-weight: 700;
             color: #ffffff;
         }
 
         .header-account-copy span {
-            font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.72);
+            font-size: 0.82rem;
+            color: rgba(255, 255, 255, 0.76);
         }
 
         .header-account-actions {
@@ -939,11 +956,15 @@
             border-radius: 999px;
             padding: 10px 16px;
             font-size: 0.85rem;
+            font-weight: 600;
             cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
         }
 
         .header-ghost-btn:hover {
             background: rgba(255, 255, 255, 0.16);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
         }
 
         .auth-modal {
@@ -1412,17 +1433,18 @@
         }
 
         .shell-container {
-            max-width: 1280px;
-            padding: 32px 24px;
+            width: min(100%, 1200px);
+            max-width: 1200px;
+            padding: 22px var(--spacing-lg) 32px;
         }
 
         .shell-container > .card {
-            background: rgba(255, 255, 255, 0.6);
-            border: 1px solid rgba(217, 226, 220, 0.3);
-            border-radius: 20px;
-            padding: 32px;
+            background: rgba(255, 255, 255, 0.72);
+            border: 1px solid rgba(217, 226, 220, 0.46);
+            border-radius: 28px;
+            padding: 28px;
             margin-bottom: 24px;
-            box-shadow: 0 2px 8px rgba(23, 45, 62, 0.02);
+            box-shadow: 0 20px 44px rgba(23, 45, 62, 0.06);
             backdrop-filter: blur(20px);
         }
 
@@ -1453,29 +1475,18 @@
                 grid-template-columns: 1fr;
             }
 
-            .entry-stats {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .entry-stat {
-                border-right: 1px solid var(--color-line);
-                border-bottom: 1px solid var(--color-line);
-            }
-
-            .entry-stat:nth-child(2n) {
-                border-right: none;
-            }
-
-            .entry-stat:nth-child(n+3) {
-                border-bottom: none;
-            }
-
             .consult-result-grid {
                 grid-template-columns: 1fr;
             }
 
             .scenario-preset-grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .consult-secondary-grid {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto;
+                min-height: auto;
             }
 
             .saved-preset-grid {
@@ -1501,15 +1512,7 @@
 
         @media (max-width: 768px) {
             .hermes-entry {
-                padding: var(--spacing-2xl) var(--spacing-lg);
-            }
-
-            .entry-title {
-                font-size: 1.85rem;
-            }
-
-            .entry-stats {
-                grid-template-columns: repeat(2, 1fr);
+                padding: var(--spacing-lg) 0 0;
             }
 
             .consult-form .form-row {
@@ -1600,20 +1603,11 @@
 
         @media (max-width: 480px) {
             .hermes-entry {
-                padding: var(--spacing-xl) var(--spacing-md);
-            }
-
-            .entry-title {
-                font-size: 1.55rem;
-                max-width: none;
+                padding: var(--spacing-md) 0 0;
             }
 
             .consult-form .form-row {
                 grid-template-columns: repeat(2, 1fr);
-            }
-
-            .entry-stats {
-                grid-template-columns: 1fr;
             }
 
             .header-account-card {
@@ -1643,6 +1637,7 @@
                         <span id="headerAccountMeta">请先登录，统一问事功能仅对账号开放</span>
                     </div>
                     <div class="header-account-actions">
+                        <a class="header-ghost-btn" href="consult-result.html" style="text-decoration:none;">结果工作台</a>
                         <button type="button" class="header-ghost-btn" id="openAuthModalBtn">登录 / 注册</button>
                         <a class="header-ghost-btn" id="openAccountCenterBtn" href="account.html" style="display:none; text-decoration:none;">账号中心</a>
                         <button type="button" class="header-ghost-btn" id="logoutBtn" style="display:none;">退出登录</button>
@@ -1654,221 +1649,148 @@
 
     <div class="container shell-container">
         <section class="card hermes-entry">
-            <div class="entry-top">
-                <div class="entry-copy">
-                    <div class="entry-kicker">统一问事中心</div>
-                    <h2 class="entry-title">一个入口，自动编排多种术数</h2>
-                    <p>登录后再说清楚「我是谁」和「我想问什么」，系统会自动选择相关模块，汇总成统一结论。</p>
-                    <div class="entry-tags">
-                        <span class="entry-tag">多术数统一编排</span>
-                        <span class="entry-tag">先登录后问事</span>
-                        <span class="entry-tag">自动归档历史记录</span>
-                    </div>
-                    <div class="entry-callout">
-                        <strong>↓</strong>
-                        <span>继续向下，先选一个场景模板，再开始问事。</span>
+            <div class="consult-stage">
+                <form id="consultForm" class="consult-form consult-primary-card">
+                    <div class="consult-primary-head">
+                        <div class="consult-primary-copy">
+                            <span class="consult-focus-pill">Step 01 · 提出问题</span>
+                            <h3>先把你最想问的事说清楚，系统再自动编排术数</h3>
+                            <p>这一页只负责输入和发起问事。提交后会进入单独的结果工作台，在那里分区查看综合结论、决策内核、模块依据和计算流程。</p>
+                        </div>
+                        <div class="consult-progress-card">
+                            <strong>当前流程</strong>
+                            <span>1. 说清楚问题</span>
+                            <span>2. 补充出生与地点条件</span>
+                            <span>3. 进入独立结果工作台</span>
+                        </div>
                     </div>
 
-                    <div class="entry-stats">
-                        <div class="entry-stat">
-                            <div class="label">入口</div>
-                            <div class="value">1 个</div>
-                            <div class="note">不用手动切换多个系统页</div>
+                    <div class="form-group">
+                        <label for="consultQuestion">你想问什么</label>
+                        <textarea id="consultQuestion" class="consult-question" placeholder="例如：我现在适合换工作吗？这段感情还能继续吗？今年开业合不合适？"></textarea>
+                    </div>
+
+                    <div class="form-group location-field">
+                        <label for="consultLocation">当前位置 / 常用地点</label>
+                        <div class="location-input-row">
+                            <input type="text" id="consultLocation" maxlength="80" placeholder="例如：上海浦东 / 陆家嘴办公区 / 家中书房">
+                            <button type="button" class="location-ghost-btn" id="detectConsultLocationBtn">定位当前城市</button>
+                            <button type="button" class="visual-entry-btn" id="openVisualInsightModalBtn">拍照辅助</button>
                         </div>
-                        <div class="entry-stat">
-                            <div class="label">编排</div>
-                            <div class="value">自动</div>
-                            <div class="note">根据问题语义智能匹配模块</div>
+                        <div class="field-help">可先自动识别当前位置，再手动补充到更精确的楼宇、工位、房间或户型描述，便于风水/空间判断。</div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="consultYear">出生年份</label>
+                            <input type="number" id="consultYear" min="1900" max="2100" placeholder="可选">
                         </div>
-                        <div class="entry-stat">
-                            <div class="label">输出</div>
-                            <div class="value">统一</div>
-                            <div class="note">结论、依据、流程图集中展示</div>
+                        <div class="form-group">
+                            <label for="consultMonth">出生月份</label>
+                            <input type="number" id="consultMonth" min="1" max="12" placeholder="可选">
                         </div>
-                        <div class="entry-stat">
-                            <div class="label">辅助</div>
-                            <div class="value">AI + 规则</div>
-                            <div class="note">兼顾自动综合与可解释推演链</div>
+                        <div class="form-group">
+                            <label for="consultDay">出生日期</label>
+                            <input type="number" id="consultDay" min="1" max="31" placeholder="可选">
+                        </div>
+                        <div class="form-group">
+                            <label for="consultHour">出生时辰</label>
+                            <input type="number" id="consultHour" min="0" max="23" placeholder="可选">
+                        </div>
+                        <div class="form-group">
+                            <label for="consultMinute">出生分钟</label>
+                            <input type="number" id="consultMinute" min="0" max="59" placeholder="可选">
+                        </div>
+                        <div class="form-group">
+                            <label for="consultGender">性别</label>
+                            <select id="consultGender">
+                                <option value="">可选</option>
+                                <option value="男">男</option>
+                                <option value="女">女</option>
+                            </select>
                         </div>
                     </div>
-                </div>
 
-                <div class="entry-aside">
-                    <div class="entry-guide">
-                        <span class="eyebrow">How It Works</span>
-                        <h3>系统会把“问题、命理、时机、空间”压成一条可回看的推演链</h3>
-                        <p>你不用自己选模块。只要把问题说清楚，系统会自动判断该调哪些术数视角，再把结果汇成统一结论。</p>
-                        <div class="entry-guide-points">
-                            <div class="entry-guide-point">
-                                <span class="num">01</span>
-                                <div>
-                                    <strong>先定问题</strong>
-                                    <span>职业、感情、求财、考试、搬动，都可以从同一个入口进入。</span>
-                                </div>
-                            </div>
-                            <div class="entry-guide-point">
-                                <span class="num">02</span>
-                                <div>
-                                    <strong>自动选术数</strong>
-                                    <span>系统会按出生信息与问题语义，自动调用八字、六爻、奇门、择日等模块。</span>
-                                </div>
-                            </div>
-                            <div class="entry-guide-point">
-                                <span class="num">03</span>
-                                <div>
-                                    <strong>统一出结论</strong>
-                                    <span>结果不是碎片化菜单，而是一份可执行、可回看、可追踪的统一判断。</span>
-                                </div>
-                            </div>
+                    <div class="consult-actions">
+                        <button type="submit" class="btn">☯ 开始系统分析</button>
+                        <button type="button" class="btn btn-ai" id="saveCurrentConditionBtn">保存当前条件</button>
+                        <button type="button" class="btn btn-ai" id="fillDemoBtn">一键填入个人信息</button>
+                        <button type="button" class="btn btn-accent" id="clearConsultBtn">清空</button>
+                    </div>
+
+                    <div class="consult-loading" id="consultLoading" aria-live="polite" aria-hidden="true">
+                        <div class="consult-loading-head">
+                            <span class="consult-loading-label" id="consultLoadingLabel">正在汇总命理信息</span>
+                            <span class="consult-loading-percent" id="consultLoadingPercent">0%</span>
+                        </div>
+                        <div class="consult-loading-track" aria-hidden="true">
+                            <div class="consult-loading-fill" id="consultLoadingFill"></div>
+                        </div>
+                        <div class="consult-loading-text" id="consultLoadingText">正在整理问题、出生信息与场景条件...</div>
+                    </div>
+                </form>
+
+                <div class="consult-secondary-grid">
+                    <div class="consult-side-card">
+                        <span class="eyebrow">Quick Start</span>
+                        <h3>先选一个贴近的场景，问事会更快进入状态</h3>
+                        <p>这些模板只是起点。点一个后，问题和基础条件会自动填入，你可以继续改成自己的实际情况。</p>
+                        <div class="scenario-preset-grid" id="scenarioPresetGrid">
+                            <button type="button" class="scenario-preset" data-scenario="career_switch">
+                                <span class="kicker">事业决策</span>
+                                <span class="title">换工作 / 跳槽</span>
+                            </button>
+                            <button type="button" class="scenario-preset" data-scenario="relationship">
+                                <span class="kicker">关系判断</span>
+                                <span class="title">感情能否继续</span>
+                            </button>
+                            <button type="button" class="scenario-preset" data-scenario="startup_date">
+                                <span class="kicker">时间选择</span>
+                                <span class="title">开业 / 启动项目</span>
+                            </button>
+                            <button type="button" class="scenario-preset" data-scenario="exam">
+                                <span class="kicker">学业考试</span>
+                                <span class="title">考试能否顺利</span>
+                            </button>
+                            <button type="button" class="scenario-preset" data-scenario="investment">
+                                <span class="kicker">财务决策</span>
+                                <span class="title">投资 / 求财</span>
+                            </button>
+                            <button type="button" class="scenario-preset" data-scenario="relocation">
+                                <span class="kicker">空间与变动</span>
+                                <span class="title">搬家 / 入宅</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="saved-preset-block">
+                        <div class="scenario-preset-head">
+                            <strong>我的常用条件</strong>
+                            <span>把本次问事的基础条件保存下来，下次可直接套用</span>
+                        </div>
+                        <div id="savedPresetGrid" class="saved-preset-grid">
+                            <div class="saved-preset-empty">登录后保存过的常用问事条件，会显示在这里。</div>
+                        </div>
+                    </div>
+
+                    <div class="consult-side-card">
+                        <span class="eyebrow">Workspace</span>
+                        <h3>结果将进入单独工作台，不再堆在长首页里</h3>
+                        <p>提交后会跳转到结果页，用 tab 拆开综合结论、决策内核、模块依据和计算流程，查看会更轻松。</p>
+                        <div class="consult-link-list">
+                            <a class="consult-link-item" href="consult-result.html">
+                                <span>打开结果工作台</span>
+                                <span>→</span>
+                            </a>
+                            <a class="consult-link-item" href="account.html">
+                                <span>进入账号中心 / 历史记录</span>
+                                <span>→</span>
+                            </a>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <form id="consultForm" class="consult-form">
-                <div class="saved-preset-block">
-                    <div class="scenario-preset-head">
-                        <strong>我的常用条件</strong>
-                        <span>把本次问事的基础条件保存下来，下次可直接套用</span>
-                    </div>
-                    <div id="savedPresetGrid" class="saved-preset-grid">
-                        <div class="saved-preset-empty">登录后保存过的常用问事条件，会显示在这里。</div>
-                    </div>
-                </div>
-
-                <div class="scenario-preset-block">
-                    <div class="scenario-preset-head">
-                        <strong>代表性场景</strong>
-                        <span>先选一个贴近的问题模板，再按你的实际情况微调</span>
-                    </div>
-                    <div class="scenario-preset-grid" id="scenarioPresetGrid">
-                        <button type="button" class="scenario-preset" data-scenario="career_switch">
-                            <span class="kicker">事业决策</span>
-                            <span class="title">换工作 / 跳槽</span>
-                            <span class="desc">适合判断当前是否该换岗、如何选时机、该稳还是该冲。</span>
-                        </button>
-                        <button type="button" class="scenario-preset" data-scenario="relationship">
-                            <span class="kicker">关系判断</span>
-                            <span class="title">感情能否继续</span>
-                            <span class="desc">适合看关系走势、复合可能性，以及接下来该怎么相处。</span>
-                        </button>
-                        <button type="button" class="scenario-preset" data-scenario="startup_date">
-                            <span class="kicker">时间选择</span>
-                            <span class="title">开业 / 启动项目</span>
-                            <span class="desc">适合看近期局势、启动风险，以及是否要配合择日与布局。</span>
-                        </button>
-                        <button type="button" class="scenario-preset" data-scenario="exam">
-                            <span class="kicker">学业考试</span>
-                            <span class="title">考试能否顺利</span>
-                            <span class="desc">适合看考试状态、临场发挥、复习重点和短期策略。</span>
-                        </button>
-                        <button type="button" class="scenario-preset" data-scenario="investment">
-                            <span class="kicker">财务决策</span>
-                            <span class="title">投资 / 求财</span>
-                            <span class="desc">适合看当前财运节奏、进退时机，以及该稳守还是试探出手。</span>
-                        </button>
-                        <button type="button" class="scenario-preset" data-scenario="relocation">
-                            <span class="kicker">空间与变动</span>
-                            <span class="title">搬家 / 入宅</span>
-                            <span class="desc">适合看是否适合搬动、当前居住支持度，以及择日配合。</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="consultQuestion">你想问什么</label>
-                    <textarea id="consultQuestion" class="consult-question" placeholder="例如：我现在适合换工作吗？这段感情还能继续吗？今年开业合不合适？"></textarea>
-                </div>
-
-                <div class="form-group location-field">
-                    <label for="consultLocation">当前位置 / 常用地点</label>
-                    <div class="location-input-row">
-                        <input type="text" id="consultLocation" maxlength="80" placeholder="例如：上海浦东 / 陆家嘴办公区 / 家中书房">
-                        <button type="button" class="location-ghost-btn" id="detectConsultLocationBtn">定位当前城市</button>
-                        <button type="button" class="visual-entry-btn" id="openVisualInsightModalBtn">拍照辅助</button>
-                    </div>
-                    <div class="field-help">可先自动识别当前位置，再手动补充到更精确的楼宇、工位、房间或户型描述，便于风水/空间判断。</div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="consultYear">出生年份</label>
-                        <input type="number" id="consultYear" min="1900" max="2100" placeholder="可选">
-                    </div>
-                    <div class="form-group">
-                        <label for="consultMonth">出生月份</label>
-                        <input type="number" id="consultMonth" min="1" max="12" placeholder="可选">
-                    </div>
-                    <div class="form-group">
-                        <label for="consultDay">出生日期</label>
-                        <input type="number" id="consultDay" min="1" max="31" placeholder="可选">
-                    </div>
-                    <div class="form-group">
-                        <label for="consultHour">出生时辰</label>
-                        <input type="number" id="consultHour" min="0" max="23" placeholder="可选">
-                    </div>
-                    <div class="form-group">
-                        <label for="consultMinute">出生分钟</label>
-                        <input type="number" id="consultMinute" min="0" max="59" placeholder="可选">
-                    </div>
-                    <div class="form-group">
-                        <label for="consultGender">性别</label>
-                        <select id="consultGender">
-                            <option value="">可选</option>
-                            <option value="男">男</option>
-                            <option value="女">女</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="consult-actions">
-                    <button type="submit" class="btn">☯ 开始系统分析</button>
-                    <button type="button" class="btn btn-ai" id="saveCurrentConditionBtn">保存当前条件</button>
-                    <button type="button" class="btn btn-ai" id="fillDemoBtn">一键填入个人信息</button>
-                    <button type="button" class="btn btn-accent" id="clearConsultBtn">清空</button>
-                </div>
-            </form>
         </section>
-
-        <div class="loading" id="consultLoading">
-            <div class="spinner"></div>
-            <p class="loading-text">正在汇总命理信息...</p>
-        </div>
-
-        <div class="consult-result" id="consultResult">
-            <div class="card result-overview">
-                <h2 class="page-title">系统结论</h2>
-                <div id="consultAnswer" class="consult-answer"></div>
-                <div id="consultMeta" class="result-meta"></div>
-            </div>
-
-            <div class="consult-result-grid">
-                <div class="consult-result-stack">
-                    <div class="card">
-                        <h2 class="page-title">决策内核</h2>
-                        <div id="consultDecisionGrid" class="decision-grid"></div>
-                    </div>
-
-                    <div class="card">
-                        <h2 class="page-title">各模块依据</h2>
-                        <div id="consultModuleGrid" class="module-summary-grid"></div>
-                    </div>
-                </div>
-
-                <div class="card" id="consultTraceCard">
-                    <div class="trace-card-head">
-                        <div>
-                            <div class="trace-card-kicker">Flow · 推演脉络</div>
-                            <h2 class="page-title">计算流程</h2>
-                            <p class="trace-card-note">从输入、识意、编排到综合，按步骤回看整条推演链。</p>
-                        </div>
-                        <div id="consultTraceSummary" class="trace-summary-chips"></div>
-                    </div>
-                    <div id="consultTraceDiagram" class="trace-diagram"></div>
-                    <div id="consultTraceSteps" class="trace-steps"></div>
-                </div>
-            </div>
-        </div>
 
         <div id="aiStatusBanner" class="ai-status-inline">
             <div class="ai-status-main">
@@ -1984,6 +1906,7 @@
     <script src="config.js?v=20260513-home-cleanup-2"></script>
     <script src="common-links.js?v=20260513-home-cleanup-2"></script>
     <script src="common-ui.js?v=20260513-home-cleanup-2"></script>
+    <script src="markdown-it.min.js"></script>
     <script src="markdown.js?v=20260513-home-cleanup-2"></script>
     <script src="api-client.js?v=20260513-home-cleanup-2"></script>
     <script src="visual-context-store.js?v=20260513-visual-draft"></script>
