@@ -261,10 +261,6 @@ class ConsultationEngine:
 
         if "liuyao" in modules:
             liuyao_result = divine(question)
-            if llm_helper.is_available():
-                ai_interpretation = llm_helper.enhance_liuyao_interpretation(liuyao_result)
-                if ai_interpretation:
-                    liuyao_result["ai_interpretation"] = ai_interpretation
             module_results["liuyao"] = liuyao_result
             module_summaries["liuyao"] = summarize_liuyao_result(liuyao_result)
 
@@ -283,10 +279,6 @@ class ConsultationEngine:
                 now.minute,
                 matter_type,
             )
-            if llm_helper.is_available():
-                ai_interpretation = llm_helper.enhance_qimen_interpretation(qimen_result, matter_type)
-                if ai_interpretation:
-                    qimen_result["ai_interpretation"] = ai_interpretation
             module_results["qimen"] = qimen_result
             module_summaries["qimen"] = summarize_qimen_result(qimen_result, matter_type)
 
@@ -298,10 +290,6 @@ class ConsultationEngine:
                 "today_fortune": today_fortune,
                 "auspicious_days": purpose_days[:5],
             }
-            if llm_helper.is_available():
-                ai_advice = llm_helper.enhance_zeri_advice(today_fortune, purpose)
-                if ai_advice:
-                    zeri_result["ai_advice"] = ai_advice
             module_results["zeri"] = zeri_result
             module_summaries["zeri"] = summarize_zeri_result(today_fortune, purpose)
             if purpose_days:

@@ -36,9 +36,10 @@ class LLMHelper:
                 base_url='https://ark.cn-beijing.volces.com/api/v3',
                 api_key=self.api_key
             )
-        
+
         self.model = "deepseek-v3-2-251201"
         self.vision_model = os.getenv('ARK_VISION_MODEL') or "doubao-seed-2-0-lite-260428"
+        self.chat_timeout = float(os.getenv('ARK_CHAT_TIMEOUT', '25'))
     
     def is_available(self) -> bool:
         """检查LLM是否可用"""
@@ -318,7 +319,8 @@ class LLMHelper:
                 model=self.model,
                 messages=messages,
                 temperature=0.7,
-                max_tokens=1000
+                max_tokens=1000,
+                timeout=self.chat_timeout,
             )
             
             return response.choices[0].message.content

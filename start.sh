@@ -143,9 +143,18 @@ cleanup_existing_services() {
     echo ""
 }
 
-# 加载环境变量
-if [ -f "$HOME/.bashrc" ]; then
-    source "$HOME/.bashrc" 2>/dev/null || true
+# 加载 AI 环境变量
+if [ -f "$HOME/.profile" ]; then
+    source "$HOME/.profile" 2>/dev/null || true
+fi
+if [ -z "${ARK_API_KEY:-}" ] && [ -f "$HOME/.bashrc" ]; then
+    while IFS= read -r line; do
+        case "$line" in
+            export\ ARK_*=*)
+                eval "$line"
+                ;;
+        esac
+    done < "$HOME/.bashrc"
 fi
 
 # 检查AI配置
