@@ -1,7 +1,7 @@
 (function () {
     var params = new URLSearchParams(window.location.search);
     var queryBase = params.get('apiBase');
-    var defaultBase = window.location.protocol + '//' + window.location.hostname + ':8002';
+    var defaultBase = window.location.origin;
     var queryGuideUrl = params.get('guideUrl');
 
     window.APP_CONFIG = {

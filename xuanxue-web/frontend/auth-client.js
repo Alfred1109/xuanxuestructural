@@ -21,7 +21,7 @@
     function formatRequestError(prefix, error) {
         var message = error && error.message ? error.message : '请求失败';
         if (window.isConnectivityError && window.isConnectivityError(error)) {
-            return prefix + '：无法连接后端服务。请确认 http://localhost:8002 正在运行，并强制刷新页面后重试。';
+            return prefix + '：无法连接后端服务。请确认当前站点的后端代理已启动，并强制刷新页面后重试。';
         }
         return prefix + '：' + message;
     }

@@ -5,7 +5,7 @@
         if (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) {
             return window.APP_CONFIG.API_BASE_URL;
         }
-        return window.location.protocol + '//' + window.location.hostname + ':8002';
+        return window.location.origin;
     }
 
     function buildUrl(path, query) {

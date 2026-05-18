@@ -149,7 +149,7 @@ if [ -f "$HOME/.bashrc" ]; then
 fi
 
 # 检查AI配置
-if [ -n "$ARK_API_KEY" ]; then
+if [ -n "${ARK_API_KEY:-}" ]; then
     echo "✓ 检测到AI配置 (ARK_API_KEY)"
     AI_STATUS="已启用"
 else
@@ -161,9 +161,12 @@ echo ""
 
 # 检查虚拟环境是否存在
 if [ ! -d "$BACKEND_DIR/venv" ]; then
-    echo "❌ 虚拟环境不存在，正在创建..."
+    echo "📦 虚拟环境不存在，正在创建..."
     cd "$BACKEND_DIR"
-    python3 -m venv venv
+    python3 -m venv venv || {
+        echo "❌ 虚拟环境创建失败，请先安装 python3-venv / python3.12-venv"
+        exit 1
+    }
     echo "✓ 虚拟环境创建完成"
     echo ""
 fi
@@ -172,7 +175,10 @@ fi
 if ! "$BACKEND_DIR/venv/bin/python" -c "import fastapi, uvicorn, pydantic, httpx, openai, iztro_py" >/dev/null 2>&1; then
     echo "📦 正在安装依赖..."
     cd "$BACKEND_DIR"
-    venv/bin/pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+    venv/bin/pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple || {
+        echo "❌ 依赖安装失败"
+        exit 1
+    }
     echo "✓ 依赖安装完成"
     echo ""
 fi
@@ -184,7 +190,7 @@ echo "🚀 启动后端服务器..."
 cd "$BACKEND_DIR"
 rm -f "$BACKEND_LOG"
 # 传递环境变量给后端进程
-if [ -n "$ARK_API_KEY" ]; then
+if [ -n "${ARK_API_KEY:-}" ]; then
     setsid env ARK_API_KEY="$ARK_API_KEY" venv/bin/python main.py > "$BACKEND_LOG" 2>&1 < /dev/null &
 else
     setsid venv/bin/python main.py > "$BACKEND_LOG" 2>&1 < /dev/null &
@@ -287,7 +293,7 @@ echo ""
 echo "💡 提示："
 echo "   - 前端日志: tail -f $FRONTEND_LOG"
 echo "   - 后端日志: tail -f $BACKEND_LOG"
-if [ -z "$ARK_API_KEY" ]; then
+if [ -z "${ARK_API_KEY:-}" ]; then
     echo "   - AI功能: 未启用，设置方法见 AI配置指南.md"
 else
     echo "   - AI功能: 已启用 ✓"
