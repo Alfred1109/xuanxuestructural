@@ -22,24 +22,26 @@ class LLMHelper:
     """大模型助手类"""
     
     def __init__(self):
-        # 从环境变量获取API KEY
-        self.api_key = os.getenv('ARK_API_KEY')
+        # 从环境变量获取提供方配置
+        self.provider = (os.getenv('LLM_PROVIDER') or 'ark').strip().lower()
+        self.base_url = os.getenv('LLM_BASE_URL') or 'https://ark.cn-beijing.volces.com/api/v3'
+        self.api_key = os.getenv('LLM_API_KEY') or os.getenv('ARK_API_KEY')
         
         if not OPENAI_AVAILABLE:
             print("警告：openai 包未安装，AI增强功能将不可用")
             self.client = None
         elif not self.api_key:
-            print("警告：未设置 ARK_API_KEY 环境变量，AI增强功能将不可用")
+            print("警告：未设置 LLM_API_KEY / ARK_API_KEY 环境变量，AI增强功能将不可用")
             self.client = None
         else:
             self.client = OpenAI(
-                base_url='https://ark.cn-beijing.volces.com/api/v3',
+                base_url=self.base_url,
                 api_key=self.api_key
             )
 
-        self.model = "deepseek-v3-2-251201"
-        self.vision_model = os.getenv('ARK_VISION_MODEL') or "doubao-seed-2-0-lite-260428"
-        self.chat_timeout = float(os.getenv('ARK_CHAT_TIMEOUT', '25'))
+        self.model = os.getenv('LLM_TEXT_MODEL') or os.getenv('ARK_TEXT_MODEL') or "deepseek-v3-2-251201"
+        self.vision_model = os.getenv('LLM_VISION_MODEL') or os.getenv('ARK_VISION_MODEL') or "doubao-seed-2-0-lite-260428"
+        self.chat_timeout = float(os.getenv('ARK_CHAT_TIMEOUT') or '90')
     
     def is_available(self) -> bool:
         """检查LLM是否可用"""

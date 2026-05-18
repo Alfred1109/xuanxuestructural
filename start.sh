@@ -153,6 +153,9 @@ if [ -z "${ARK_API_KEY:-}" ] && [ -f "$HOME/.bashrc" ]; then
             export\ ARK_*=*)
                 eval "$line"
                 ;;
+            export\ LLM_*=*)
+                eval "$line"
+                ;;
         esac
     done < "$HOME/.bashrc"
 fi
@@ -199,8 +202,17 @@ echo "🚀 启动后端服务器..."
 cd "$BACKEND_DIR"
 rm -f "$BACKEND_LOG"
 # 传递环境变量给后端进程
-if [ -n "${ARK_API_KEY:-}" ]; then
-    setsid env ARK_API_KEY="$ARK_API_KEY" venv/bin/python main.py > "$BACKEND_LOG" 2>&1 < /dev/null &
+if [ -n "${ARK_API_KEY:-}" ] || [ -n "${LLM_API_KEY:-}" ] || [ -n "${LLM_BASE_URL:-}" ] || [ -n "${LLM_PROVIDER:-}" ] || [ -n "${LLM_TEXT_MODEL:-}" ] || [ -n "${ARK_VISION_MODEL:-}" ] || [ -n "${ARK_CHAT_TIMEOUT:-}" ]; then
+    setsid env \
+        ARK_API_KEY="${ARK_API_KEY:-}" \
+        ARK_VISION_MODEL="${ARK_VISION_MODEL:-}" \
+        ARK_CHAT_TIMEOUT="${ARK_CHAT_TIMEOUT:-}" \
+        LLM_API_KEY="${LLM_API_KEY:-}" \
+        LLM_BASE_URL="${LLM_BASE_URL:-}" \
+        LLM_PROVIDER="${LLM_PROVIDER:-}" \
+        LLM_TEXT_MODEL="${LLM_TEXT_MODEL:-}" \
+        LLM_VISION_MODEL="${LLM_VISION_MODEL:-}" \
+        venv/bin/python main.py > "$BACKEND_LOG" 2>&1 < /dev/null &
 else
     setsid venv/bin/python main.py > "$BACKEND_LOG" 2>&1 < /dev/null &
 fi
