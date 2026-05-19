@@ -251,10 +251,60 @@
 
         .consult-form {
             margin-top: 0;
+            display: grid;
+            gap: 18px;
         }
 
         .consult-form .form-group {
             margin-bottom: var(--spacing-xl);
+        }
+
+        .consult-form > * {
+            min-width: 0;
+        }
+
+        .consult-panel {
+            display: grid;
+            gap: 14px;
+            padding: 20px;
+            border-radius: 24px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(246, 248, 245, 0.98) 100%);
+            border: 1px solid rgba(44, 91, 79, 0.08);
+            box-shadow: 0 14px 28px rgba(23, 45, 62, 0.035);
+        }
+
+        .consult-panel-head {
+            display: grid;
+            gap: 6px;
+        }
+
+        .consult-panel-kicker {
+            display: inline-flex;
+            align-items: center;
+            width: fit-content;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(44, 91, 79, 0.08);
+            color: var(--color-primary-dark);
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .consult-panel-head strong {
+            color: var(--color-text);
+            font-size: 1rem;
+        }
+
+        .consult-panel-head span {
+            color: var(--color-text-secondary);
+            font-size: 0.88rem;
+            line-height: 1.7;
+        }
+
+        .consult-panel .form-group {
+            margin-bottom: 0;
         }
 
         .consult-form label {
@@ -285,6 +335,13 @@
 
         .consult-question::placeholder {
             color: var(--color-text-tertiary);
+        }
+
+        .consult-question-tip {
+            margin-top: 8px;
+            color: var(--color-text-tertiary);
+            font-size: 0.8rem;
+            line-height: 1.65;
         }
 
         .scenario-preset-block {
@@ -670,6 +727,13 @@
             margin-bottom: 0;
         }
 
+        .scenario-preset-scroll-hint {
+            display: none;
+            color: var(--color-text-tertiary);
+            font-size: 0.78rem;
+            line-height: 1.6;
+        }
+
         .consult-form .form-row {
             display: grid;
             grid-template-columns: repeat(6, 1fr);
@@ -705,6 +769,10 @@
             grid-template-columns: minmax(0, 1fr) auto auto;
             gap: 10px;
             align-items: center;
+        }
+
+        .location-input-row > * {
+            min-width: 0;
         }
 
         .location-ghost-btn {
@@ -747,6 +815,86 @@
             line-height: 1.6;
         }
 
+        .consult-optional {
+            border-radius: 24px;
+            border: 1px solid rgba(44, 91, 79, 0.08);
+            background: linear-gradient(180deg, rgba(248, 242, 229, 0.4) 0%, rgba(255, 255, 255, 0.96) 100%);
+            overflow: hidden;
+        }
+
+        .consult-optional[open] {
+            box-shadow: 0 14px 26px rgba(23, 45, 62, 0.035);
+        }
+
+        .consult-optional summary {
+            list-style: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 18px 20px;
+        }
+
+        .consult-optional summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .consult-optional-copy {
+            display: grid;
+            gap: 4px;
+            min-width: 0;
+        }
+
+        .consult-optional-copy strong {
+            color: var(--color-text);
+            font-size: 0.98rem;
+        }
+
+        .consult-optional-copy span {
+            color: var(--color-text-secondary);
+            font-size: 0.84rem;
+            line-height: 1.65;
+        }
+
+        .consult-optional-icon {
+            flex: none;
+            width: 34px;
+            height: 34px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            background: rgba(44, 91, 79, 0.08);
+            color: var(--color-primary-dark);
+            font-size: 1rem;
+            transition: transform 0.2s ease;
+        }
+
+        .consult-optional[open] .consult-optional-icon {
+            transform: rotate(45deg);
+        }
+
+        .consult-optional-body {
+            padding: 0 20px 20px;
+            border-top: 1px solid rgba(44, 91, 79, 0.08);
+        }
+
+        .consult-optional .form-row {
+            margin-bottom: 0;
+        }
+
+        .consult-optional .form-group {
+            margin-bottom: 0;
+        }
+
+        .consult-optional-note {
+            margin: 14px 0 0;
+            color: var(--color-text-tertiary);
+            font-size: 0.8rem;
+            line-height: 1.65;
+        }
+
         .consult-actions {
             display: flex;
             gap: var(--spacing-md);
@@ -782,6 +930,72 @@
         .consult-actions .btn:not(:first-child):hover {
             background: var(--color-bg);
             border-color: var(--color-text-tertiary);
+        }
+
+        .consult-secondary-actions {
+            border-radius: 20px;
+            border: 1px dashed rgba(44, 91, 79, 0.18);
+            background: rgba(255, 255, 255, 0.72);
+            overflow: hidden;
+        }
+
+        .consult-secondary-actions summary {
+            list-style: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px 16px;
+        }
+
+        .consult-secondary-actions summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .consult-secondary-copy {
+            display: grid;
+            gap: 4px;
+        }
+
+        .consult-secondary-copy strong {
+            color: var(--color-text);
+            font-size: 0.92rem;
+        }
+
+        .consult-secondary-copy span {
+            color: var(--color-text-secondary);
+            font-size: 0.8rem;
+            line-height: 1.6;
+        }
+
+        .consult-secondary-icon {
+            width: 30px;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            background: rgba(44, 91, 79, 0.08);
+            color: var(--color-primary-dark);
+            font-size: 0.95rem;
+            transition: transform 0.2s ease;
+        }
+
+        .consult-secondary-actions[open] .consult-secondary-icon {
+            transform: rotate(45deg);
+        }
+
+        .consult-secondary-body {
+            display: grid;
+            gap: 10px;
+            padding: 0 16px 16px;
+            border-top: 1px solid rgba(44, 91, 79, 0.08);
+        }
+
+        .consult-secondary-body .btn {
+            width: 100%;
+            justify-content: flex-start;
         }
 
         .consult-result {
@@ -1511,7 +1725,6 @@
                 grid-template-rows: auto;
                 min-height: auto;
             }
-
             .saved-preset-grid {
                 grid-template-columns: 1fr;
             }
@@ -1581,14 +1794,74 @@
                 margin-bottom: 20px;
             }
 
+            .consult-panel {
+                padding: 18px;
+                border-radius: 22px;
+            }
+
             .consult-form .form-row {
-                grid-template-columns: repeat(3, 1fr);
+                grid-template-columns: repeat(2, minmax(0, 1fr));
                 gap: 12px;
                 margin-bottom: 20px;
             }
 
+            .consult-form .form-row .form-group {
+                margin-bottom: 0;
+            }
+
+            .consult-question {
+                min-height: 128px;
+            }
+
+            .consult-question-tip {
+                margin-top: 6px;
+            }
+
+            .location-input-row {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                align-items: stretch;
+            }
+
+            .location-input-row input {
+                grid-column: 1 / -1;
+            }
+
+            .location-ghost-btn,
+            .visual-entry-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 100%;
+                min-height: 44px;
+            }
+
+            .scenario-preset-head {
+                align-items: flex-start;
+            }
+
             .scenario-preset-grid {
-                grid-template-columns: 1fr;
+                display: grid;
+                grid-auto-flow: column;
+                grid-auto-columns: minmax(240px, 78vw);
+                grid-template-columns: none;
+                overflow-x: auto;
+                overscroll-behavior-x: contain;
+                padding-bottom: 4px;
+                scroll-snap-type: x proximity;
+                scrollbar-width: none;
+            }
+
+            .scenario-preset-grid::-webkit-scrollbar {
+                display: none;
+            }
+
+            .scenario-preset {
+                min-height: 100%;
+                scroll-snap-align: start;
+            }
+
+            .scenario-preset-scroll-hint {
+                display: block;
             }
 
             .location-input-row {
@@ -1620,6 +1893,22 @@
                 width: 100%;
                 min-width: 0;
                 padding: 12px 16px;
+            }
+
+            .consult-actions .btn:first-child {
+                grid-column: 1 / -1;
+            }
+
+            .consult-secondary-actions {
+                grid-column: 1 / -1;
+            }
+
+            .consult-optional summary {
+                padding: 16px 18px;
+            }
+
+            .consult-optional-body {
+                padding: 0 18px 18px;
             }
 
             .visual-context-head,
@@ -1743,8 +2032,45 @@
                 letter-spacing: 0.06em;
             }
 
+            .consult-panel {
+                padding: 16px;
+                border-radius: 20px;
+            }
+
+            .scenario-preset-grid {
+                grid-auto-columns: minmax(220px, 84vw);
+            }
+
             .consult-form .form-row {
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns: 1fr;
+            }
+
+            .consult-question {
+                min-height: 112px;
+            }
+
+            .consult-panel-head span,
+            .consult-optional-copy span,
+            .field-help,
+            .consult-question-tip,
+            .consult-optional-note {
+                font-size: 0.78rem;
+            }
+
+            .location-input-row {
+                grid-template-columns: 1fr;
+            }
+
+            .location-input-row input {
+                grid-column: auto;
+            }
+
+            .consult-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .consult-secondary-body .btn {
+                min-height: 42px;
             }
 
             .consult-actions {
@@ -1832,54 +2158,78 @@
                     <div class="form-group">
                         <label for="consultQuestion">你想问什么</label>
                         <textarea id="consultQuestion" class="consult-question" placeholder="例如：我现在适合换工作吗？这段感情还能继续吗？今年开业合不合适？"></textarea>
+                        <div class="consult-question-tip">尽量写出你的目标、困扰和时间范围，系统更容易给出具体判断。</div>
                     </div>
 
                     <div class="form-group location-field">
                         <label for="consultLocation">当前位置 / 常用地点</label>
                         <div class="location-input-row">
-                            <input type="text" id="consultLocation" maxlength="80" placeholder="例如：上海浦东 / 陆家嘴办公区 / 家中书房">
+                            <input type="text" id="consultLocation" maxlength="80" autocomplete="address-level2" placeholder="例如：上海浦东 / 陆家嘴办公区 / 家中书房">
                             <button type="button" class="location-ghost-btn" id="detectConsultLocationBtn">定位当前城市</button>
                             <button type="button" class="visual-entry-btn" id="openVisualInsightModalBtn">拍照辅助</button>
                         </div>
                         <div class="field-help">可先自动识别当前位置，再手动补充到更精确的楼宇、工位、房间或户型描述，便于风水/空间判断。</div>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="consultYear">出生年份</label>
-                            <input type="number" id="consultYear" min="1900" max="2100" placeholder="可选">
+                    <details class="consult-optional">
+                        <summary>
+                            <div class="consult-optional-copy">
+                                <strong>补充出生信息</strong>
+                                <span>可选填写。需要更依赖命盘的判断时，再展开补充会更完整。</span>
+                            </div>
+                            <span class="consult-optional-icon" aria-hidden="true">+</span>
+                        </summary>
+                        <div class="consult-optional-body">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="consultYear">出生年份</label>
+                                    <input type="number" id="consultYear" min="1900" max="2100" inputmode="numeric" autocomplete="bday-year" placeholder="可选">
+                                </div>
+                                <div class="form-group">
+                                    <label for="consultMonth">出生月份</label>
+                                    <input type="number" id="consultMonth" min="1" max="12" inputmode="numeric" autocomplete="bday-month" placeholder="可选">
+                                </div>
+                                <div class="form-group">
+                                    <label for="consultDay">出生日期</label>
+                                    <input type="number" id="consultDay" min="1" max="31" inputmode="numeric" autocomplete="bday-day" placeholder="可选">
+                                </div>
+                                <div class="form-group">
+                                    <label for="consultHour">出生时辰</label>
+                                    <input type="number" id="consultHour" min="0" max="23" inputmode="numeric" placeholder="可选">
+                                </div>
+                                <div class="form-group">
+                                    <label for="consultMinute">出生分钟</label>
+                                    <input type="number" id="consultMinute" min="0" max="59" inputmode="numeric" placeholder="可选">
+                                </div>
+                                <div class="form-group">
+                                    <label for="consultGender">性别</label>
+                                    <select id="consultGender" autocomplete="sex">
+                                        <option value="">可选</option>
+                                        <option value="男">男</option>
+                                        <option value="女">女</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <p class="consult-optional-note">如果你暂时不确定准确时辰，也可以先只填年月日，先拿到一版判断。</p>
                         </div>
-                        <div class="form-group">
-                            <label for="consultMonth">出生月份</label>
-                            <input type="number" id="consultMonth" min="1" max="12" placeholder="可选">
-                        </div>
-                        <div class="form-group">
-                            <label for="consultDay">出生日期</label>
-                            <input type="number" id="consultDay" min="1" max="31" placeholder="可选">
-                        </div>
-                        <div class="form-group">
-                            <label for="consultHour">出生时辰</label>
-                            <input type="number" id="consultHour" min="0" max="23" placeholder="可选">
-                        </div>
-                        <div class="form-group">
-                            <label for="consultMinute">出生分钟</label>
-                            <input type="number" id="consultMinute" min="0" max="59" placeholder="可选">
-                        </div>
-                        <div class="form-group">
-                            <label for="consultGender">性别</label>
-                            <select id="consultGender">
-                                <option value="">可选</option>
-                                <option value="男">男</option>
-                                <option value="女">女</option>
-                            </select>
-                        </div>
-                    </div>
+                    </details>
 
                     <div class="consult-actions">
                         <button type="submit" class="btn">☯ 开始系统分析</button>
-                        <button type="button" class="btn btn-ai" id="saveCurrentConditionBtn">保存当前条件</button>
-                        <button type="button" class="btn btn-ai" id="fillDemoBtn">一键填入个人信息</button>
-                        <button type="button" class="btn btn-accent" id="clearConsultBtn">清空</button>
+                        <details class="consult-secondary-actions">
+                            <summary>
+                                <div class="consult-secondary-copy">
+                                    <strong>更多操作</strong>
+                                    <span>保存常用条件、填入示例，或快速清空当前表单。</span>
+                                </div>
+                                <span class="consult-secondary-icon" aria-hidden="true">+</span>
+                            </summary>
+                            <div class="consult-secondary-body">
+                                <button type="button" class="btn btn-ai" id="saveCurrentConditionBtn">保存当前条件</button>
+                                <button type="button" class="btn btn-ai" id="fillDemoBtn">一键填入个人信息</button>
+                                <button type="button" class="btn btn-accent" id="clearConsultBtn">清空当前内容</button>
+                            </div>
+                        </details>
                     </div>
 
                     <div class="consult-loading" id="consultLoading" aria-live="polite" aria-hidden="true">
@@ -1925,6 +2275,7 @@
                                 <span class="title">搬家 / 入宅</span>
                             </button>
                         </div>
+                        <div class="scenario-preset-scroll-hint">手机上可左右滑动，快速挑一个最接近的场景。</div>
                     </div>
 
                     <div class="saved-preset-block">
