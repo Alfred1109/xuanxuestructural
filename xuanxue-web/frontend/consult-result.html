@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hermes 玄学系统 - 统一问事结果</title>
+    <link rel="stylesheet" href="common-header.css?v=20260519-result-workspace">
+    <link rel="stylesheet" href="common-theme.css?v=20260519-result-workspace">
+    <style>
+        .workspace-shell {
+            max-width: 1280px;
+            padding: 32px 24px 52px;
+        }
+
+        .header-account {
+            margin-top: 4px;
+            display: block;
+        }
+
+        .header-account-card {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 16px 18px;
+            border-radius: 22px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.08) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow: 0 14px 30px rgba(7, 20, 17, 0.12);
+            backdrop-filter: blur(14px);
+        }
+
+        .header-account-copy {
+            display: grid;
+            gap: 4px;
+            text-align: left;
+        }
+
+        .header-account-copy strong {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .header-account-copy span {
+            font-size: 0.82rem;
+            color: rgba(255, 255, 255, 0.76);
+        }
+
+        .header-account-actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .header-ghost-btn {
+            appearance: none;
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            background: rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+            border-radius: 999px;
+            padding: 10px 16px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .header-ghost-btn:hover {
+            background: rgba(255, 255, 255, 0.16);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .workspace-shell > .card {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(217, 226, 220, 0.45);
+            border-radius: 24px;
+            padding: 28px;
+            margin-bottom: 22px;
+            box-shadow: 0 14px 30px rgba(23, 45, 62, 0.04);
+            backdrop-filter: blur(20px);
+        }
+
+        .result-hero {
+            display: grid;
+            grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.72fr);
+            gap: 22px;
+            align-items: start;
+            background:
+                radial-gradient(circle at 14% 18%, rgba(168, 116, 60, 0.12) 0%, transparent 26%),
+                radial-gradient(circle at 86% 0%, rgba(44, 91, 79, 0.14) 0%, transparent 28%),
+                linear-gradient(145deg, rgba(255, 255, 255, 0.96) 0%, rgba(247, 248, 244, 0.96) 100%);
+        }
+
+        .result-hero-copy {
+            min-width: 0;
+        }
+
+        .result-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(44, 91, 79, 0.08);
+            color: var(--color-primary-dark);
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .result-hero-copy h2 {
+            margin: 18px 0 12px;
+            font-size: clamp(1.8rem, 3vw, 2.5rem);
+            line-height: 1.16;
+            letter-spacing: -0.025em;
+        }
+
+        .result-hero-summary {
+            margin: 0 0 16px;
+            color: var(--color-text-secondary);
+            font-size: 1rem;
+            line-height: 1.78;
+            max-width: 54ch;
+        }
+
+        .result-hero-chips {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .result-hero-side {
+            display: grid;
+            gap: 14px;
+        }
+
+        .result-side-card {
+            padding: 18px 18px 16px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid rgba(44, 91, 79, 0.1);
+        }
+
+        .result-side-label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--color-accent);
+            margin-bottom: 8px;
+        }
+
+        .result-side-text {
+            color: var(--color-text);
+            font-size: 0.96rem;
+            line-height: 1.72;
+        }
+
+        .result-side-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .result-link-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 42px;
+            padding: 10px 16px;
+            border-radius: 999px;
+            border: 1px solid rgba(44, 91, 79, 0.14);
+            background: #fff;
+            color: var(--color-primary-dark);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .result-link-btn.primary {
+            background: var(--color-primary);
+            border-color: var(--color-primary);
+            color: #fff;
+        }
+
+        .result-tabs-card {
+            position: sticky;
+            top: 12px;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            padding-top: 18px;
+            padding-bottom: 18px;
+        }
+
+        .result-tabs {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .result-tab {
+            border: 1px solid rgba(44, 91, 79, 0.12);
+            background: rgba(255, 255, 255, 0.94);
+            color: var(--color-text-secondary);
+            border-radius: 999px;
+            padding: 10px 16px;
+            font: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.18s ease;
+        }
+
+        .result-tab.active {
+            background: var(--color-primary);
+            border-color: var(--color-primary);
+            color: #fff;
+            box-shadow: 0 12px 22px rgba(44, 91, 79, 0.18);
+        }
+
+        .result-tab-hint {
+            color: var(--color-text-tertiary);
+            font-size: 0.88rem;
+            line-height: 1.6;
+        }
+
+        .result-panel {
+            display: none;
+        }
+
+        .result-panel.active {
+            display: block;
+        }
+
+        .result-panel-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(320px, 0.9fr);
+            gap: 20px;
+        }
+
+        .result-panel-stack {
+            display: grid;
+            gap: 20px;
+        }
+
+        .result-overview .page-title,
+        .result-panel .page-title {
+            margin-bottom: 12px;
+        }
+
+        .consult-answer {
+            line-height: 1.95;
+            color: var(--color-text);
+            font-size: 1.02rem;
+        }
+
+        .result-meta {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .result-chip {
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(44, 91, 79, 0.08);
+            border: 1px solid rgba(44, 91, 79, 0.12);
+            color: var(--color-primary-dark);
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+        .module-summary-grid,
+        .decision-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .module-summary-card,
+        .decision-card {
+            background: rgba(255, 255, 255, 0.84);
+            border: 1px solid rgba(217, 226, 220, 0.92);
+            border-radius: 14px;
+            padding: 14px;
+            box-shadow: 0 8px 18px rgba(23, 45, 62, 0.035);
+        }
+
+        .module-summary-card .title,
+        .decision-card .title {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--color-primary-dark);
+            margin-bottom: 8px;
+        }
+
+        .module-summary-card .body,
+        .decision-card .body {
+            font-size: 0.92rem;
+            color: var(--color-text-secondary);
+            line-height: 1.7;
+            white-space: pre-wrap;
+        }
+
+        .trace-card-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 18px;
+            margin-bottom: 16px;
+        }
+
+        .trace-card-kicker {
+            font-size: 0.74rem;
+            font-weight: 700;
+            color: var(--color-accent);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .trace-card-note {
+            margin: 0;
+            color: var(--color-text-secondary);
+            font-size: 0.92rem;
+            line-height: 1.7;
+            max-width: 54ch;
+        }
+
+        .trace-summary-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .trace-summary-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(44, 91, 79, 0.07);
+            color: var(--color-primary-dark);
+            font-size: 0.8rem;
+        }
+
+        .trace-summary-chip strong {
+            font-size: 0.84rem;
+        }
+
+        .trace-diagram {
+            min-height: 220px;
+            border-radius: 18px;
+            background: linear-gradient(180deg, rgba(252, 250, 246, 0.94) 0%, rgba(247, 249, 245, 0.94) 100%);
+            border: 1px solid rgba(217, 226, 220, 0.92);
+            padding: 18px;
+            overflow: auto;
+        }
+
+        .trace-diagram.is-interactive {
+            cursor: zoom-in;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+        }
+
+        .trace-diagram.is-interactive:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 30px rgba(23, 45, 62, 0.08);
+            border-color: rgba(148, 179, 167, 0.96);
+        }
+
+        .trace-diagram.is-interactive:focus-visible {
+            outline: 3px solid rgba(168, 116, 60, 0.28);
+            outline-offset: 3px;
+        }
+
+        .trace-diagram.is-interactive::after {
+            content: "点击放大查看";
+            position: sticky;
+            right: 0;
+            bottom: 0;
+            float: right;
+            margin-top: 10px;
+            padding: 7px 12px;
+            border-radius: 999px;
+            background: rgba(23, 58, 52, 0.88);
+            color: #fff;
+            font-size: 0.78rem;
+            letter-spacing: 0.18px;
+            box-shadow: 0 10px 24px rgba(23, 45, 62, 0.12);
+            pointer-events: none;
+        }
+
+        .trace-diagram svg {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
+        .trace-diagram-modal-open {
+            overflow: hidden;
+        }
+
+        .trace-diagram-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 1200;
+            display: none;
+        }
+
+        .trace-diagram-modal.is-open {
+            display: block;
+        }
+
+        .trace-diagram-modal-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(10, 24, 28, 0.56);
+            backdrop-filter: blur(6px);
+        }
+
+        .trace-diagram-modal-dialog {
+            position: relative;
+            width: min(1200px, calc(100vw - 32px));
+            max-height: calc(100vh - 32px);
+            margin: 16px auto;
+            border-radius: 24px;
+            overflow: hidden;
+            border: 1px solid rgba(217, 226, 220, 0.92);
+            background:
+                radial-gradient(circle at 18% 0%, rgba(168, 116, 60, 0.12) 0%, transparent 26%),
+                radial-gradient(circle at 86% 100%, rgba(44, 91, 79, 0.12) 0%, transparent 28%),
+                rgba(250, 248, 243, 0.98);
+            box-shadow: 0 30px 80px rgba(10, 24, 28, 0.28);
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr);
+        }
+
+        .trace-diagram-modal-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 18px 22px 14px;
+            border-bottom: 1px solid rgba(217, 226, 220, 0.92);
+            background: rgba(255, 255, 255, 0.72);
+        }
+
+        .trace-diagram-modal-copy {
+            display: grid;
+            gap: 4px;
+        }
+
+        .trace-diagram-modal-copy strong {
+            color: var(--color-primary-dark);
+            font-size: 1rem;
+            letter-spacing: 0.2px;
+        }
+
+        .trace-diagram-modal-copy span {
+            color: var(--color-text-secondary);
+            font-size: 0.86rem;
+        }
+
+        .trace-diagram-modal-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .trace-diagram-modal-scale {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 58px;
+            padding: 7px 10px;
+            border-radius: 999px;
+            background: rgba(44, 91, 79, 0.08);
+            color: var(--color-primary-dark);
+            font-size: 0.82rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .trace-diagram-modal-reset,
+        .trace-diagram-modal-download,
+        .trace-diagram-modal-close {
+            border: 0;
+            border-radius: 999px;
+            padding: 9px 14px;
+            font: inherit;
+            cursor: pointer;
+        }
+
+        .trace-diagram-modal-reset,
+        .trace-diagram-modal-download {
+            background: rgba(44, 91, 79, 0.1);
+            color: var(--color-primary-dark);
+            border: 1px solid rgba(44, 91, 79, 0.14);
+        }
+
+        .trace-diagram-modal-close {
+            background: rgba(23, 58, 52, 0.9);
+            color: #fff;
+        }
+
+        .trace-diagram-modal-body {
+            overflow: auto;
+            padding: 18px 22px 24px;
+        }
+
+        .trace-diagram-modal-viewport {
+            position: relative;
+            overflow: hidden;
+            min-height: 62vh;
+            border-radius: 18px;
+            border: 1px solid rgba(217, 226, 220, 0.92);
+            background:
+                radial-gradient(circle at 18% 0%, rgba(168, 116, 60, 0.08) 0%, transparent 24%),
+                radial-gradient(circle at 86% 100%, rgba(44, 91, 79, 0.08) 0%, transparent 26%),
+                rgba(255, 255, 255, 0.78);
+            cursor: grab;
+            touch-action: none;
+        }
+
+        .trace-diagram-modal-viewport.is-zoomed {
+            cursor: grab;
+        }
+
+        .trace-diagram-modal-viewport.is-grabbing {
+            cursor: grabbing;
+        }
+
+        .trace-diagram-modal-canvas {
+            width: max-content;
+            min-width: 100%;
+            min-height: 100%;
+            transform-origin: 0 0;
+            will-change: transform;
+        }
+
+        .trace-diagram-modal-body svg {
+            display: block;
+            min-width: min-content;
+            max-width: none;
+            height: auto;
+            margin: 0 auto;
+        }
+
+        .trace-steps {
+            display: grid;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .trace-step {
+            position: relative;
+            border: 1px solid rgba(217, 226, 220, 0.92);
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.88);
+            overflow: hidden;
+        }
+
+        .trace-step summary {
+            list-style: none;
+            cursor: pointer;
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr) auto;
+            gap: 14px;
+            align-items: center;
+            padding: 14px 16px;
+            background: linear-gradient(180deg, rgba(252, 250, 246, 0.94) 0%, rgba(255, 255, 255, 0.86) 100%);
+        }
+
+        .trace-step summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .trace-step-index {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--color-primary) 0%, #557c70 100%);
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.86rem;
+        }
+
+        .trace-step-copy {
+            min-width: 0;
+            display: grid;
+            gap: 3px;
+        }
+
+        .trace-step .label {
+            color: var(--color-primary-dark);
+            font-weight: 700;
+            font-size: 0.98rem;
+        }
+
+        .trace-step .summary {
+            color: var(--color-text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.55;
+        }
+
+        .trace-step-state {
+            color: var(--color-accent);
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.35px;
+            text-transform: uppercase;
+        }
+
+        .trace-step-state::before {
+            content: "展开";
+        }
+
+        .trace-step[open] .trace-step-state::before {
+            content: "收起";
+        }
+
+        .trace-step-body {
+            margin-left: 54px;
+            padding: 12px 16px 16px 0;
+            border-top: 1px solid #e6ece6;
+            display: grid;
+            gap: 10px;
+        }
+
+        .trace-field .field-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--color-accent);
+            margin-bottom: 4px;
+        }
+
+        .trace-field .field-title.formula {
+            color: var(--color-primary-dark);
+        }
+
+        .trace-field .trace-field-content {
+            margin: 0;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: rgba(248, 249, 244, 0.96);
+            border: 1px solid #e1e8e1;
+            color: var(--color-text);
+            white-space: pre-wrap;
+            word-break: break-word;
+            line-height: 1.7;
+            font-size: 0.85rem;
+        }
+
+        .trace-field .trace-field-content.formula-block {
+            background: rgba(241, 247, 243, 0.96);
+            border-color: rgba(44, 91, 79, 0.14);
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        }
+
+        .result-empty {
+            text-align: center;
+            width: min(100%, 680px);
+            margin: 28px auto 0;
+            padding: 52px 28px;
+        }
+
+        .result-empty h2 {
+            margin-bottom: 10px;
+        }
+
+        .result-empty p {
+            max-width: 42ch;
+            margin: 0 auto 18px;
+        }
+
+        .auth-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 20, 18, 0.48);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 10000;
+        }
+
+        .auth-modal.show {
+            display: flex;
+        }
+
+        .auth-dialog {
+            width: min(100%, 920px);
+            display: grid;
+            grid-template-columns: minmax(260px, 0.95fr) minmax(320px, 1.05fr);
+            background: #fbfaf7;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 26px 60px rgba(10, 20, 18, 0.22);
+        }
+
+        .auth-aside {
+            padding: 28px;
+            background: linear-gradient(160deg, #20473f 0%, #1a3a34 55%, #4b6a4d 100%);
+            color: #ffffff;
+        }
+
+        .auth-aside .kicker {
+            display: inline-block;
+            margin-bottom: 12px;
+            font-size: 0.75rem;
+            opacity: 0.72;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .auth-aside h3 {
+            color: #ffffff;
+            margin-bottom: 12px;
+        }
+
+        .auth-aside p {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .auth-list {
+            display: grid;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .auth-list-item {
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.92);
+            font-size: 0.86rem;
+        }
+
+        .auth-main {
+            padding: 24px;
+            background: #fbfaf7;
+        }
+
+        .auth-main-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .auth-main-head h3 {
+            margin-bottom: 0;
+        }
+
+        .auth-close {
+            appearance: none;
+            border: none;
+            background: transparent;
+            color: var(--color-text-tertiary);
+            font-size: 1.4rem;
+            cursor: pointer;
+        }
+
+        .auth-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .auth-tab {
+            appearance: none;
+            border: 1px solid rgba(44, 91, 79, 0.12);
+            background: rgba(44, 91, 79, 0.04);
+            color: var(--color-text-secondary);
+            border-radius: 999px;
+            padding: 10px 16px;
+            cursor: pointer;
+        }
+
+        .auth-tab.active {
+            background: var(--color-primary);
+            color: #ffffff;
+            border-color: var(--color-primary);
+        }
+
+        @media (max-width: 960px) {
+            .result-hero,
+            .result-panel-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .auth-dialog {
+                grid-template-columns: 1fr;
+            }
+
+            .auth-aside {
+                display: none;
+            }
+
+            .result-tabs-card {
+                position: static;
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .trace-card-head {
+                flex-direction: column;
+            }
+
+            .trace-summary-chips {
+                justify-content: flex-start;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .workspace-shell {
+                padding: 20px 16px 36px;
+            }
+
+            .workspace-shell > .card {
+                padding: 22px 18px;
+                border-radius: 18px;
+            }
+
+            .header-account-card {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .header-account-actions {
+                justify-content: flex-start;
+            }
+
+            .result-tabs {
+                width: 100%;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                padding-bottom: 4px;
+            }
+
+            .result-tab {
+                white-space: nowrap;
+            }
+
+            .trace-diagram.is-interactive::after {
+                position: static;
+                float: none;
+                display: inline-flex;
+                margin-top: 12px;
+            }
+
+            .trace-diagram-modal-dialog {
+                width: calc(100vw - 20px);
+                max-height: calc(100vh - 20px);
+                margin: 10px auto;
+                border-radius: 18px;
+            }
+
+            .trace-diagram-modal-head {
+                align-items: flex-start;
+                flex-direction: column;
+                padding: 16px;
+            }
+
+            .trace-diagram-modal-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .trace-diagram-modal-body {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="unified-header">
+        <div class="container">
+            <div class="site-title">
+                <h1>☯ 玄学预测系统</h1>
+                <p>传统命理学 · 现代科技 · 智能分析</p>
+            </div>
+            <div class="header-account">
+                <div class="header-account-card">
+                    <div class="header-account-copy">
+                        <strong id="headerAccountName">未登录</strong>
+                        <span id="headerAccountMeta">请先登录，统一问事功能仅对账号开放</span>
+                    </div>
+                    <div class="header-account-actions">
+                        <a class="header-ghost-btn" href="index.html" style="text-decoration:none;">问事页</a>
+                        <button type="button" class="header-ghost-btn" id="openAuthModalBtn">登录 / 注册</button>
+                        <a class="header-ghost-btn" id="openAccountCenterBtn" href="account.html" style="display:none; text-decoration:none;">账号中心</a>
+                        <button type="button" class="header-ghost-btn" id="logoutBtn" style="display:none;">退出登录</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container workspace-shell">
+        <div id="consultResultWorkspace" style="display:none;">
+            <section class="card result-hero">
+                <div class="result-hero-copy">
+                    <span class="result-kicker">Consult Workspace</span>
+                    <h2 id="resultHeroQuestion">本次统一问事结果</h2>
+                    <p id="resultHeroSummary" class="result-hero-summary">系统已经把问题、命理、时机和环境线索汇总成一份统一判断。</p>
+                    <div id="resultHeroChips" class="result-hero-chips"></div>
+                </div>
+                <div class="result-hero-side">
+                    <div class="result-side-card">
+                        <div class="result-side-label">工作台说明</div>
+                        <div class="result-side-text">下方用 tab 把综合结论、决策内核、模块依据和计算流程拆开展示。你可以先看结论，再按需下钻到依据和推演链。</div>
+                    </div>
+                    <div class="result-side-card">
+                        <div class="result-side-label">最近结果</div>
+                        <div id="resultHeroTimestamp" class="result-side-text">本次结果已暂存到当前浏览器会话</div>
+                        <div class="result-side-actions">
+                            <a id="resultBackLink" class="result-link-btn primary" href="index.html">继续发起问事</a>
+                            <a class="result-link-btn" href="account.html">查看历史记录</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card result-tabs-card">
+                <div id="resultTabs" class="result-tabs" role="tablist" aria-label="统一问事结果分区">
+                    <button type="button" class="result-tab active" data-result-tab="summary" aria-selected="true">综合结论</button>
+                    <button type="button" class="result-tab" data-result-tab="decision" aria-selected="false">决策内核</button>
+                    <button type="button" class="result-tab" data-result-tab="modules" aria-selected="false">模块依据</button>
+                    <button type="button" class="result-tab" data-result-tab="trace" aria-selected="false">计算流程</button>
+                </div>
+                <div class="result-tab-hint">从总判断一路看到模块依据和推演流程，不再在一个超长页面里来回找内容。</div>
+            </section>
+
+            <div id="resultPanels">
+                <section class="card result-panel result-overview active" data-result-panel="summary">
+                    <h2 class="page-title">系统结论</h2>
+                    <div id="consultAnswer" class="consult-answer"></div>
+                    <div id="consultMeta" class="result-meta"></div>
+                </section>
+
+                <section class="card result-panel" data-result-panel="decision" hidden>
+                    <h2 class="page-title">决策内核</h2>
+                    <div id="consultDecisionGrid" class="decision-grid"></div>
+                </section>
+
+                <section class="card result-panel" data-result-panel="modules" hidden>
+                    <h2 class="page-title">各模块依据</h2>
+                    <div id="consultModuleGrid" class="module-summary-grid"></div>
+                </section>
+
+                <section class="card result-panel" data-result-panel="trace" hidden>
+                    <div class="trace-card-head">
+                        <div>
+                            <div class="trace-card-kicker">Flow · 推演脉络</div>
+                            <h2 class="page-title">计算流程</h2>
+                            <p class="trace-card-note">从输入、识意、编排到综合，按步骤回看整条推演链。适合在你想追问“系统为什么这样判断”时使用。</p>
+                        </div>
+                        <div id="consultTraceSummary" class="trace-summary-chips"></div>
+                    </div>
+                    <div id="consultTraceDiagram" class="trace-diagram"></div>
+                    <div id="consultTraceSteps" class="trace-steps"></div>
+                </section>
+            </div>
+        </div>
+
+        <section id="consultResultEmpty" class="card result-empty">
+            <h2>还没有可展示的结果</h2>
+            <p>先回到问事页提交一次统一问事，系统会把最新结果带到这个工作台里，方便你分区查看综合结论、模块依据和推演流程。</p>
+            <a class="result-link-btn primary" href="index.html">回到问事页</a>
+        </section>
+    </div>
+
+    <div id="authModal" class="auth-modal">
+        <div class="auth-dialog">
+            <aside class="auth-aside">
+                <span class="kicker">Hermes Account</span>
+                <h3>先登录，再开始统一问事</h3>
+                <p>账号不仅用于保存历史，更是统一问事的使用门槛。登录后才能发起问事、累计资料并追踪结果。</p>
+                <div class="auth-list">
+                    <div class="auth-list-item">自动保存每次统一问事的完整结论</div>
+                    <div class="auth-list-item">按账号查看历史记录和模块摘要</div>
+                    <div class="auth-list-item">维护出生信息，减少重复填写</div>
+                </div>
+            </aside>
+            <div class="auth-main">
+                <div class="auth-main-head">
+                    <h3>登录与注册</h3>
+                    <button type="button" class="auth-close" id="authModalClose">×</button>
+                </div>
+                <div class="auth-tabs">
+                    <button type="button" class="auth-tab active" id="authTabLogin">登录</button>
+                    <button type="button" class="auth-tab" id="authTabRegister">注册</button>
+                </div>
+                <div id="authLoginPanel">
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label for="loginEmail">邮箱</label>
+                            <input id="loginEmail" type="email" maxlength="120" required placeholder="name@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="loginPassword">密码</label>
+                            <input id="loginPassword" type="password" minlength="8" maxlength="120" required placeholder="至少 8 位">
+                        </div>
+                        <div class="consult-actions">
+                            <button type="submit" class="btn">登录</button>
+                        </div>
+                    </form>
+                </div>
+                <div id="authRegisterPanel" style="display:none;">
+                    <form id="registerForm">
+                        <div class="form-group">
+                            <label for="registerDisplayName">昵称</label>
+                            <input id="registerDisplayName" type="text" maxlength="40" placeholder="例如：阿明">
+                        </div>
+                        <div class="form-group">
+                            <label for="registerEmail">邮箱</label>
+                            <input id="registerEmail" type="email" maxlength="120" required placeholder="name@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="registerPassword">密码</label>
+                            <input id="registerPassword" type="password" minlength="8" maxlength="120" required placeholder="至少 8 位">
+                        </div>
+                        <div class="consult-actions">
+                            <button type="submit" class="btn">创建账号</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js?v=20260519-result-workspace"></script>
+    <script src="common-links.js?v=20260519-result-workspace"></script>
+    <script src="common-ui.js?v=20260519-result-workspace"></script>
+    <script src="markdown-it.min.js"></script>
+    <script src="markdown.js?v=20260519-result-workspace"></script>
+    <script src="api-client.js?v=20260519-result-workspace"></script>
+    <script src="auth-client.js?v=20260519-result-workspace"></script>
+    <script src="ai-status.js?v=20260519-result-workspace"></script>
+    <script src="common-renderers.js?v=20260519-result-workspace"></script>
+    <script src="decision-panel.js?v=20260519-result-workspace"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script src="trace-panel.js?v=20260519-result-workspace"></script>
+    <script src="consult-panel.js?v=20260519-result-workspace"></script>
+    <script>
+        if (window.applyCommonLinks) {
+            window.applyCommonLinks();
+        }
+        if (window.authClient && window.authClient.initialize) {
+            window.authClient.initialize();
+        }
+        if (window.consultPanel && window.consultPanel.initializeResultWorkspace) {
+            window.consultPanel.initializeResultWorkspace();
+        }
+    </script>
+</body>
+</html>

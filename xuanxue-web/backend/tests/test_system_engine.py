@@ -95,6 +95,18 @@ class TestSystemEngine(unittest.TestCase):
         self.assertIn("meihua", result["module_summaries"])
         self.assertTrue(any(step["id"] == "meihua_cast" for step in result["trace"]["steps"]))
 
+    def test_consultation_engine_builds_liuyao_trace_without_birth_profile(self):
+        payload = UnifiedConsultRequest(
+            question="这段感情还能继续吗？"
+        )
+
+        with patch("core.system_engine.llm_helper.is_available", return_value=False):
+            result = consultation_engine.consult(payload)
+
+        self.assertIn("liuyao", result["intent"]["modules"])
+        self.assertTrue(any(step["id"] == "liuyao_cast" for step in result["trace"]["steps"]))
+        self.assertTrue(any(step["id"] == "liuyao_judge" for step in result["trace"]["steps"]))
+
     def test_consultation_engine_adds_zeri_for_clear_purpose(self):
         payload = UnifiedConsultRequest(
             question="今天适合开业吗？",

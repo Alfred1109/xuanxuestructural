@@ -37,6 +37,10 @@
             align-items: stretch;
         }
 
+        .consult-stage > * {
+            min-width: 0;
+        }
+
         .consult-primary-card {
             padding: 24px;
             border-radius: 28px;
@@ -1471,6 +1475,25 @@
         }
 
         @media (max-width: 900px) {
+            .consult-stage {
+                grid-template-columns: 1fr;
+            }
+
+            .consult-primary-card,
+            .consult-secondary-grid {
+                padding: 22px;
+                border-radius: 24px;
+            }
+
+            .consult-primary-head {
+                flex-direction: column;
+            }
+
+            .consult-progress-card {
+                width: 100%;
+                min-width: 0;
+            }
+
             .entry-top {
                 grid-template-columns: 1fr;
             }
@@ -1515,12 +1538,67 @@
                 padding: var(--spacing-lg) 0 0;
             }
 
+            .shell-container {
+                padding: 18px var(--spacing-md) 28px;
+            }
+
+            .shell-container > .card {
+                padding: 20px;
+                border-radius: 24px;
+            }
+
+            .consult-stage,
+            .consult-secondary-grid,
+            .consult-result,
+            .consult-result-stack {
+                gap: 16px;
+            }
+
+            .consult-primary-card,
+            .consult-secondary-grid {
+                padding: 18px;
+                border-radius: 22px;
+            }
+
+            .consult-primary-copy h3,
+            .consult-side-card h3 {
+                font-size: 1.12rem;
+                line-height: 1.45;
+            }
+
+            .consult-primary-copy p,
+            .consult-side-card p {
+                font-size: 0.9rem;
+                line-height: 1.72;
+            }
+
+            .consult-progress-card {
+                padding: 14px;
+                border-radius: 18px;
+            }
+
+            .consult-form .form-group {
+                margin-bottom: 20px;
+            }
+
             .consult-form .form-row {
                 grid-template-columns: repeat(3, 1fr);
+                gap: 12px;
+                margin-bottom: 20px;
             }
 
             .scenario-preset-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .location-input-row {
+                grid-template-columns: 1fr;
+            }
+
+            .location-ghost-btn,
+            .visual-entry-btn {
+                width: 100%;
+                justify-content: center;
             }
 
             .visual-modal {
@@ -1533,16 +1611,50 @@
             }
 
             .consult-actions {
-                flex-direction: column;
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 12px;
             }
 
             .consult-actions .btn {
                 width: 100%;
+                min-width: 0;
+                padding: 12px 16px;
             }
 
             .visual-context-head,
             .visual-modal-head {
                 align-items: flex-start;
+            }
+
+            .header-account-card {
+                padding: 14px 16px;
+                border-radius: 18px;
+                gap: 14px;
+            }
+
+            .header-account-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .header-ghost-btn {
+                flex: 1 1 calc(50% - 5px);
+                justify-content: center;
+                min-width: 0;
+                padding: 10px 12px;
+            }
+
+            .consult-link-item,
+            .saved-preset-item,
+            .scenario-preset {
+                border-radius: 16px;
+            }
+
+            .visual-context-banner,
+            .consult-loading {
+                padding: 16px;
+                border-radius: 18px;
             }
 
             .trace-step summary {
@@ -1606,8 +1718,37 @@
                 padding: var(--spacing-md) 0 0;
             }
 
+            .shell-container {
+                padding: 14px 12px 24px;
+            }
+
+            .shell-container > .card,
+            .consult-primary-card,
+            .consult-secondary-grid {
+                padding: 16px;
+                border-radius: 20px;
+            }
+
+            .page-title {
+                font-size: 1.35rem;
+            }
+
+            .consult-primary-copy h3 {
+                font-size: 1.02rem;
+            }
+
+            .consult-focus-pill,
+            .consult-side-card .eyebrow {
+                font-size: 0.7rem;
+                letter-spacing: 0.06em;
+            }
+
             .consult-form .form-row {
                 grid-template-columns: repeat(2, 1fr);
+            }
+
+            .consult-actions {
+                grid-template-columns: 1fr;
             }
 
             .header-account-card {
@@ -1616,9 +1757,32 @@
             }
 
             .header-account-actions {
+                flex-direction: column;
                 justify-content: flex-start;
             }
 
+            .header-ghost-btn {
+                width: 100%;
+                flex: none;
+            }
+
+            .saved-preset-item {
+                padding: 12px;
+            }
+
+            .saved-preset-item .actions {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .saved-preset-item .mini-btn {
+                width: 100%;
+                text-align: center;
+            }
+
+            .consult-link-item {
+                padding: 12px 14px;
+            }
         }
     </style>
 </head>

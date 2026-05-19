@@ -457,18 +457,25 @@
         }
     }
 
-    function requestCurrentLocation(targetInputId) {
-        var input = document.getElementById(targetInputId);
-        if (!input) {
-            return;
+    function showLocationPermissionDeniedMessage() {
+        if (window.showToast) {
+            window.showToast('浏览器已阻止当前站点的定位权限。请点地址栏旁的站点设置，把“位置”改为“允许”后再试。', 'warn');
         }
-        if (!navigator.geolocation) {
-            if (window.showToast) {
-                window.showToast('当前浏览器不支持地理定位。', 'warn');
-            }
-            return;
-        }
+    }
 
+    async function getGeolocationPermissionState() {
+        if (!navigator.permissions || !navigator.permissions.query) {
+            return 'unknown';
+        }
+        try {
+            var result = await navigator.permissions.query({ name: 'geolocation' });
+            return result && result.state ? result.state : 'unknown';
+        } catch (_error) {
+            return 'unknown';
+        }
+    }
+
+    function locateIntoInput(input) {
         navigator.geolocation.getCurrentPosition(async function (position) {
             var suggested = await resolveHumanReadableLocation(position);
             if (!suggested) {
@@ -490,7 +497,8 @@
         }, function (error) {
             var message = '定位失败';
             if (error && error.code === 1) {
-                message = '你拒绝了定位权限，请允许浏览器定位后再试。';
+                showLocationPermissionDeniedMessage();
+                return;
             } else if (error && error.code === 2) {
                 message = '无法获取当前位置，请检查网络或系统定位设置。';
             } else if (error && error.code === 3) {
@@ -504,6 +512,27 @@
             timeout: 10000,
             maximumAge: 300000
         });
+    }
+
+    async function requestCurrentLocation(targetInputId) {
+        var input = document.getElementById(targetInputId);
+        if (!input) {
+            return;
+        }
+        if (!navigator.geolocation) {
+            if (window.showToast) {
+                window.showToast('当前浏览器不支持地理定位。', 'warn');
+            }
+            return;
+        }
+
+        var permissionState = await getGeolocationPermissionState();
+        if (permissionState === 'denied') {
+            showLocationPermissionDeniedMessage();
+            return;
+        }
+
+        locateIntoInput(input);
     }
 
     function bindEvents() {
@@ -782,6 +811,7 @@
         isAuthenticated: function () {
             return !!currentUser;
         },
+        requestCurrentLocation: requestCurrentLocation,
         openAuthModal: function (tab) {
             toggleAuthModal(true, tab || 'login');
         }

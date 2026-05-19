@@ -1241,7 +1241,7 @@
         }
 
         function showConsultLoading() {
-            if (!elements.consultLoading) {
+            if (!elements.consultLoading || !elements.consultLoading.classList) {
                 return;
             }
             clearConsultLoadingTimer();
@@ -1267,7 +1267,7 @@
 
         function hideConsultLoading() {
             clearConsultLoadingTimer();
-            if (!elements.consultLoading) {
+            if (!elements.consultLoading || !elements.consultLoading.classList) {
                 return;
             }
             elements.consultLoading.classList.remove('show');

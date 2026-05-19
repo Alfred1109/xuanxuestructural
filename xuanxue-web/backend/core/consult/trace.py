@@ -536,6 +536,23 @@ def build_trace_graph(
             derivation=liuyao_trace,
             previous=last_step,
         )
+        last_step = add_step(
+            "liuyao_judge",
+            "六爻解读",
+            "卦象综合判断",
+            inputs={"gua_info": liuyao_result.get("gua_info", {})},
+            rule="按本卦、变卦、动爻和问题语境综合推断",
+            outputs={
+                "summary": interpretation.get("summary", ""),
+                "advice": interpretation.get("advice", ""),
+                "timing": interpretation.get("timing", ""),
+            },
+            evidence=[
+                interpretation.get("summary", ""),
+                interpretation.get("advice", ""),
+            ],
+            previous=last_step,
+        )
 
     if "fengshui" in modules:
         fengshui_result = module_results.get("fengshui", {})
@@ -774,24 +791,6 @@ def build_trace_graph(
             ],
             previous=last_step,
         )
-        last_step = add_step(
-            "liuyao_judge",
-            "六爻解读",
-            "卦象综合判断",
-            inputs={"gua_info": liuyao_result.get("gua_info", {})},
-            rule="按本卦、变卦、动爻和问题语境综合推断",
-            outputs={
-                "summary": interpretation.get("summary", ""),
-                "advice": interpretation.get("advice", ""),
-                "timing": interpretation.get("timing", ""),
-            },
-            evidence=[
-                interpretation.get("summary", ""),
-                interpretation.get("advice", ""),
-            ],
-            previous=last_step,
-        )
-
     if "meihua" in modules:
         meihua_result = module_results.get("meihua", {})
         interpretation = meihua_result.get("interpretation", {})

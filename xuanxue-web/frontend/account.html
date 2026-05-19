@@ -17,21 +17,22 @@
         }
 
         .header-account {
-            margin-top: 18px;
-            display: flex;
-            justify-content: center;
+            margin-top: 4px;
+            display: block;
         }
 
         .header-account-card {
-            width: min(100%, 780px);
+            width: 100%;
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 18px;
-            padding: 14px 18px;
-            border-radius: 18px;
-            background: rgba(255, 255, 255, 0.12);
-            border: 1px solid rgba(255, 255, 255, 0.16);
+            padding: 16px 18px;
+            border-radius: 22px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.08) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow: 0 14px 30px rgba(7, 20, 17, 0.12);
+            backdrop-filter: blur(14px);
         }
 
         .header-account-copy {
@@ -41,14 +42,14 @@
         }
 
         .header-account-copy strong {
-            font-size: 0.95rem;
+            font-size: 1rem;
             font-weight: 700;
             color: #ffffff;
         }
 
         .header-account-copy span {
-            font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.72);
+            font-size: 0.82rem;
+            color: rgba(255, 255, 255, 0.76);
         }
 
         .header-account-actions {
@@ -66,11 +67,15 @@
             border-radius: 999px;
             padding: 10px 16px;
             font-size: 0.85rem;
+            font-weight: 600;
             cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
         }
 
         .header-ghost-btn:hover {
             background: rgba(255, 255, 255, 0.16);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
         }
 
         .account-center {
@@ -912,6 +917,7 @@
     <script src="config.js?v=20260512-auth-fix"></script>
     <script src="common-links.js?v=20260512-auth-fix"></script>
     <script src="common-ui.js?v=20260512-auth-fix"></script>
+    <script src="markdown-it.min.js"></script>
     <script src="markdown.js?v=20260512-auth-fix"></script>
     <script src="api-client.js?v=20260512-auth-fix"></script>
     <script src="auth-client.js?v=20260512-auth-fix"></script>
