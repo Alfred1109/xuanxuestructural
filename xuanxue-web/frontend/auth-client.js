@@ -463,6 +463,12 @@
         }
     }
 
+    function showLocationRequiresSecureContextMessage() {
+        if (window.showToast) {
+            window.showToast('当前访问地址不是安全上下文，浏览器不会开放定位。请使用 HTTPS 域名访问，或在本机用 localhost 打开后再试。', 'warn');
+        }
+    }
+
     async function getGeolocationPermissionState() {
         if (!navigator.permissions || !navigator.permissions.query) {
             return 'unknown';
@@ -523,6 +529,10 @@
             if (window.showToast) {
                 window.showToast('当前浏览器不支持地理定位。', 'warn');
             }
+            return;
+        }
+        if (window.isSecureContext === false) {
+            showLocationRequiresSecureContextMessage();
             return;
         }
 

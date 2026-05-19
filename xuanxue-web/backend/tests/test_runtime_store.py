@@ -6,7 +6,14 @@ from pathlib import Path
 
 sys.path.append('/home/alfred/multiproject/xuanxue/xuanxue-web/backend')
 
-from core.runtime.store import append_jsonl, read_json_file, read_jsonl, read_recent_jsonl, write_json_file
+from core.runtime.store import (
+    append_jsonl,
+    read_json_file,
+    read_jsonl,
+    read_recent_jsonl,
+    update_json_file,
+    write_json_file,
+)
 
 
 class TestRuntimeStore(unittest.TestCase):
@@ -68,3 +75,17 @@ class TestRuntimeStore(unittest.TestCase):
             result = read_json_file(path, default={})
 
         self.assertEqual(result, payload)
+
+    def test_update_json_file_reads_updates_and_writes_under_one_lock(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "state.json"
+
+            def updater(payload):
+                payload["items"].append({"id": 1})
+                return payload
+
+            result = update_json_file(path, {"items": []}, updater)
+            stored = read_json_file(path, default={})
+
+        self.assertEqual(result, {"items": [{"id": 1}]})
+        self.assertEqual(stored, result)

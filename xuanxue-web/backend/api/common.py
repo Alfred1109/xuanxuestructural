@@ -150,7 +150,10 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 def configure_cors(app) -> None:
     cors_origins = [
         origin.strip()
-        for origin in getenv("CORS_ALLOW_ORIGINS", "http://localhost:8003,http://127.0.0.1:8003").split(",")
+        for origin in getenv(
+            "CORS_ALLOW_ORIGINS",
+            "http://localhost,http://127.0.0.1,http://localhost:8003,http://127.0.0.1:8003",
+        ).split(",")
         if origin.strip()
     ]
     app.add_middleware(

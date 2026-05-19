@@ -13,7 +13,7 @@ from uuid import uuid4
 
 from fastapi import HTTPException, Request
 
-from .runtime.store import read_json_file, resolve_runtime_path, write_json_file
+from .runtime.store import read_json_file, resolve_runtime_path, update_json_file, write_json_file
 
 
 EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
@@ -55,6 +55,16 @@ def _read_sessions() -> List[Dict[str, Any]]:
 
 def _write_sessions(sessions: List[Dict[str, Any]]) -> None:
     write_json_file(_sessions_path(), {"sessions": sessions})
+
+
+def _extract_users(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
+    users = payload.get("users") if isinstance(payload, dict) else []
+    return users if isinstance(users, list) else []
+
+
+def _extract_sessions(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
+    sessions = payload.get("sessions") if isinstance(payload, dict) else []
+    return sessions if isinstance(sessions, list) else []
 
 
 def _cleanup_expired_sessions(sessions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -215,19 +225,23 @@ def _normalize_consult_preset(data: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def create_session(user_id: str) -> Dict[str, Any]:
-    sessions = _cleanup_expired_sessions(_read_sessions())
     token = secrets.token_urlsafe(32)
     expires_at = (datetime.now(timezone.utc) + timedelta(days=SESSION_TTL_DAYS)).isoformat(timespec="seconds")
-    sessions.append(
-        {
-            "session_id": str(uuid4()),
-            "user_id": user_id,
-            "token_hash": _hash_token(token),
-            "created_at": _now_iso(),
-            "expires_at": expires_at,
-        }
-    )
-    _write_sessions(sessions)
+
+    def updater(payload: Dict[str, Any]) -> Dict[str, Any]:
+        sessions = _cleanup_expired_sessions(_extract_sessions(payload))
+        sessions.append(
+            {
+                "session_id": str(uuid4()),
+                "user_id": user_id,
+                "token_hash": _hash_token(token),
+                "created_at": _now_iso(),
+                "expires_at": expires_at,
+            }
+        )
+        return {"sessions": sessions}
+
+    update_json_file(_sessions_path(), {"sessions": []}, updater)
     return {
         "token": token,
         "expires_at": expires_at,
@@ -237,12 +251,6 @@ def create_session(user_id: str) -> Dict[str, Any]:
 def register_user(email: str, password: str, display_name: Optional[str] = None) -> Dict[str, Any]:
     normalized_email = _validate_email(email)
     _validate_password(password)
-    if _find_user_by_email(normalized_email):
-        raise HTTPException(
-            status_code=409,
-            detail={"code": "conflict", "message": "该邮箱已注册", "retryable": False},
-        )
-
     now = _now_iso()
     password_salt, password_hash = _hash_password(password)
     safe_display_name = (display_name or "").strip() or normalized_email.split("@")[0]
@@ -260,9 +268,18 @@ def register_user(email: str, password: str, display_name: Optional[str] = None)
         "created_at": now,
         "updated_at": now,
     }
-    users = _read_users()
-    users.append(user)
-    _write_users(users)
+
+    def updater(payload: Dict[str, Any]) -> Dict[str, Any]:
+        users = _extract_users(payload)
+        if any(_normalize_email(str(item.get("email") or "")) == normalized_email for item in users):
+            raise HTTPException(
+                status_code=409,
+                detail={"code": "conflict", "message": "该邮箱已注册", "retryable": False},
+            )
+        users.append(user)
+        return {"users": users}
+
+    update_json_file(_users_path(), {"users": []}, updater)
 
     session = create_session(user["user_id"])
     return {
@@ -293,8 +310,11 @@ def get_user_by_token(token: str) -> Optional[Dict[str, Any]]:
     if not token:
         return None
 
-    sessions = _cleanup_expired_sessions(_read_sessions())
-    _write_sessions(sessions)
+    def updater(payload: Dict[str, Any]) -> Dict[str, Any]:
+        return {"sessions": _cleanup_expired_sessions(_extract_sessions(payload))}
+
+    session_payload = update_json_file(_sessions_path(), {"sessions": []}, updater)
+    sessions = _extract_sessions(session_payload)
     token_hash = _hash_token(token)
     for session in sessions:
         if hmac.compare_digest(str(session.get("token_hash") or ""), token_hash):
@@ -308,64 +328,73 @@ def logout_session(token: str) -> bool:
     if not token:
         return False
     token_hash = _hash_token(token)
-    sessions = _cleanup_expired_sessions(_read_sessions())
-    remaining = [session for session in sessions if str(session.get("token_hash") or "") != token_hash]
-    changed = len(remaining) != len(sessions)
-    if changed:
-        _write_sessions(remaining)
+    changed = False
+
+    def updater(payload: Dict[str, Any]) -> Dict[str, Any]:
+        nonlocal changed
+        sessions = _cleanup_expired_sessions(_extract_sessions(payload))
+        remaining = [session for session in sessions if str(session.get("token_hash") or "") != token_hash]
+        changed = len(remaining) != len(sessions)
+        return {"sessions": remaining}
+
+    update_json_file(_sessions_path(), {"sessions": []}, updater)
     return changed
 
 
 def update_user_account(user_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:
-    users = _read_users()
     matched_user: Optional[Dict[str, Any]] = None
 
-    for user in users:
-        if user.get("user_id") != user_id:
-            continue
+    def updater(payload: Dict[str, Any]) -> Dict[str, Any]:
+        nonlocal matched_user
+        users = _extract_users(payload)
 
-        display_name = updates.get("display_name")
-        if display_name is not None:
-            display_name = str(display_name).strip()
-            if not display_name:
-                raise HTTPException(
-                    status_code=400,
-                    detail={"code": "bad_request", "message": "昵称不能为空", "retryable": False},
-                )
-            user["display_name"] = display_name
+        for user in users:
+            if user.get("user_id") != user_id:
+                continue
 
-        new_password = updates.get("new_password")
-        if new_password:
-            current_password = str(updates.get("current_password") or "")
-            if not current_password or not _verify_password(current_password, user):
-                raise HTTPException(
-                    status_code=401,
-                    detail={"code": "unauthorized", "message": "当前密码不正确", "retryable": False},
-                )
-            _validate_password(str(new_password))
-            password_salt, password_hash = _hash_password(str(new_password))
-            user["password_salt"] = password_salt
-            user["password_hash"] = password_hash
+            display_name = updates.get("display_name")
+            if display_name is not None:
+                display_name = str(display_name).strip()
+                if not display_name:
+                    raise HTTPException(
+                        status_code=400,
+                        detail={"code": "bad_request", "message": "昵称不能为空", "retryable": False},
+                    )
+                user["display_name"] = display_name
 
-        profile_updates = _build_profile_updates(updates)
-        profile = user.get("profile") if isinstance(user.get("profile"), dict) else {}
-        profile["gender"] = profile_updates["gender"]
-        profile["location"] = profile_updates["location"]
-        birth = profile_updates["birth"]
-        profile["birth"] = birth if any(value is not None for value in birth.values()) else None
-        profile["consult_presets"] = profile.get("consult_presets") if isinstance(profile.get("consult_presets"), list) else []
-        user["profile"] = profile
-        user["updated_at"] = _now_iso()
-        matched_user = user
-        break
+            new_password = updates.get("new_password")
+            if new_password:
+                current_password = str(updates.get("current_password") or "")
+                if not current_password or not _verify_password(current_password, user):
+                    raise HTTPException(
+                        status_code=401,
+                        detail={"code": "unauthorized", "message": "当前密码不正确", "retryable": False},
+                    )
+                _validate_password(str(new_password))
+                password_salt, password_hash = _hash_password(str(new_password))
+                user["password_salt"] = password_salt
+                user["password_hash"] = password_hash
 
-    if matched_user is None:
-        raise HTTPException(
-            status_code=404,
-            detail={"code": "not_found", "message": "账号不存在", "retryable": False},
-        )
+            profile_updates = _build_profile_updates(updates)
+            profile = user.get("profile") if isinstance(user.get("profile"), dict) else {}
+            profile["gender"] = profile_updates["gender"]
+            profile["location"] = profile_updates["location"]
+            birth = profile_updates["birth"]
+            profile["birth"] = birth if any(value is not None for value in birth.values()) else None
+            profile["consult_presets"] = profile.get("consult_presets") if isinstance(profile.get("consult_presets"), list) else []
+            user["profile"] = profile
+            user["updated_at"] = _now_iso()
+            matched_user = user
+            break
 
-    _write_users(users)
+        if matched_user is None:
+            raise HTTPException(
+                status_code=404,
+                detail={"code": "not_found", "message": "账号不存在", "retryable": False},
+            )
+        return {"users": users}
+
+    update_json_file(_users_path(), {"users": []}, updater)
     return public_user(matched_user)
 
 
@@ -382,72 +411,80 @@ def list_user_consult_presets(user_id: str) -> List[Dict[str, Any]]:
 
 
 def save_user_consult_preset(user_id: str, preset_data: Dict[str, Any]) -> List[Dict[str, Any]]:
-    users = _read_users()
     normalized = _normalize_consult_preset(preset_data)
     matched_user: Optional[Dict[str, Any]] = None
 
-    for user in users:
-        if user.get("user_id") != user_id:
-            continue
-        profile = user.get("profile") if isinstance(user.get("profile"), dict) else {}
-        presets = profile.get("consult_presets") if isinstance(profile.get("consult_presets"), list) else []
-        updated = False
-        if normalized["is_default"]:
-            for item in presets:
-                item["is_default"] = False
-        for index, item in enumerate(presets):
-            if item.get("preset_id") == normalized["preset_id"]:
-                if normalized.get("is_default") is not True and item.get("is_default") is True:
+    def updater(payload: Dict[str, Any]) -> Dict[str, Any]:
+        nonlocal matched_user
+        users = _extract_users(payload)
+
+        for user in users:
+            if user.get("user_id") != user_id:
+                continue
+            profile = user.get("profile") if isinstance(user.get("profile"), dict) else {}
+            presets = profile.get("consult_presets") if isinstance(profile.get("consult_presets"), list) else []
+            updated = False
+            if normalized["is_default"]:
+                for item in presets:
+                    item["is_default"] = False
+            for index, item in enumerate(presets):
+                if item.get("preset_id") == normalized["preset_id"]:
+                    if normalized.get("is_default") is not True and item.get("is_default") is True:
+                        normalized["is_default"] = True
+                    presets[index] = normalized
+                    updated = True
+                    break
+            if not updated:
+                if not presets:
                     normalized["is_default"] = True
-                presets[index] = normalized
-                updated = True
-                break
-        if not updated:
-            if not presets:
-                normalized["is_default"] = True
-            presets.insert(0, normalized)
-        if not any(item.get("is_default") for item in presets) and presets:
-            presets[0]["is_default"] = True
-        profile["consult_presets"] = presets[:12]
-        user["profile"] = profile
-        user["updated_at"] = _now_iso()
-        matched_user = user
-        break
+                presets.insert(0, normalized)
+            if not any(item.get("is_default") for item in presets) and presets:
+                presets[0]["is_default"] = True
+            profile["consult_presets"] = presets[:12]
+            user["profile"] = profile
+            user["updated_at"] = _now_iso()
+            matched_user = user
+            break
 
-    if matched_user is None:
-        raise HTTPException(
-            status_code=404,
-            detail={"code": "not_found", "message": "账号不存在", "retryable": False},
-        )
+        if matched_user is None:
+            raise HTTPException(
+                status_code=404,
+                detail={"code": "not_found", "message": "账号不存在", "retryable": False},
+            )
+        return {"users": users}
 
-    _write_users(users)
+    update_json_file(_users_path(), {"users": []}, updater)
     return public_user(matched_user)["profile"]["consult_presets"]
 
 
 def delete_user_consult_preset(user_id: str, preset_id: str) -> List[Dict[str, Any]]:
-    users = _read_users()
     matched_user: Optional[Dict[str, Any]] = None
 
-    for user in users:
-        if user.get("user_id") != user_id:
-            continue
-        profile = user.get("profile") if isinstance(user.get("profile"), dict) else {}
-        presets = profile.get("consult_presets") if isinstance(profile.get("consult_presets"), list) else []
-        profile["consult_presets"] = [item for item in presets if item.get("preset_id") != preset_id]
-        if profile["consult_presets"] and not any(item.get("is_default") for item in profile["consult_presets"]):
-            profile["consult_presets"][0]["is_default"] = True
-        user["profile"] = profile
-        user["updated_at"] = _now_iso()
-        matched_user = user
-        break
+    def updater(payload: Dict[str, Any]) -> Dict[str, Any]:
+        nonlocal matched_user
+        users = _extract_users(payload)
 
-    if matched_user is None:
-        raise HTTPException(
-            status_code=404,
-            detail={"code": "not_found", "message": "账号不存在", "retryable": False},
-        )
+        for user in users:
+            if user.get("user_id") != user_id:
+                continue
+            profile = user.get("profile") if isinstance(user.get("profile"), dict) else {}
+            presets = profile.get("consult_presets") if isinstance(profile.get("consult_presets"), list) else []
+            profile["consult_presets"] = [item for item in presets if item.get("preset_id") != preset_id]
+            if profile["consult_presets"] and not any(item.get("is_default") for item in profile["consult_presets"]):
+                profile["consult_presets"][0]["is_default"] = True
+            user["profile"] = profile
+            user["updated_at"] = _now_iso()
+            matched_user = user
+            break
 
-    _write_users(users)
+        if matched_user is None:
+            raise HTTPException(
+                status_code=404,
+                detail={"code": "not_found", "message": "账号不存在", "retryable": False},
+            )
+        return {"users": users}
+
+    update_json_file(_users_path(), {"users": []}, updater)
     return public_user(matched_user)["profile"]["consult_presets"]
 
 

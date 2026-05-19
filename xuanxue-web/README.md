@@ -118,6 +118,16 @@ xuanxue-web/
 - AI 配置说明链接也通过 `frontend/config.js` 统一配置
 - AI 择日页面默认调用 `GET /api/ai/enhance-zeri/today`，以服务端日期为准
 
+## 开发与测试
+
+后端测试依赖单独放在 `backend/requirements-dev.txt`：
+
+```bash
+cd xuanxue-web/backend
+venv/bin/pip install -r requirements-dev.txt
+venv/bin/python -m pytest -q
+```
+
 ## 技术栈
 
 ### 后端
