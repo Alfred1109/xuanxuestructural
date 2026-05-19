@@ -4,6 +4,16 @@
     var esc = renderers.esc || function (value) { return String(value ?? ''); };
     var renderMetricBar = renderers.renderMetricBar || function () { return ''; };
     var renderDecisionCard = renderers.renderDecisionCard || function () { return ''; };
+    var translateStringValue = renderers.translateStringValue || function (value) { return String(value ?? ''); };
+    var formatOneDecimal = renderers.formatOneDecimal || function (value) {
+        var numeric = Number(value);
+        return Number.isFinite(numeric) ? numeric.toFixed(1) : String(value ?? '');
+    };
+
+    function formatWeight(value) {
+        var numeric = Number(value);
+        return Number.isFinite(numeric) ? numeric.toFixed(1) : String(value ?? '');
+    }
 
     function renderDecisionPanel(payload, mountEl) {
         if (!mountEl) {
@@ -31,22 +41,22 @@
             renderDecisionCard(
                 '决策类型',
                 '类型：' + (decisionKernel.decision_type || 'balanced')
-                + '\n行动等级：' + (recommendation.action_level || 'wait')
-                + '\n决策期望值：' + (recommendation.decision_expectancy || 0)
+                + '\n行动等级：' + translateStringValue(recommendation.action_level || 'wait')
+                + '\n决策期望值：' + formatOneDecimal(recommendation.decision_expectancy || 0)
                 + '\n日志编号：' + (((payload || {}).decision_log || {}).log_id || '暂无')
             ),
             renderDecisionCard(
                 '熵值',
-                '熵值：' + (entropy.score || 0)
-                + '\n等级：' + (entropy.label || 'unknown')
+                '熵值：' + formatOneDecimal(entropy.score || 0)
+                + '\n等级：' + translateStringValue(entropy.label || 'unknown')
                 + '\n说明：' + (entropy.reason || '暂无')
             ),
             renderDecisionCard(
                 '统一信号',
-                '内部阻力：' + (weightedScores.internal_resistance || 0)
-                + '\n确定性：' + (weightedScores.certainty || 0)
-                + '\n可执行性：' + (weightedScores.actionability || 0)
-                + '\n方向分：' + (weightedScores.direction_score || 0),
+                '内部阻力：' + formatOneDecimal(weightedScores.internal_resistance || 0)
+                + '\n确定性：' + formatOneDecimal(weightedScores.certainty || 0)
+                + '\n可执行性：' + formatOneDecimal(weightedScores.actionability || 0)
+                + '\n方向分：' + formatOneDecimal(weightedScores.direction_score || 0),
                 '<div class="metric-bars">' + metricBars + '</div>'
             ),
             renderDecisionCard(
@@ -59,7 +69,7 @@
                 '模块权重',
                 signals.length
                     ? ['当前有效先验：'].concat(signals.map(function (signal) {
-                        return signal.module + ': ' + ((weights[signal.module] || 0).toFixed(2));
+                        return signal.module + ': ' + formatWeight(weights[signal.module] || 0);
                     })).join('\n')
                     : '暂无'
             ),

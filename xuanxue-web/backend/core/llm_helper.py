@@ -321,11 +321,43 @@ class LLMHelper:
                 model=self.model,
                 messages=messages,
                 temperature=0.7,
-                max_tokens=1000,
+                max_tokens=1400,
                 timeout=self.chat_timeout,
             )
-            
-            return response.choices[0].message.content
+
+            if not response.choices:
+                return None
+
+            first_choice = response.choices[0]
+            first_content = (first_choice.message.content or "").strip()
+            finish_reason = getattr(first_choice, "finish_reason", None)
+
+            if finish_reason != "length" or not first_content:
+                return first_content or None
+
+            continuation_messages = list(messages)
+            continuation_messages.append({"role": "assistant", "content": first_content})
+            continuation_messages.append({
+                "role": "user",
+                "content": "你上一条回答在中途结束了。请从刚才中断的位置继续，不要重复前文，也不要另起开场。"
+            })
+
+            continuation = self.client.chat.completions.create(
+                model=self.model,
+                messages=continuation_messages,
+                temperature=0.7,
+                max_tokens=900,
+                timeout=self.chat_timeout,
+            )
+
+            if not continuation.choices:
+                return first_content
+
+            continuation_content = (continuation.choices[0].message.content or "").strip()
+            if not continuation_content:
+                return first_content
+
+            return first_content + "\n" + continuation_content
             
         except Exception as e:
             print(f"LLM对话失败: {str(e)}")

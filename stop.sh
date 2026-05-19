@@ -5,7 +5,8 @@
 set -u
 
 BACKEND_PORT=8002
-FRONTEND_PORT=8003
+FRONTEND_MODE="${FRONTEND_MODE:-nginx}"
+FRONTEND_PORT="${FRONTEND_PORT:-8003}"
 BACKEND_PID_FILE=/tmp/xuanxue-backend.pid
 FRONTEND_PID_FILE=/tmp/xuanxue-frontend.pid
 
@@ -61,22 +62,26 @@ else
     fi
 fi
 
-# 停止前端服务
-if [ -f "$FRONTEND_PID_FILE" ]; then
-    FRONTEND_PID=$(cat "$FRONTEND_PID_FILE")
-    stop_pid_if_running "$FRONTEND_PID" "前端服务"
-    rm -f "$FRONTEND_PID_FILE"
-else
-    echo "⚠️  未找到前端PID文件，尝试查找进程..."
-    PIDS=$(list_port_pids "$FRONTEND_PORT")
-    if [ -n "$PIDS" ]; then
-        echo "🛑 找到占用$FRONTEND_PORT端口的进程: $PIDS"
-        kill $PIDS >/dev/null 2>&1 || true
-        sleep 1
-        echo "✓ 前端进程已停止"
+if [ "$FRONTEND_MODE" = "local" ]; then
+    # 停止前端服务
+    if [ -f "$FRONTEND_PID_FILE" ]; then
+        FRONTEND_PID=$(cat "$FRONTEND_PID_FILE")
+        stop_pid_if_running "$FRONTEND_PID" "前端服务"
+        rm -f "$FRONTEND_PID_FILE"
     else
-        echo "✓ 没有找到运行中的前端服务"
+        echo "⚠️  未找到前端PID文件，尝试查找进程..."
+        PIDS=$(list_port_pids "$FRONTEND_PORT")
+        if [ -n "$PIDS" ]; then
+            echo "🛑 找到占用$FRONTEND_PORT端口的进程: $PIDS"
+            kill $PIDS >/dev/null 2>&1 || true
+            sleep 1
+            echo "✓ 前端进程已停止"
+        else
+            echo "✓ 没有找到运行中的前端服务"
+        fi
     fi
+else
+    echo "ℹ️  当前为 Nginx 统一出口模式，未管理本地前端静态服务"
 fi
 
 echo ""

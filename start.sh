@@ -14,7 +14,9 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 BACKEND_DIR="$SCRIPT_DIR/xuanxue-web/backend"
 FRONTEND_DIR="$SCRIPT_DIR/xuanxue-web/frontend"
 BACKEND_PORT=8002
-FRONTEND_PORT=8003
+FRONTEND_MODE="${FRONTEND_MODE:-nginx}"
+FRONTEND_PORT="${FRONTEND_PORT:-8003}"
+PUBLIC_ENTRY_URL="${PUBLIC_ENTRY_URL:-http://localhost/index.html}"
 BACKEND_LOG=/tmp/xuanxue-backend.log
 FRONTEND_LOG=/tmp/xuanxue-frontend.log
 BACKEND_PID_FILE=/tmp/xuanxue-backend.pid
@@ -109,7 +111,7 @@ cleanup_existing_services() {
         ensure_process_stopped "$(cat "$BACKEND_PID_FILE" 2>/dev/null || true)" "后端服务"
         rm -f "$BACKEND_PID_FILE"
     fi
-    if [ -f "$FRONTEND_PID_FILE" ]; then
+    if [ "$FRONTEND_MODE" = "local" ] && [ -f "$FRONTEND_PID_FILE" ]; then
         ensure_process_stopped "$(cat "$FRONTEND_PID_FILE" 2>/dev/null || true)" "前端服务"
         rm -f "$FRONTEND_PID_FILE"
     fi
@@ -122,7 +124,7 @@ cleanup_existing_services() {
             kill $backend_pids >/dev/null 2>&1 || true
         fi
     fi
-    if is_port_in_use "$FRONTEND_PORT"; then
+    if [ "$FRONTEND_MODE" = "local" ] && is_port_in_use "$FRONTEND_PORT"; then
         local frontend_pids
         frontend_pids="$(list_port_pids "$FRONTEND_PORT" | tr '\n' ' ')"
         if [ -n "$frontend_pids" ]; then
@@ -135,10 +137,12 @@ cleanup_existing_services() {
         echo "❌ 端口 $BACKEND_PORT 未能释放"
         exit 1
     }
-    wait_for_port_release "$FRONTEND_PORT" 20 1 || {
-        echo "❌ 端口 $FRONTEND_PORT 未能释放"
-        exit 1
-    }
+    if [ "$FRONTEND_MODE" = "local" ]; then
+        wait_for_port_release "$FRONTEND_PORT" 20 1 || {
+            echo "❌ 端口 $FRONTEND_PORT 未能释放"
+            exit 1
+        }
+    fi
     echo "✓ 旧服务清理完成"
     echo ""
 }
@@ -261,41 +265,51 @@ fi
 echo "✓ 关键接口已就绪"
 echo ""
 
-# 启动前端HTTP服务器
-echo "🌐 启动前端服务器..."
-cd "$FRONTEND_DIR"
-rm -f "$FRONTEND_LOG"
-setsid python3 -m http.server "$FRONTEND_PORT" > "$FRONTEND_LOG" 2>&1 < /dev/null &
-FRONTEND_PID=$!
-disown || true
-echo "✓ 前端服务器已启动 (PID: $FRONTEND_PID)"
-echo "   访问地址: http://localhost:$FRONTEND_PORT"
-echo "   日志文件: $FRONTEND_LOG"
-echo "$FRONTEND_PID" > "$FRONTEND_PID_FILE"
-echo ""
+if [ "$FRONTEND_MODE" = "local" ]; then
+    echo "🌐 启动前端服务器..."
+    cd "$FRONTEND_DIR"
+    rm -f "$FRONTEND_LOG"
+    setsid python3 -m http.server "$FRONTEND_PORT" > "$FRONTEND_LOG" 2>&1 < /dev/null &
+    FRONTEND_PID=$!
+    disown || true
+    echo "✓ 前端服务器已启动 (PID: $FRONTEND_PID)"
+    echo "   访问地址: http://localhost:$FRONTEND_PORT"
+    echo "   日志文件: $FRONTEND_LOG"
+    echo "$FRONTEND_PID" > "$FRONTEND_PID_FILE"
+    echo ""
 
-# 等待前端服务启动
-if wait_for_http "http://localhost:$FRONTEND_PORT/index.html" 10 1; then
-    echo "✓ 前端服务启动成功"
+    if wait_for_http "http://localhost:$FRONTEND_PORT/index.html" 10 1; then
+        echo "✓ 前端服务启动成功"
+    else
+        echo "❌ 前端服务启动失败"
+        show_recent_log "$FRONTEND_LOG"
+        kill "$FRONTEND_PID" >/dev/null 2>&1 || true
+        kill "$BACKEND_PID" >/dev/null 2>&1 || true
+        rm -f "$FRONTEND_PID_FILE" "$BACKEND_PID_FILE"
+        exit 1
+    fi
 else
-    echo "❌ 前端服务启动失败"
-    show_recent_log "$FRONTEND_LOG"
-    kill "$FRONTEND_PID" >/dev/null 2>&1 || true
-    kill "$BACKEND_PID" >/dev/null 2>&1 || true
-    rm -f "$FRONTEND_PID_FILE" "$BACKEND_PID_FILE"
-    exit 1
+    echo "🌐 前端入口模式: Nginx 统一出口"
+    echo "   未启动本地静态前端服务"
+    echo "   统一入口: $PUBLIC_ENTRY_URL"
+    echo ""
+    if wait_for_http "$PUBLIC_ENTRY_URL" 3 1; then
+        echo "✓ Nginx 统一入口可访问"
+    else
+        echo "⚠️  当前未检测到统一入口响应，请确认 Nginx 已启动并已代理到本项目"
+    fi
 fi
 
 # 打开浏览器
 if command -v xdg-open > /dev/null; then
-    xdg-open "http://localhost:$FRONTEND_PORT/index.html" 2>/dev/null &
+    xdg-open "$PUBLIC_ENTRY_URL" 2>/dev/null &
     echo "✓ 前端页面已在浏览器中打开"
 elif command -v gnome-open > /dev/null; then
-    gnome-open "http://localhost:$FRONTEND_PORT/index.html" 2>/dev/null &
+    gnome-open "$PUBLIC_ENTRY_URL" 2>/dev/null &
     echo "✓ 前端页面已在浏览器中打开"
 else
     echo "⚠️  无法自动打开浏览器"
-    echo "   请手动打开: http://localhost:$FRONTEND_PORT/index.html"
+    echo "   请手动打开: $PUBLIC_ENTRY_URL"
 fi
 
 echo ""
@@ -304,7 +318,11 @@ echo "  系统启动完成！"
 echo "======================================"
 echo ""
 echo "📌 使用说明："
-echo "   - 前端界面: http://localhost:$FRONTEND_PORT"
+if [ "$FRONTEND_MODE" = "local" ]; then
+    echo "   - 前端界面: http://localhost:$FRONTEND_PORT"
+else
+    echo "   - 统一入口: $PUBLIC_ENTRY_URL"
+fi
 echo "   - 后端API: http://localhost:$BACKEND_PORT"
 echo "   - API文档: http://localhost:$BACKEND_PORT/docs"
 echo ""
@@ -312,8 +330,12 @@ echo "📌 停止服务："
 echo "   运行: ./stop.sh"
 echo ""
 echo "💡 提示："
-echo "   - 前端日志: tail -f $FRONTEND_LOG"
 echo "   - 后端日志: tail -f $BACKEND_LOG"
+if [ "$FRONTEND_MODE" = "local" ]; then
+    echo "   - 前端日志: tail -f $FRONTEND_LOG"
+else
+    echo "   - 如需本地静态前端模式，可执行: FRONTEND_MODE=local ./start.sh"
+fi
 if [ -z "${ARK_API_KEY:-}" ]; then
     echo "   - AI功能: 未启用，设置方法见 AI配置指南.md"
 else

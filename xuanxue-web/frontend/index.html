@@ -42,6 +42,8 @@
         }
 
         .consult-primary-card {
+            display: grid;
+            gap: 18px;
             padding: 24px;
             border-radius: 28px;
             background:
@@ -57,7 +59,6 @@
             align-items: flex-start;
             justify-content: space-between;
             gap: 16px;
-            margin-bottom: 18px;
         }
 
         .consult-primary-copy {
@@ -1773,6 +1774,14 @@
                 border-radius: 22px;
             }
 
+            .consult-primary-card {
+                gap: 14px;
+            }
+
+            .consult-primary-head {
+                gap: 12px;
+            }
+
             .consult-primary-copy h3,
             .consult-side-card h3 {
                 font-size: 1.12rem;
@@ -1781,17 +1790,37 @@
 
             .consult-primary-copy p,
             .consult-side-card p {
-                font-size: 0.9rem;
-                line-height: 1.72;
+                font-size: 0.88rem;
+                line-height: 1.66;
             }
 
             .consult-progress-card {
-                padding: 14px;
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 8px;
+                padding: 13px 14px;
                 border-radius: 18px;
             }
 
+            .consult-progress-card strong {
+                width: 100%;
+                margin-bottom: 0;
+                font-size: 0.84rem;
+            }
+
+            .consult-progress-card span {
+                display: inline-flex;
+                width: auto;
+                padding: 6px 10px;
+                border-radius: 999px;
+                background: rgba(44, 91, 79, 0.06);
+                font-size: 0.76rem;
+                line-height: 1.4;
+            }
+
             .consult-form .form-group {
-                margin-bottom: 20px;
+                margin-bottom: 18px;
             }
 
             .consult-panel {
@@ -1887,6 +1916,7 @@
                 display: grid;
                 grid-template-columns: repeat(2, minmax(0, 1fr));
                 gap: 12px;
+                margin-top: 2px;
             }
 
             .consult-actions .btn {
@@ -1903,6 +1933,71 @@
                 grid-column: 1 / -1;
             }
 
+            .header-account {
+                margin-top: 0;
+            }
+
+            .header-account-card {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr);
+                align-items: start;
+                padding: 12px 14px;
+                border-radius: 18px;
+                gap: 10px;
+            }
+
+            .header-account-copy {
+                gap: 2px;
+            }
+
+            .header-account-copy strong {
+                font-size: 0.92rem;
+            }
+
+            .header-account-copy span {
+                font-size: 0.74rem;
+                line-height: 1.45;
+            }
+
+            .header-account-actions {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                width: 100%;
+                justify-content: stretch;
+                gap: 8px;
+            }
+
+            .consult-primary-card {
+                padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px));
+            }
+
+            .consult-actions {
+                position: sticky;
+                bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+                z-index: 12;
+                margin: 0 -2px;
+                padding: 12px;
+                border-radius: 20px;
+                background: rgba(250, 248, 243, 0.94);
+                border: 1px solid rgba(44, 91, 79, 0.1);
+                box-shadow: 0 18px 36px rgba(23, 45, 62, 0.12);
+                backdrop-filter: blur(14px);
+            }
+
+            .consult-actions::before {
+                content: "";
+                position: absolute;
+                inset: -12px 0 auto;
+                height: 16px;
+                background: linear-gradient(180deg, rgba(245, 247, 245, 0) 0%, rgba(245, 247, 245, 0.88) 100%);
+                pointer-events: none;
+            }
+
+            .consult-actions .btn {
+                min-height: 48px;
+                font-weight: 700;
+            }
+
             .consult-optional summary {
                 padding: 16px 18px;
             }
@@ -1917,27 +2012,27 @@
             }
 
             .header-account-card {
-                padding: 14px 16px;
+                padding: 12px 14px;
                 border-radius: 18px;
-                gap: 14px;
-            }
-
-            .header-account-actions {
-                width: 100%;
-                justify-content: flex-start;
+                gap: 10px;
             }
 
             .header-ghost-btn {
-                flex: 1 1 calc(50% - 5px);
                 justify-content: center;
+                width: 100%;
                 min-width: 0;
-                padding: 10px 12px;
+                padding: 9px 10px;
+                font-size: 0.78rem;
             }
 
             .consult-link-item,
             .saved-preset-item,
             .scenario-preset {
                 border-radius: 16px;
+            }
+
+            .consult-secondary-grid > *:not(:last-child) {
+                padding-bottom: 16px;
             }
 
             .visual-context-banner,
@@ -2018,6 +2113,10 @@
                 border-radius: 20px;
             }
 
+            .consult-primary-card {
+                gap: 12px;
+            }
+
             .page-title {
                 font-size: 1.35rem;
             }
@@ -2026,10 +2125,30 @@
                 font-size: 1.02rem;
             }
 
+            .consult-primary-copy p,
+            .consult-side-card p {
+                font-size: 0.84rem;
+                line-height: 1.6;
+            }
+
             .consult-focus-pill,
             .consult-side-card .eyebrow {
                 font-size: 0.7rem;
                 letter-spacing: 0.06em;
+            }
+
+            .consult-progress-card {
+                padding: 12px;
+                gap: 6px;
+            }
+
+            .consult-progress-card strong {
+                font-size: 0.8rem;
+            }
+
+            .consult-progress-card span {
+                padding: 5px 9px;
+                font-size: 0.72rem;
             }
 
             .consult-panel {
@@ -2073,27 +2192,43 @@
                 min-height: 42px;
             }
 
-            .consult-actions {
-                grid-template-columns: 1fr;
+            .header-account-card {
+                padding: 10px 12px;
+                gap: 8px;
             }
 
-            .header-account-card {
-                flex-direction: column;
-                align-items: stretch;
+            .header-account-copy strong {
+                font-size: 0.88rem;
+            }
+
+            .header-account-copy span {
+                font-size: 0.72rem;
             }
 
             .header-account-actions {
-                flex-direction: column;
-                justify-content: flex-start;
+                grid-template-columns: 1fr;
             }
 
-            .header-ghost-btn {
-                width: 100%;
-                flex: none;
+            .consult-primary-card {
+                padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+            }
+
+            .consult-actions {
+                bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+                padding: 10px;
+                border-radius: 18px;
             }
 
             .saved-preset-item {
                 padding: 12px;
+            }
+
+            .consult-secondary-grid > *:not(:last-child) {
+                padding-bottom: 14px;
+            }
+
+            .consult-loading {
+                margin-top: 10px;
             }
 
             .saved-preset-item .actions {
@@ -2427,8 +2562,8 @@
     <script src="visual-context-store.js?v=20260513-visual-draft"></script>
     <script src="auth-client.js?v=20260513-home-cleanup-2"></script>
     <script src="ai-status.js?v=20260513-home-cleanup-2"></script>
-    <script src="common-renderers.js?v=20260513-home-cleanup-2"></script>
-    <script src="decision-panel.js?v=20260513-home-cleanup-2"></script>
+    <script src="common-renderers.js?v=20260519-home-render-fix"></script>
+    <script src="decision-panel.js?v=20260519-home-render-fix"></script>
     <script src="trace-panel.js?v=20260513-home-cleanup-2"></script>
     <script src="consult-panel.js?v=20260513-home-cleanup-2"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>

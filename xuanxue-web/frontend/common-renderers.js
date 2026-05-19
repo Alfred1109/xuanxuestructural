@@ -7,6 +7,218 @@
         return esc(JSON.stringify(value ?? {}, null, 2));
     }
 
+    function isNumericLike(value) {
+        return typeof value === 'number'
+            || (typeof value === 'string' && value.trim() !== '' && !Number.isNaN(Number(value)));
+    }
+
+    function formatOneDecimal(value) {
+        var numeric = Number(value);
+        if (!Number.isFinite(numeric)) {
+            return String(value ?? '');
+        }
+        return numeric.toFixed(1);
+    }
+
+    function translateToken(token) {
+        var labels = {
+            wood: '木',
+            fire: '火',
+            earth: '土',
+            metal: '金',
+            water: '水',
+            yang: '阳',
+            yin: '阴',
+            same: '同',
+            different: '异',
+            high: '高',
+            medium: '中',
+            low: '低',
+            unknown: '未知',
+            balanced: '平衡型',
+            strategic: '战略型',
+            tactical: '战术型',
+            timing: '择时型',
+            wait: '等待',
+            go: '行动',
+            cautious: '谨慎推进',
+            hold: '暂缓',
+            space: '空间',
+            palm: '手相',
+            face: '面相',
+            bundle: '多图组合',
+            micro: '微观参考',
+            support: '支持度',
+            risk: '风险',
+            actionability: '可执行性',
+            certainty_hint: '确定性提示',
+            clarity: '清晰度',
+            confidence: '可信度',
+            jia: '甲',
+            yi: '乙',
+            bing: '丙',
+            ding: '丁',
+            wu: '戊',
+            ji: '己',
+            geng: '庚',
+            xin: '辛',
+            ren: '壬',
+            gui: '癸',
+            zi: '子',
+            chou: '丑',
+            yin: '寅',
+            mao: '卯',
+            chen: '辰',
+            si: '巳',
+            wu_zhi: '午',
+            wei: '未',
+            shen: '申',
+            you: '酉',
+            xu: '戌',
+            hai: '亥',
+            qian: '乾',
+            dui: '兑',
+            li: '离',
+            zhen: '震',
+            xun: '巽',
+            kan: '坎',
+            gen: '艮',
+            kun: '坤'
+        };
+        return labels[token] || token;
+    }
+
+    function translateStringValue(value) {
+        if (typeof value !== 'string') {
+            return value;
+        }
+
+        var exactLabels = {
+            unknown: '未知',
+            high: '高',
+            medium: '中',
+            low: '低',
+            balanced: '平衡型',
+            strategic: '战略型',
+            tactical: '战术型',
+            timing: '择时型',
+            wait: '等待',
+            go: '行动',
+            cautious: '谨慎推进',
+            hold: '暂缓',
+            space: '空间',
+            palm: '手相',
+            face: '面相',
+            bundle: '多图组合',
+            wood: '木',
+            fire: '火',
+            earth: '土',
+            metal: '金',
+            water: '水',
+            yang: '阳',
+            yin: '阴'
+        };
+        if (exactLabels[value]) {
+            return exactLabels[value];
+        }
+
+        var normalized = value.trim().toLowerCase();
+        if (exactLabels[normalized]) {
+            return exactLabels[normalized];
+        }
+
+        var ganzhiPinyin = {
+            jia: '甲', yi: '乙', bing: '丙', ding: '丁', wu: '戊', ji: '己', geng: '庚', xin: '辛', ren: '壬', gui: '癸',
+            zi: '子', chou: '丑', yin: '寅', mao: '卯', chen: '辰', si: '巳', wei: '未', shen: '申', you: '酉', xu: '戌', hai: '亥'
+        };
+        if (ganzhiPinyin[normalized]) {
+            return ganzhiPinyin[normalized];
+        }
+        if (normalized === 'wu') {
+            return value === 'wu' ? '戊' : value;
+        }
+
+        return value
+            .replace(/month index/gi, '月序')
+            .replace(/month gan index/gi, '月干索引')
+            .replace(/month zhi index/gi, '月支索引')
+            .replace(/hour zhi index/gi, '时支索引')
+            .replace(/hour gan index/gi, '时干索引')
+            .replace(/hour gan base/gi, '起始时干索引')
+            .replace(/day gan index/gi, '日干索引')
+            .replace(/gan index/gi, '天干索引')
+            .replace(/zhi index/gi, '地支索引')
+            .replace(/year pillar/gi, '年柱')
+            .replace(/month pillar/gi, '月柱')
+            .replace(/day pillar/gi, '日柱')
+            .replace(/hour pillar/gi, '时柱')
+            .replace(/birth time/gi, '出生时间')
+            .replace(/base date/gi, '基准日期')
+            .replace(/days diff/gi, '相差天数')
+            .replace(/year for ganzhi/gi, '用于取干支的年份')
+            .replace(/day master/gi, '日主')
+            .replace(/year yinyang/gi, '年干阴阳')
+            .replace(/age range/gi, '年龄区间')
+            .replace(/prev jie/gi, '前一节气')
+            .replace(/next jie/gi, '后一节气')
+            .replace(/delta days/gi, '相差天数')
+            .replace(/start age formula/gi, '起运公式')
+            .replace(/wuxing count/gi, '五行统计')
+            .replace(/boundaries/gi, '节气边界')
+            .replace(/comparison/gi, '比较')
+            .replace(/\bbirth_time\b/gi, '出生时间')
+            .replace(/\bbase_date\b/gi, '基准日期')
+            .replace(/\bdays_diff\b/gi, '相差天数')
+            .replace(/\byear_for_ganzhi\b/gi, '用于取干支的年份')
+            .replace(/\bmonth_index\b/gi, '月序')
+            .replace(/\bmonth_gan_index\b/gi, '月干索引')
+            .replace(/\bmonth_zhi_index\b/gi, '月支索引')
+            .replace(/\bhour_zhi_index\b/gi, '时支索引')
+            .replace(/\bhour_gan_index\b/gi, '时干索引')
+            .replace(/\bhour_gan_base\b/gi, '起始时干索引')
+            .replace(/\bday_gan_index\b/gi, '日干索引')
+            .replace(/\bgan_index\b/gi, '天干索引')
+            .replace(/\bzhi_index\b/gi, '地支索引')
+            .replace(/\byear_gan\b/gi, '年干')
+            .replace(/\bday_gan\b/gi, '日干')
+            .replace(/\bboundaries\b/gi, '节气边界')
+            .replace(/\bterm\b/gi, '节气')
+            .replace(/\bdate\b/gi, '日期')
+            .replace(/\bcomparison\b/gi, '比较')
+            .replace(/\bresult\b/gi, '结果')
+            .replace(/\bsource\b/gi, '来源')
+            .replace(/\binput\b/gi, '输入')
+            .replace(/\bfinal\b/gi, '最终结果')
+            .replace(/\bquality\b/gi, '质量评估')
+            .replace(/\bkind\b/gi, '类型')
+            .replace(/\bsteps\b/gi, '步骤')
+            .replace(/\bage_range\b/gi, '年龄区间')
+            .replace(/\bprev_jie\b/gi, '前一节气')
+            .replace(/\bnext_jie\b/gi, '后一节气')
+            .replace(/\bdelta_days\b/gi, '相差天数')
+            .replace(/\bstart_age_formula\b/gi, '起运公式')
+            .replace(/\bmonth_pillar\b/gi, '月柱')
+            .replace(/\byear_pillar\b/gi, '年柱')
+            .replace(/\bday_pillar\b/gi, '日柱')
+            .replace(/\bhour_pillar\b/gi, '时柱')
+            .replace(/\bwuxing_count\b/gi, '五行统计')
+            .replace(/\bday_master\b/gi, '日主')
+            .replace(/\byear_yinyang\b/gi, '年干阴阳')
+            .replace(/\bdirection\b/gi, '方向')
+            .replace(/\b(jia|yi|bing|ding|wu|ji|geng|xin|ren|gui)\b/gi, function (match) {
+                return ganzhiPinyin[match.toLowerCase()] || match;
+            })
+            .replace(/\b(zi|chou|yin|mao|chen|si|wei|shen|you|xu|hai)\b/gi, function (match) {
+                return ganzhiPinyin[match.toLowerCase()] || match;
+            })
+            .replace(/\b(qian|dui|li|zhen|xun|kan|gen|kun)\b/gi, function (match) {
+                return translateToken(match.toLowerCase());
+            })
+            .replace(/\b(wood|fire|earth|metal|water|yang|yin|high|medium|low|unknown|space|palm|face|bundle)\b/gi, function (match) {
+                return translateToken(match.toLowerCase());
+            });
+    }
+
     function renderMetricBar(label, value) {
         var numeric = Math.max(0, Math.min(100, Number(value) || 0));
         return [
@@ -42,8 +254,18 @@
             return '';
         }
 
-        if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-            return label ? (label + '：' + String(value)) : String(value);
+        if (typeof value === 'number') {
+            var numericValue = formatOneDecimal(value);
+            return label ? (label + '：' + numericValue) : numericValue;
+        }
+
+        if (typeof value === 'string') {
+            var translated = translateStringValue(value);
+            return label ? (label + '：' + translated) : translated;
+        }
+
+        if (typeof value === 'boolean') {
+            return label ? (label + '：' + (value ? '是' : '否')) : (value ? '是' : '否');
         }
 
         if (Array.isArray(value)) {
@@ -144,7 +366,38 @@
             recommendation: '行动建议',
             entropy: '熵值',
             weights: '权重',
-            decision_type: '决策类型'
+            decision_type: '决策类型',
+            gan: '天干',
+            zhi: '地支',
+            wuxing: '五行',
+            yinyang: '阴阳',
+            items: '明细',
+            totals: '汇总',
+            contributions: '贡献项',
+            source: '来源',
+            result: '结果',
+            input: '输入',
+            final: '最终结果',
+            quality: '质量评估',
+            kind: '类型',
+            base: '基础值',
+            adjustments: '调整项',
+            support: '支持度',
+            risk: '风险',
+            actionability: '可执行性',
+            certainty_hint: '确定性提示',
+            confidence: '可信度',
+            clarity: '清晰度',
+            earthly_branch: '地支',
+            five_elements_class: '五行局',
+            solar_input: '阳历输入',
+            lunar_output: '农历结果',
+            chinese_date: '中文日期',
+            solar_date: '阳历日期',
+            lunar_date: '农历日期',
+            time_range: '时辰范围',
+            sign: '星座',
+            zodiac: '生肖'
         };
         return labels[key] || String(key).replace(/_/g, ' ');
     }
@@ -170,6 +423,10 @@
         renderTraceText: renderTraceText,
         renderDecisionCard: renderDecisionCard,
         renderMetricBar: renderMetricBar,
-        renderTraceFieldBlock: renderTraceFieldBlock
+        renderTraceFieldBlock: renderTraceFieldBlock,
+        formatOneDecimal: formatOneDecimal,
+        translateStringValue: translateStringValue,
+        humanizeKey: humanizeKey,
+        isNumericLike: isNumericLike
     };
 })();
