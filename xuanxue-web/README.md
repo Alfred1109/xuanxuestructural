@@ -1,5 +1,17 @@
 # 玄学预测系统
 
+> 阅读顺序建议：
+>
+> - 本文：项目运行与目录导航
+> - [ARCHITECTURE.md](./ARCHITECTURE.md)：真实代码结构与职责边界
+> - [INTEGRATION_ROADMAP.md](./INTEGRATION_ROADMAP.md)：阶段性规划
+> - [INTEGRATION_IMPLEMENTATION_PLAN.md](./INTEGRATION_IMPLEMENTATION_PLAN.md)：细化实施记录
+>
+> 说明：
+>
+> - `backend/venv/` 是本机 Python 虚拟环境，不属于源码结构的一部分
+> - `backend/runtime/` 是运行期 JSON / JSONL 数据目录，属于本机状态，不应视为核心代码
+
 一个综合性的玄学预测平台，包含六大分支的完整功能。
 
 开发者可先阅读：
@@ -91,7 +103,13 @@ xuanxue-web/
 启动脚本会自动检查端口占用、虚拟环境和依赖，并启动：
 
 - 后端 API：`http://localhost:8002`
-- 前端页面：`http://localhost:8003/index.html`
+- 前端统一入口：`http://localhost/`
+
+当前默认部署模式：
+
+- `Nginx` 直接托管 `frontend/` 静态目录
+- `Nginx` 反向代理 `/api/`、`/docs`、`/openapi.json` 到 `8002`
+- 默认不再依赖本地 `8003` 静态服务
 
 ## 接口约定
 
@@ -113,8 +131,9 @@ xuanxue-web/
 - **配置**: `config.js` 统一管理 `API_BASE_URL` 和 AI 配置指南地址
 
 ### 部署
-- **本地开发**: `./start.sh` 启动 FastAPI 和静态前端
-- **生产部署**: Docker / Nginx / 云平台尚未在本仓库内提供现成配置
+- **本地/单机运行**: `./start.sh` 启动 FastAPI，并接入当前机器上的 Nginx 统一入口
+- **Nginx 模板**: 参考 `../deploy/nginx/xuanxue.conf`
+- **生产部署**: Docker / 云平台编排尚未在本仓库内提供现成配置
 
 ## 核心特性
 

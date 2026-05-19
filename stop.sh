@@ -21,6 +21,10 @@ list_port_pids() {
         lsof -ti:"$port" 2>/dev/null
         return 0
     fi
+    if command -v ss > /dev/null 2>&1; then
+        ss -ltnp "( sport = :$port )" 2>/dev/null | awk -F'pid=' 'NF>1 {split($2, a, ","); print a[1]}' | sort -u
+        return 0
+    fi
     return 1
 }
 
@@ -62,26 +66,24 @@ else
     fi
 fi
 
-if [ "$FRONTEND_MODE" = "local" ]; then
-    # 停止前端服务
-    if [ -f "$FRONTEND_PID_FILE" ]; then
-        FRONTEND_PID=$(cat "$FRONTEND_PID_FILE")
-        stop_pid_if_running "$FRONTEND_PID" "前端服务"
-        rm -f "$FRONTEND_PID_FILE"
+if [ -f "$FRONTEND_PID_FILE" ]; then
+    FRONTEND_PID=$(cat "$FRONTEND_PID_FILE")
+    stop_pid_if_running "$FRONTEND_PID" "前端服务"
+    rm -f "$FRONTEND_PID_FILE"
+else
+    PIDS=$(list_port_pids "$FRONTEND_PORT")
+    if [ -n "$PIDS" ]; then
+        echo "🛑 找到占用$FRONTEND_PORT端口的进程: $PIDS"
+        kill $PIDS >/dev/null 2>&1 || true
+        sleep 1
+        echo "✓ 前端进程已停止"
     else
-        echo "⚠️  未找到前端PID文件，尝试查找进程..."
-        PIDS=$(list_port_pids "$FRONTEND_PORT")
-        if [ -n "$PIDS" ]; then
-            echo "🛑 找到占用$FRONTEND_PORT端口的进程: $PIDS"
-            kill $PIDS >/dev/null 2>&1 || true
-            sleep 1
-            echo "✓ 前端进程已停止"
-        else
+        if [ "$FRONTEND_MODE" = "local" ]; then
             echo "✓ 没有找到运行中的前端服务"
+        else
+            echo "ℹ️  当前为 Nginx 统一出口模式，未检测到本地前端静态服务"
         fi
     fi
-else
-    echo "ℹ️  当前为 Nginx 统一出口模式，未管理本地前端静态服务"
 fi
 
 echo ""

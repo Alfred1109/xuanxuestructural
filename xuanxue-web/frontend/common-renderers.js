@@ -98,10 +98,17 @@
             high: '高',
             medium: '中',
             low: '低',
+            none: '无',
+            light: '轻度',
+            heavy: '重度',
             balanced: '平衡型',
             strategic: '战略型',
             tactical: '战术型',
             timing: '择时型',
+            temporal: '时序型',
+            baseline: '基础层',
+            window: '窗口层',
+            probe: '试探推进',
             wait: '等待',
             go: '行动',
             cautious: '谨慎推进',
@@ -110,13 +117,28 @@
             palm: '手相',
             face: '面相',
             bundle: '多图组合',
+            home: '住宅',
+            office: '办公室',
+            generic: '通用',
+            supported: '有靠',
+            neutral: '中性',
+            exposed: '暴露',
             wood: '木',
             fire: '火',
             earth: '土',
             metal: '金',
             water: '水',
             yang: '阳',
-            yin: '阴'
+            yin: '阴',
+            bazi: '八字',
+            ziwei: '紫微斗数',
+            qimen: '奇门遁甲',
+            liuyao: '六爻',
+            meihua: '梅花易数',
+            zeri: '择日',
+            fengshui: '风水',
+            location_context: '地点上下文',
+            purpose_specificity: '用途明确度'
         };
         if (exactLabels[value]) {
             return exactLabels[value];
@@ -166,6 +188,26 @@
             .replace(/wuxing count/gi, '五行统计')
             .replace(/boundaries/gi, '节气边界')
             .replace(/comparison/gi, '比较')
+            .replace(/symbol/gi, '符号')
+            .replace(/weight/gi, '权重')
+            .replace(/module/gi, '模块')
+            .replace(/layer/gi, '层级')
+            .replace(/raw/gi, '原始数据')
+            .replace(/reason/gi, '原因')
+            .replace(/effect/gi, '影响')
+            .replace(/name/gi, '名称')
+            .replace(/log id/gi, '日志编号')
+            .replace(/aggregate effect/gi, '汇总影响')
+            .replace(/weighted scores/gi, '加权得分')
+            .replace(/baseline strength/gi, '承载力')
+            .replace(/timing window/gi, '时机窗')
+            .replace(/external support/gi, '外部助力')
+            .replace(/internal resistance/gi, '内部阻力')
+            .replace(/risk exposure/gi, '风险暴露')
+            .replace(/direction score/gi, '方向分')
+            .replace(/decision expectancy/gi, '决策期望值')
+            .replace(/action level/gi, '行动等级')
+            .replace(/risk hedges/gi, '风险对冲')
             .replace(/\bbirth_time\b/gi, '出生时间')
             .replace(/\bbase_date\b/gi, '基准日期')
             .replace(/\bdays_diff\b/gi, '相差天数')
@@ -205,6 +247,20 @@
             .replace(/\bday_master\b/gi, '日主')
             .replace(/\byear_yinyang\b/gi, '年干阴阳')
             .replace(/\bdirection\b/gi, '方向')
+            .replace(/\blog_id\b/gi, '日志编号')
+            .replace(/\baggregate_effect\b/gi, '汇总影响')
+            .replace(/\bweighted_scores\b/gi, '加权得分')
+            .replace(/\bbaseline_strength\b/gi, '承载力')
+            .replace(/\btiming_window\b/gi, '时机窗')
+            .replace(/\bexternal_support\b/gi, '外部助力')
+            .replace(/\binternal_resistance\b/gi, '内部阻力')
+            .replace(/\brisk_exposure\b/gi, '风险暴露')
+            .replace(/\bdirection_score\b/gi, '方向分')
+            .replace(/\bdecision_expectancy\b/gi, '决策期望值')
+            .replace(/\baction_level\b/gi, '行动等级')
+            .replace(/\brisk_hedges\b/gi, '风险对冲')
+            .replace(/\blocation_context\b/gi, '地点上下文')
+            .replace(/\bpurpose_specificity\b/gi, '用途明确度')
             .replace(/\b(jia|yi|bing|ding|wu|ji|geng|xin|ren|gui)\b/gi, function (match) {
                 return ganzhiPinyin[match.toLowerCase()] || match;
             })
@@ -214,7 +270,10 @@
             .replace(/\b(qian|dui|li|zhen|xun|kan|gen|kun)\b/gi, function (match) {
                 return translateToken(match.toLowerCase());
             })
-            .replace(/\b(wood|fire|earth|metal|water|yang|yin|high|medium|low|unknown|space|palm|face|bundle)\b/gi, function (match) {
+            .replace(/\b(wood|fire|earth|metal|water|yang|yin|high|medium|low|unknown|space|palm|face|bundle|none|light|heavy|home|office|generic|supported|neutral|exposed)\b/gi, function (match) {
+                return translateToken(match.toLowerCase());
+            })
+            .replace(/\b(bazi|ziwei|qimen|liuyao|meihua|zeri|fengshui|strategic|tactical|timing|temporal|baseline|window|wait|go|cautious|hold|probe|location_context|purpose_specificity)\b/gi, function (match) {
                 return translateToken(match.toLowerCase());
             });
     }
@@ -237,6 +296,34 @@
             extra || '',
             '</div>'
         ].join('');
+    }
+
+    function renderInfoCard(className, title, value, meta) {
+        var cardClass = className || 'info-card';
+        return [
+            '<div class="' + esc(cardClass) + '">',
+            '  <div class="kicker">' + esc(meta || '') + '</div>',
+            '  <div class="title">' + esc(title || '未命名') + '</div>',
+            '  <div class="meta">' + esc(value || '') + '</div>',
+            '</div>'
+        ].join('');
+    }
+
+    function renderTraceItem(title, body) {
+        return [
+            '<div class="trace-item">',
+            '  <h4>' + esc(title || '未命名') + '</h4>',
+            '  <div class="trace-body">' + esc(body || '') + '</div>',
+            '</div>'
+        ].join('');
+    }
+
+    function renderTraceItems(items) {
+        return (Array.isArray(items) ? items : [])
+            .map(function (item) {
+                return renderTraceItem(item && item.title, item && item.body);
+            })
+            .join('');
     }
 
     function renderTraceFieldBlock(title, value, className) {
@@ -303,6 +390,33 @@
         return formatTraceValue(value, '');
     }
 
+    function normalizeKeyName(key) {
+        return String(key ?? '')
+            .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+            .replace(/[\s.\-\/]+/g, '_')
+            .replace(/_+/g, '_')
+            .replace(/^_+|_+$/g, '')
+            .toLowerCase();
+    }
+
+    function prettifyFallbackKey(key) {
+        var normalized = normalizeKeyName(key);
+        if (!normalized) {
+            return '';
+        }
+
+        var translated = translateStringValue(normalized);
+        if (translated !== normalized) {
+            return translated.replace(/_/g, ' ');
+        }
+
+        return String(key ?? '')
+            .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+            .replace(/[_./-]+/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
     function humanizeKey(key) {
         var labels = {
             question: '问题',
@@ -318,6 +432,8 @@
             answer: '结果',
             ai_enabled: 'AI 开关',
             ai: 'AI 状态',
+            aggregate: '汇总',
+            rationale: '依据',
             question_text: '问题',
             day_master: '日主',
             tiangan: '天干',
@@ -355,6 +471,7 @@
             suitable: '宜',
             avoid: '忌',
             candidate_days: '候选日期',
+            weekday: '星期',
             module_summaries: '模块摘要',
             modifiers: '修正项',
             signals: '决策信号',
@@ -367,6 +484,15 @@
             entropy: '熵值',
             weights: '权重',
             decision_type: '决策类型',
+            module: '模块',
+            layer: '层级',
+            raw: '原始数据',
+            reason: '原因',
+            effect: '影响',
+            name: '名称',
+            symbol: '符号',
+            weight: '权重',
+            log_id: '日志编号',
             gan: '天干',
             zhi: '地支',
             wuxing: '五行',
@@ -375,6 +501,8 @@
             totals: '汇总',
             contributions: '贡献项',
             source: '来源',
+            aggregate_effect: '汇总影响',
+            weighted_scores: '加权得分',
             result: '结果',
             input: '输入',
             final: '最终结果',
@@ -388,6 +516,15 @@
             certainty_hint: '确定性提示',
             confidence: '可信度',
             clarity: '清晰度',
+            baseline_strength: '承载力',
+            timing_window: '时机窗',
+            external_support: '外部助力',
+            internal_resistance: '内部阻力',
+            risk_exposure: '风险暴露',
+            direction_score: '方向分',
+            decision_expectancy: '决策期望值',
+            action_level: '行动等级',
+            risk_hedges: '风险对冲',
             earthly_branch: '地支',
             five_elements_class: '五行局',
             solar_input: '阳历输入',
@@ -396,10 +533,21 @@
             solar_date: '阳历日期',
             lunar_date: '农历日期',
             time_range: '时辰范围',
+            current_decadal: '当前大限',
+            fortune_cycle: '运程周期',
+            ranges: '区间',
+            fortune_advice: '运势建议',
+            image_quality: '图像质量',
+            lighting: '光照',
+            occlusion: '遮挡',
+            seat_backing: '靠山',
+            face_shape: '脸型',
             sign: '星座',
             zodiac: '生肖'
         };
-        return labels[key] || String(key).replace(/_/g, ' ');
+        var rawKey = String(key ?? '');
+        var normalizedKey = normalizeKeyName(rawKey);
+        return labels[rawKey] || labels[normalizedKey] || prettifyFallbackKey(rawKey);
     }
 
     function looksLikeBirth(value) {
@@ -422,7 +570,10 @@
         prettyJson: prettyJson,
         renderTraceText: renderTraceText,
         renderDecisionCard: renderDecisionCard,
+        renderInfoCard: renderInfoCard,
         renderMetricBar: renderMetricBar,
+        renderTraceItem: renderTraceItem,
+        renderTraceItems: renderTraceItems,
         renderTraceFieldBlock: renderTraceFieldBlock,
         formatOneDecimal: formatOneDecimal,
         translateStringValue: translateStringValue,

@@ -18,59 +18,6 @@
             gap: 12px;
             margin-top: 16px;
         }
-
-        .result-card {
-            background: rgba(255, 255, 255, 0.86);
-            border: 1px solid rgba(217, 226, 220, 0.92);
-            border-radius: 16px;
-            padding: 16px;
-        }
-
-        .result-card .kicker {
-            color: var(--color-text-soft);
-            font-size: 0.82rem;
-        }
-
-        .result-card .title {
-            font-size: 1.38rem;
-            font-weight: 700;
-            color: var(--color-primary-strong);
-            margin: 6px 0 8px;
-        }
-
-        .result-card .meta {
-            white-space: pre-wrap;
-            word-break: break-word;
-            line-height: 1.7;
-            color: var(--color-text);
-        }
-
-        .trace-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 12px;
-            margin-top: 16px;
-        }
-
-        .trace-item {
-            background: rgba(255, 255, 255, 0.84);
-            border: 1px solid rgba(217, 226, 220, 0.92);
-            border-radius: 14px;
-            padding: 14px;
-        }
-
-        .trace-item h4 {
-            color: var(--color-primary-strong);
-            margin-bottom: 8px;
-        }
-
-        .trace-item .trace-body {
-            white-space: pre-wrap;
-            word-break: break-word;
-            line-height: 1.7;
-            color: var(--color-text);
-            font-size: 0.92rem;
-        }
     </style>
 </head>
 <body>
@@ -173,37 +120,43 @@
     <script>
         const esc = (value) => (window.escapeHtml ? window.escapeHtml(value ?? '') : String(value ?? ''));
         const renderMarkdown = (text) => window.renderMarkdownSimple(text || '', '#173a34');
+        const renderers = window.commonRenderers || {};
+        const renderInfoCard = typeof renderers.renderInfoCard === 'function'
+            ? renderers.renderInfoCard
+            : function (className, title, value, meta) {
+                return [
+                    '<div class="' + esc(className || 'result-card') + '">',
+                    '  <div class="kicker">' + esc(meta || '') + '</div>',
+                    '  <div class="title">' + esc(title || '未命名') + '</div>',
+                    '  <div class="meta">' + esc(value || '') + '</div>',
+                    '</div>'
+                ].join('');
+            };
+        const renderTraceItems = typeof renderers.renderTraceItems === 'function'
+            ? renderers.renderTraceItems
+            : function (items) {
+                return (Array.isArray(items) ? items : []).map((item) => [
+                    '<div class="trace-item">',
+                    '  <h4>' + esc(item && item.title) + '</h4>',
+                    '  <div class="trace-body">' + esc(item && item.body) + '</div>',
+                    '</div>'
+                ].join('')).join('');
+            };
 
         if (window.applyCommonLinks) {
             window.applyCommonLinks();
         }
 
-        function renderCard(title, value, meta) {
-            return [
-                '<div class="result-card">',
-                '  <div class="kicker">' + esc(meta || '') + '</div>',
-                '  <div class="title">' + esc(title || '未命名') + '</div>',
-                '  <div class="meta">' + esc(value || '') + '</div>',
-                '</div>'
-            ].join('');
-        }
-
         function renderTrace(trace) {
-            const renderers = window.commonRenderers || {};
             const format = typeof renderers.renderTraceText === 'function'
                 ? renderers.renderTraceText
                 : function (value) { return typeof value === 'string' ? value : JSON.stringify(value, null, 2); };
 
-            return [
+            return renderTraceItems([
                 { title: '朝向推导', body: format(trace && trace.orientation ? trace.orientation : {}) },
                 { title: '布局推导', body: format(trace && trace.layout ? trace.layout : {}) },
                 { title: '综合结论', body: format(trace && trace.summary ? trace.summary : {}) }
-            ].map((item) => [
-                '<div class="trace-item">',
-                '  <h4>' + esc(item.title) + '</h4>',
-                '  <div class="trace-body">' + esc(item.body) + '</div>',
-                '</div>'
-            ].join('')).join('');
+            ]);
         }
 
         document.getElementById('fengshuiForm').addEventListener('submit', async (event) => {
@@ -226,10 +179,10 @@
                 const data = response.data || {};
 
                 document.getElementById('summaryGrid').innerHTML = [
-                    renderCard(data.orientation || '未知朝向', '朝向适配：' + (data.orientation_fit || 0) + '分', '朝向'),
-                    renderCard(data.scene_type || '通用空间', '空间支持：' + (data.space_support || 0) + '分', '场景'),
-                    renderCard(data.recommended_direction || '待判断', data.avoid_direction || '暂无回避方位', '宜 / 忌'),
-                    renderCard(String(data.layout_risk || 0), '布局风险分', '风险')
+                    renderInfoCard('result-card', data.orientation || '未知朝向', '朝向适配：' + (data.orientation_fit || 0) + '分', '朝向'),
+                    renderInfoCard('result-card', data.scene_type || '通用空间', '空间支持：' + (data.space_support || 0) + '分', '场景'),
+                    renderInfoCard('result-card', data.recommended_direction || '待判断', data.avoid_direction || '暂无回避方位', '宜 / 忌'),
+                    renderInfoCard('result-card', String(data.layout_risk || 0), '布局风险分', '风险')
                 ].join('');
 
                 document.getElementById('analysis').innerHTML = renderMarkdown([

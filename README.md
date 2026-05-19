@@ -1,5 +1,12 @@
 # 玄学体系总览
 
+> 这个文件主要保留“玄学知识体系”的概览说明。  
+> 如果你要运行、开发或部署当前项目，请优先查看：
+>
+> - [xuanxue-web/README.md](./xuanxue-web/README.md)
+> - [xuanxue-web/ARCHITECTURE.md](./xuanxue-web/ARCHITECTURE.md)
+> - [AI配置指南.md](./AI配置指南.md)
+
 > 玄学，源于"玄之又玄，众妙之门"（《道德经》），是中国传统文化中以阴阳五行为核心，探索天地人三才关系的知识体系。
 
 ---

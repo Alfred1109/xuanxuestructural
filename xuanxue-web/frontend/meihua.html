@@ -74,33 +74,6 @@
             color: rgba(255, 248, 236, 0.9);
         }
 
-        .trace-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 10px;
-            margin-top: 12px;
-        }
-
-        .trace-item {
-            background: rgba(255, 255, 255, 0.84);
-            border: 1px solid rgba(217, 226, 220, 0.92);
-            border-radius: 14px;
-            padding: 14px;
-        }
-
-        .trace-item h4 {
-            color: var(--color-primary-strong);
-            margin-bottom: 8px;
-        }
-
-        .trace-item .trace-body {
-            margin: 0;
-            white-space: pre-wrap;
-            word-break: break-word;
-            line-height: 1.7;
-            color: var(--color-text);
-            font-size: 0.92rem;
-        }
     </style>
 </head>
 <body>
@@ -184,6 +157,17 @@
     <script>
         const esc = (value) => (window.escapeHtml ? window.escapeHtml(value ?? '') : String(value ?? ''));
         const renderMarkdown = (text) => window.renderMarkdownSimple(text || '', '#173a34');
+        const renderers = window.commonRenderers || {};
+        const renderTraceItems = typeof renderers.renderTraceItems === 'function'
+            ? renderers.renderTraceItems
+            : function (items) {
+                return (Array.isArray(items) ? items : []).map((item) => `
+                    <div class="trace-item">
+                        <h4>${esc(item && item.title)}</h4>
+                        <div class="trace-body">${esc(item && item.body)}</div>
+                    </div>
+                `).join('');
+            };
         let currentMethod = 'time';
 
         if (window.applyCommonLinks) {
@@ -217,7 +201,6 @@
         }
 
         function formatTraceText(value, label = '') {
-            const renderers = window.commonRenderers || {};
             if (typeof renderers.renderTraceText === 'function') {
                 const text = renderers.renderTraceText(label ? { [label]: value } : value);
                 if (label && text.startsWith(label + '：')) {
@@ -238,7 +221,7 @@
             const biangua = trace && trace.biangua ? trace.biangua : {};
             const tiyong = trace && trace.tiyong ? trace.tiyong : {};
 
-            return [
+            return renderTraceItems([
                 {
                     title: '起卦源',
                     body: formatTraceText(source)
@@ -263,12 +246,7 @@
                     title: '体用',
                     body: `体：${tiyong.ti && tiyong.ti.name}(${tiyong.ti && tiyong.ti.wuxing})\n用：${tiyong.yong && tiyong.yong.name}(${tiyong.yong && tiyong.yong.wuxing})\n关系：${tiyong.relation || ''}\n判断：${tiyong.summary || ''}`
                 }
-            ].map((item) => `
-                <div class="trace-item">
-                    <h4>${esc(item.title)}</h4>
-                    <div class="trace-body">${esc(item.body)}</div>
-                </div>
-            `).join('');
+            ]);
         }
 
         document.getElementById('meihuaForm').addEventListener('submit', async (event) => {

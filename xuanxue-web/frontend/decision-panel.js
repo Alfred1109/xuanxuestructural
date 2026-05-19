@@ -5,6 +5,7 @@
     var renderMetricBar = renderers.renderMetricBar || function () { return ''; };
     var renderDecisionCard = renderers.renderDecisionCard || function () { return ''; };
     var translateStringValue = renderers.translateStringValue || function (value) { return String(value ?? ''); };
+    var humanizeKey = renderers.humanizeKey || function (value) { return String(value ?? ''); };
     var formatOneDecimal = renderers.formatOneDecimal || function (value) {
         var numeric = Number(value);
         return Number.isFinite(numeric) ? numeric.toFixed(1) : String(value ?? '');
@@ -40,7 +41,7 @@
         mountEl.innerHTML = [
             renderDecisionCard(
                 '决策类型',
-                '类型：' + (decisionKernel.decision_type || 'balanced')
+                '类型：' + translateStringValue(decisionKernel.decision_type || 'balanced')
                 + '\n行动等级：' + translateStringValue(recommendation.action_level || 'wait')
                 + '\n决策期望值：' + formatOneDecimal(recommendation.decision_expectancy || 0)
                 + '\n日志编号：' + (((payload || {}).decision_log || {}).log_id || '暂无')
@@ -69,7 +70,7 @@
                 '模块权重',
                 signals.length
                     ? ['当前有效先验：'].concat(signals.map(function (signal) {
-                        return signal.module + ': ' + formatWeight(weights[signal.module] || 0);
+                        return translateStringValue(signal.module || humanizeKey('module')) + ': ' + formatWeight(weights[signal.module] || 0);
                     })).join('\n')
                     : '暂无'
             ),
@@ -77,7 +78,7 @@
                 '环境修正',
                 modifiers.length
                     ? modifiers.map(function (modifier) {
-                        return modifier.name + ': ' + modifier.reason;
+                        return translateStringValue(modifier.name || '') + ': ' + modifier.reason;
                     }).join('\n')
                     : '暂无环境修正项'
             ),

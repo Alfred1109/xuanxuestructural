@@ -16,7 +16,7 @@ FRONTEND_DIR="$SCRIPT_DIR/xuanxue-web/frontend"
 BACKEND_PORT=8002
 FRONTEND_MODE="${FRONTEND_MODE:-nginx}"
 FRONTEND_PORT="${FRONTEND_PORT:-8003}"
-PUBLIC_ENTRY_URL="${PUBLIC_ENTRY_URL:-http://localhost/index.html}"
+PUBLIC_ENTRY_URL="${PUBLIC_ENTRY_URL:-http://localhost/}"
 BACKEND_LOG=/tmp/xuanxue-backend.log
 FRONTEND_LOG=/tmp/xuanxue-frontend.log
 BACKEND_PID_FILE=/tmp/xuanxue-backend.pid
@@ -111,7 +111,7 @@ cleanup_existing_services() {
         ensure_process_stopped "$(cat "$BACKEND_PID_FILE" 2>/dev/null || true)" "后端服务"
         rm -f "$BACKEND_PID_FILE"
     fi
-    if [ "$FRONTEND_MODE" = "local" ] && [ -f "$FRONTEND_PID_FILE" ]; then
+    if [ -f "$FRONTEND_PID_FILE" ]; then
         ensure_process_stopped "$(cat "$FRONTEND_PID_FILE" 2>/dev/null || true)" "前端服务"
         rm -f "$FRONTEND_PID_FILE"
     fi
@@ -124,7 +124,7 @@ cleanup_existing_services() {
             kill $backend_pids >/dev/null 2>&1 || true
         fi
     fi
-    if [ "$FRONTEND_MODE" = "local" ] && is_port_in_use "$FRONTEND_PORT"; then
+    if is_port_in_use "$FRONTEND_PORT"; then
         local frontend_pids
         frontend_pids="$(list_port_pids "$FRONTEND_PORT" | tr '\n' ' ')"
         if [ -n "$frontend_pids" ]; then
@@ -290,7 +290,8 @@ if [ "$FRONTEND_MODE" = "local" ]; then
     fi
 else
     echo "🌐 前端入口模式: Nginx 统一出口"
-    echo "   未启动本地静态前端服务"
+    echo "   静态目录: $FRONTEND_DIR"
+    echo "   未启动本地前端静态服务"
     echo "   统一入口: $PUBLIC_ENTRY_URL"
     echo ""
     if wait_for_http "$PUBLIC_ENTRY_URL" 3 1; then
@@ -322,6 +323,7 @@ if [ "$FRONTEND_MODE" = "local" ]; then
     echo "   - 前端界面: http://localhost:$FRONTEND_PORT"
 else
     echo "   - 统一入口: $PUBLIC_ENTRY_URL"
+    echo "   - 静态目录: $FRONTEND_DIR"
 fi
 echo "   - 后端API: http://localhost:$BACKEND_PORT"
 echo "   - API文档: http://localhost:$BACKEND_PORT/docs"

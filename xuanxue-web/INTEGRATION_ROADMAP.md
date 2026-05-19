@@ -1,5 +1,10 @@
 # 玄学系统集成线路图
 
+> 文档状态：阶段性规划文档  
+> 用途：描述中长期集成方向与能力版图，不作为“当前实现事实”的唯一依据。  
+> 如果你要确认当前代码真实结构，请优先查看 [ARCHITECTURE.md](./ARCHITECTURE.md)。  
+> 如果你要看更细的落地拆解，请查看 [INTEGRATION_IMPLEMENTATION_PLAN.md](./INTEGRATION_IMPLEMENTATION_PLAN.md)。
+
 本文用于说明当前系统已经覆盖的玄学能力、整体系统边界，以及下一阶段继续增强集成化时的推荐接入路线。
 
 适用对象：

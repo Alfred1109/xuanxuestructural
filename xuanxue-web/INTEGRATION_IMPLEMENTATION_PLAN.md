@@ -1,5 +1,10 @@
 # 玄学系统集成实施规划
 
+> 文档状态：阶段性实施规划 / 历史实施参考  
+> 用途：说明某一阶段“准备如何做”和“曾经如何拆解任务”，不保证与当前代码完全同步。  
+> 如果你要确认当前代码真实结构，请优先查看 [ARCHITECTURE.md](./ARCHITECTURE.md)。  
+> 如果你要看系统中长期目标版图，请查看 [INTEGRATION_ROADMAP.md](./INTEGRATION_ROADMAP.md)。
+
 本文是在 [INTEGRATION_ROADMAP.md](./INTEGRATION_ROADMAP.md) 的基础上，进一步落成的实施规划版文档。
 
 如果说路线图回答的是“系统未来应该长成什么样”，那么本文回答的是：

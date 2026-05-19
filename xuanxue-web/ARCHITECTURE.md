@@ -1,5 +1,13 @@
 # 架构说明
 
+> 文档状态：当前事实来源  
+> 适用场景：查看当前代码组织、模块边界、兼容层策略、请求流与维护约束。  
+> 相关文档：
+>
+> - [README.md](./README.md)：运行入口与目录导航
+> - [INTEGRATION_ROADMAP.md](./INTEGRATION_ROADMAP.md)：中长期规划版图
+> - [INTEGRATION_IMPLEMENTATION_PLAN.md](./INTEGRATION_IMPLEMENTATION_PLAN.md)：阶段性实施拆解与历史参考
+
 本文面向开发者，说明当前 `xuanxue-web/` 的真实代码结构、主要数据流、兼容层策略，以及后续扩展时应遵守的边界。
 
 ## 1. 设计目标
