@@ -22,6 +22,7 @@ from api.fengshui import router as fengshui_router
 from api.location import router as location_router
 from api.system import router as system_router
 from api.ziwei import router as ziwei_router
+from core.auth import ensure_superadmin_account
 from core.llm_helper import llm_helper
 
 
@@ -33,6 +34,7 @@ app = FastAPI(
 
 
 configure_cors(app)
+ensure_superadmin_account()
 
 
 @app.middleware("http")

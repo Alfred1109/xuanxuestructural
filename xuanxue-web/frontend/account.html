@@ -229,6 +229,46 @@
             align-items: start;
         }
 
+        .account-section-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+
+        .account-section-tab {
+            appearance: none;
+            border: 1px solid rgba(44, 91, 79, 0.12);
+            background: rgba(44, 91, 79, 0.04);
+            color: var(--color-primary-dark);
+            border-radius: 999px;
+            padding: 10px 16px;
+            font-size: 0.86rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+        }
+
+        .account-section-tab:hover {
+            transform: translateY(-1px);
+            background: rgba(44, 91, 79, 0.08);
+        }
+
+        .account-section-tab.active {
+            background: var(--color-primary);
+            border-color: var(--color-primary);
+            color: #ffffff;
+            box-shadow: 0 10px 20px rgba(23, 58, 52, 0.12);
+        }
+
+        .account-tab-panel {
+            display: none;
+        }
+
+        .account-tab-panel.show {
+            display: block;
+        }
+
         .account-panel-card {
             background: #ffffff;
             border: 1px solid var(--color-line);
@@ -534,6 +574,189 @@
             color: var(--color-text-secondary);
         }
 
+        .admin-panel {
+            display: none;
+            gap: 18px;
+        }
+
+        .admin-panel.show {
+            display: grid;
+        }
+
+        .admin-kicker {
+            display: inline-flex;
+            width: fit-content;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(168, 116, 60, 0.12);
+            color: #8a541f;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+        }
+
+        .admin-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+        }
+
+        .admin-stat-card {
+            border-radius: 16px;
+            border: 1px solid rgba(44, 91, 79, 0.08);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(249, 247, 242, 0.98) 100%);
+            padding: 16px;
+        }
+
+        .admin-stat-card .label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--color-text-secondary);
+        }
+
+        .admin-stat-card .value {
+            display: block;
+            margin-top: 8px;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--color-primary-dark);
+        }
+
+        .admin-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+            gap: 18px;
+        }
+
+        .admin-card {
+            border-radius: 18px;
+            border: 1px solid rgba(44, 91, 79, 0.08);
+            background: linear-gradient(180deg, rgba(247, 248, 246, 0.82) 0%, rgba(252, 252, 250, 0.96) 100%);
+            padding: 18px;
+        }
+
+        .admin-card h4 {
+            margin-bottom: 6px;
+        }
+
+        .admin-card p {
+            margin-bottom: 14px;
+            color: var(--color-text-secondary);
+            font-size: 0.88rem;
+        }
+
+        .admin-table-wrap {
+            overflow: auto;
+            border-radius: 14px;
+            border: 1px solid rgba(44, 91, 79, 0.08);
+            background: #ffffff;
+        }
+
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 720px;
+        }
+
+        .admin-table th,
+        .admin-table td {
+            padding: 12px 14px;
+            text-align: left;
+            border-bottom: 1px solid rgba(44, 91, 79, 0.08);
+            font-size: 0.84rem;
+            vertical-align: top;
+        }
+
+        .admin-table th {
+            color: var(--color-primary-dark);
+            background: rgba(44, 91, 79, 0.04);
+            font-size: 0.8rem;
+        }
+
+        .admin-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .admin-list-item {
+            border-radius: 14px;
+            border: 1px solid rgba(44, 91, 79, 0.08);
+            background: #ffffff;
+            padding: 14px;
+        }
+
+        .admin-list-item strong {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--color-text);
+        }
+
+        .admin-list-item .meta {
+            color: var(--color-text-secondary);
+            font-size: 0.82rem;
+            line-height: 1.65;
+        }
+
+        .admin-activity-block {
+            display: grid;
+            gap: 10px;
+        }
+
+        .admin-pagination {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+
+        .admin-pagination-info {
+            color: var(--color-text-secondary);
+            font-size: 0.82rem;
+        }
+
+        .admin-pagination-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .admin-page-btn {
+            appearance: none;
+            border: 1px solid rgba(44, 91, 79, 0.12);
+            background: rgba(44, 91, 79, 0.04);
+            color: var(--color-primary-dark);
+            border-radius: 999px;
+            padding: 8px 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .admin-page-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .admin-chip-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .admin-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 10px;
+            border-radius: 999px;
+            background: rgba(44, 91, 79, 0.08);
+            color: var(--color-primary-dark);
+            font-size: 0.74rem;
+            font-weight: 600;
+        }
+
         .auth-modal {
             position: fixed;
             inset: 0;
@@ -648,6 +871,7 @@
 
         @media (max-width: 980px) {
             .account-overview-inner,
+            .admin-grid,
             .history-stack,
             .auth-dialog {
                 grid-template-columns: 1fr;
@@ -776,77 +1000,133 @@
 
                 <div id="accountAuthedContent" style="display:none;">
                     <div class="account-layout">
-                        <div class="account-panel-card account-profile-card">
-                            <h4>账号资料</h4>
-                            <form id="accountProfileForm">
-                                <div class="account-form-grid">
-                                    <div class="form-group span-3">
-                                        <label for="profileDisplayName">昵称</label>
-                                        <input id="profileDisplayName" type="text" maxlength="40" placeholder="怎么称呼你">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="profileGender">性别</label>
-                                        <select id="profileGender">
-                                            <option value="">可选</option>
-                                            <option value="男">男</option>
-                                            <option value="女">女</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group span-2 location-field">
-                                        <label for="profileLocation">常用地点</label>
-                                        <div class="location-input-row">
-                                            <input id="profileLocation" type="text" maxlength="80" placeholder="例如：上海浦东 / 陆家嘴办公区 / 家中书房">
-                                            <button type="button" class="location-ghost-btn" id="detectProfileLocationBtn">定位当前城市</button>
-                                        </div>
-                                        <div class="account-form-note">识别后你仍可以手动继续补充到更精确的位置描述。</div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="profileYear">出生年份</label>
-                                        <input id="profileYear" type="number" min="1900" max="2100" placeholder="可选">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="profileMonth">出生月份</label>
-                                        <input id="profileMonth" type="number" min="1" max="12" placeholder="可选">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="profileDay">出生日期</label>
-                                        <input id="profileDay" type="number" min="1" max="31" placeholder="可选">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="profileHour">出生时辰</label>
-                                        <input id="profileHour" type="number" min="0" max="23" placeholder="可选">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="profileMinute">出生分钟</label>
-                                        <input id="profileMinute" type="number" min="0" max="59" placeholder="可选">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="profileCurrentPassword">当前密码</label>
-                                        <input id="profileCurrentPassword" type="password" placeholder="仅在修改密码时填写">
-                                    </div>
-                                    <div class="form-group span-3">
-                                        <label for="profileNewPassword">新密码</label>
-                                        <input id="profileNewPassword" type="password" placeholder="留空则不修改密码">
-                                        <div class="account-form-note">修改密码时需要同时填写当前密码。昵称、出生资料和常用地点会作为默认账号资料保存。</div>
-                                    </div>
-                                </div>
-                                <div class="consult-actions">
-                                    <button type="submit" class="btn">保存账号资料</button>
-                                </div>
-                            </form>
+                        <div class="account-section-tabs" id="accountSectionTabs">
+                            <button type="button" class="account-section-tab active" data-account-tab="profile">个人信息</button>
+                            <button type="button" class="account-section-tab" data-account-tab="history">问事历史</button>
+                            <button type="button" class="account-section-tab" data-account-tab="admin" id="adminSectionTab" style="display:none;">管理页面</button>
                         </div>
 
-                        <div class="account-panel-card account-history-card">
-                            <div class="account-history-head">
-                                <div>
-                                    <h4>问事历史</h4>
-                                    <p>左侧快速浏览历史记录，右侧展开完整结论与分项依据。</p>
-                                </div>
-                                <div class="history-count-pill" id="historyCountPill">0 条记录</div>
+                        <div class="account-tab-panel show" data-account-panel="profile">
+                            <div class="account-panel-card account-profile-card">
+                                <h4>账号资料</h4>
+                                <form id="accountProfileForm">
+                                    <div class="account-form-grid">
+                                        <div class="form-group span-3">
+                                            <label for="profileDisplayName">昵称</label>
+                                            <input id="profileDisplayName" type="text" maxlength="40" placeholder="怎么称呼你">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="profileGender">性别</label>
+                                            <select id="profileGender">
+                                                <option value="">可选</option>
+                                                <option value="男">男</option>
+                                                <option value="女">女</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group span-2 location-field">
+                                            <label for="profileLocation">常用地点</label>
+                                            <div class="location-input-row">
+                                                <input id="profileLocation" type="text" maxlength="80" placeholder="例如：上海浦东 / 陆家嘴办公区 / 家中书房">
+                                                <button type="button" class="location-ghost-btn" id="detectProfileLocationBtn">定位当前城市</button>
+                                            </div>
+                                            <div class="account-form-note">识别后你仍可以手动继续补充到更精确的位置描述。</div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="profileYear">出生年份</label>
+                                            <input id="profileYear" type="number" min="1900" max="2100" placeholder="可选">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="profileMonth">出生月份</label>
+                                            <input id="profileMonth" type="number" min="1" max="12" placeholder="可选">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="profileDay">出生日期</label>
+                                            <input id="profileDay" type="number" min="1" max="31" placeholder="可选">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="profileHour">出生时辰</label>
+                                            <input id="profileHour" type="number" min="0" max="23" placeholder="可选">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="profileMinute">出生分钟</label>
+                                            <input id="profileMinute" type="number" min="0" max="59" placeholder="可选">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="profileCurrentPassword">当前密码</label>
+                                            <input id="profileCurrentPassword" type="password" placeholder="仅在修改密码时填写">
+                                        </div>
+                                        <div class="form-group span-3">
+                                            <label for="profileNewPassword">新密码</label>
+                                            <input id="profileNewPassword" type="password" placeholder="留空则不修改密码">
+                                            <div class="account-form-note">修改密码时需要同时填写当前密码。昵称、出生资料和常用地点会作为默认账号资料保存。</div>
+                                        </div>
+                                    </div>
+                                    <div class="consult-actions">
+                                        <button type="submit" class="btn">保存账号资料</button>
+                                    </div>
+                                </form>
                             </div>
-                            <div class="history-stack">
-                                <div id="historyList" class="history-list"></div>
-                                <div id="historyDetail" class="history-detail"></div>
+                        </div>
+
+                        <div class="account-tab-panel" data-account-panel="history">
+                            <div class="account-panel-card account-history-card">
+                                <div class="account-history-head">
+                                    <div>
+                                        <h4>问事历史</h4>
+                                        <p>左侧快速浏览历史记录，右侧展开完整结论与分项依据。</p>
+                                    </div>
+                                    <div class="history-count-pill" id="historyCountPill">0 条记录</div>
+                                </div>
+                                <div class="history-stack">
+                                    <div id="historyList" class="history-list"></div>
+                                    <div id="historyDetail" class="history-detail"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="account-tab-panel" data-account-panel="admin" id="adminPanel">
+                            <div class="account-panel-card">
+                                <span class="admin-kicker">Admin Dashboard</span>
+                                <h4 style="margin-top:10px;">管理员看板</h4>
+                                <p style="margin-bottom:16px; color: var(--color-text-secondary);">`superadmin` 登录后可查看用户概况、最近活跃与统一问事使用记录。</p>
+                                <div id="adminSummaryGrid" class="admin-summary-grid"></div>
+                            </div>
+
+                            <div class="admin-grid">
+                                <div class="admin-card">
+                                    <h4>用户管理</h4>
+                                    <p>当前注册用户、角色、资料完整度与最近更新时间。</p>
+                                    <div class="admin-table-wrap">
+                                        <table class="admin-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>昵称 / 邮箱</th>
+                                                    <th>角色</th>
+                                                    <th>性别</th>
+                                                    <th>地点</th>
+                                                    <th>出生资料</th>
+                                                    <th>更新时间</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="adminUserTableBody"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div class="admin-card">
+                                    <h4>用户使用记录</h4>
+                                    <p>最近统一问事活动、模块分布与用途偏好。</p>
+                                    <div class="admin-activity-block">
+                                        <div id="adminRecentActivity" class="admin-list"></div>
+                                        <div class="admin-pagination">
+                                            <div id="adminPaginationInfo" class="admin-pagination-info"></div>
+                                            <div class="admin-pagination-actions">
+                                                <button type="button" class="admin-page-btn" id="adminPrevPageBtn">上一页</button>
+                                                <button type="button" class="admin-page-btn" id="adminNextPageBtn">下一页</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -4,23 +4,28 @@ from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, Field, model_validator
 
 from core.auth import (
+    build_admin_user_metrics,
     delete_user_consult_preset,
+    ensure_superadmin_account,
     extract_token_from_request,
     login_user,
+    list_all_users,
     list_user_consult_presets,
     logout_session,
     public_user,
     register_user,
+    resolve_admin_user,
     resolve_authenticated_user,
     save_user_consult_preset,
     update_user_account,
 )
-from core.consult_history import get_consult_history_detail, list_consult_history
+from core.consult_history import build_consult_activity_summary, get_consult_history_detail, list_consult_history
 
 from .common import success_response
 
 
 router = APIRouter()
+ensure_superadmin_account()
 
 
 class RegisterRequest(BaseModel):
@@ -140,3 +145,22 @@ async def auth_consult_preset_delete(preset_id: str, request: Request):
     user = resolve_authenticated_user(request)
     items = delete_user_consult_preset(str(user.get("user_id")), preset_id)
     return success_response({"items": items, "count": len(items)}, request=request)
+
+
+@router.get("/api/admin/users")
+async def admin_users(request: Request):
+    resolve_admin_user(request)
+    items = list_all_users()
+    return success_response({"items": items, "count": len(items)}, request=request)
+
+
+@router.get("/api/admin/dashboard")
+async def admin_dashboard(request: Request):
+    resolve_admin_user(request)
+    return success_response(
+        {
+            "users": build_admin_user_metrics(),
+            "usage": build_consult_activity_summary(limit=200),
+        },
+        request=request,
+    )

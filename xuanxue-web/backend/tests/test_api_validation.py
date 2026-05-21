@@ -330,6 +330,22 @@ class TestApiValidation(unittest.TestCase):
         self.assertEqual(profile_payload["data"]["user"]["display_name"], "新昵称")
         self.assertEqual(profile_payload["data"]["user"]["profile"]["location"], "上海")
 
+        profile_without_password_resp = self.request(
+            "PATCH",
+            "/api/auth/profile",
+            headers={"Authorization": "Bearer " + token},
+            json={
+                "display_name": "只改资料",
+                "location": "杭州",
+                "current_password": "",
+                "new_password": "",
+            },
+        )
+        self.assertEqual(profile_without_password_resp.status_code, 200)
+        profile_without_password_payload = self.assert_success_envelope(profile_without_password_resp)
+        self.assertEqual(profile_without_password_payload["data"]["user"]["display_name"], "只改资料")
+        self.assertEqual(profile_without_password_payload["data"]["user"]["profile"]["location"], "杭州")
+
         consult_resp = self.request(
             "POST",
             "/api/system/consult",
@@ -429,6 +445,60 @@ class TestApiValidation(unittest.TestCase):
         )
         self.assertEqual(login_resp.status_code, 401)
         self.assert_error_envelope(login_resp, "unauthorized")
+
+    def test_admin_dashboard_requires_admin_role(self):
+        register_resp = self.request(
+            "POST",
+            "/api/auth/register",
+            json={
+                "email": "member@example.com",
+                "password": "password123",
+                "display_name": "普通成员",
+            },
+        )
+        register_payload = self.assert_success_envelope(register_resp)
+        token = register_payload["data"]["token"]
+
+        forbidden_resp = self.request(
+            "GET",
+            "/api/admin/dashboard",
+            headers={"Authorization": "Bearer " + token},
+        )
+        self.assertEqual(forbidden_resp.status_code, 403)
+        self.assert_error_envelope(forbidden_resp, "forbidden")
+
+    def test_superadmin_can_access_admin_dashboard(self):
+        login_resp = self.request(
+            "POST",
+            "/api/auth/login",
+            json={
+                "email": "superadmin@xuanxue.local",
+                "password": "SuperAdmin2026!",
+            },
+        )
+        self.assertEqual(login_resp.status_code, 200)
+        login_payload = self.assert_success_envelope(login_resp)
+        self.assertTrue(login_payload["data"]["user"]["is_admin"])
+        token = login_payload["data"]["token"]
+
+        dashboard_resp = self.request(
+            "GET",
+            "/api/admin/dashboard",
+            headers={"Authorization": "Bearer " + token},
+        )
+        self.assertEqual(dashboard_resp.status_code, 200)
+        dashboard_payload = self.assert_success_envelope(dashboard_resp)
+        self.assertIn("users", dashboard_payload["data"])
+        self.assertIn("usage", dashboard_payload["data"])
+
+        users_resp = self.request(
+            "GET",
+            "/api/admin/users",
+            headers={"Authorization": "Bearer " + token},
+        )
+        self.assertEqual(users_resp.status_code, 200)
+        users_payload = self.assert_success_envelope(users_resp)
+        self.assertGreaterEqual(users_payload["data"]["count"], 1)
 
     def test_ai_chat_unavailable_returns_503(self):
         with patch("main.llm_helper.is_available", return_value=False):

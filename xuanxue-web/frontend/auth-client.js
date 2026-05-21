@@ -3,6 +3,10 @@
     var currentUser = null;
     var initialized = false;
     var consultPresets = [];
+    var adminDashboard = null;
+    var activeAccountTab = 'profile';
+    var adminActivityPage = 1;
+    var ADMIN_ACTIVITY_PAGE_SIZE = 8;
     var moduleLabels = {
         bazi: '八字底盘',
         ziwei: '紫微命盘',
@@ -56,6 +60,27 @@
         } catch (_err) {
             return false;
         }
+    }
+
+    function isAdminUser() {
+        return !!(currentUser && currentUser.is_admin);
+    }
+
+    function switchAccountTab(tabName) {
+        var target = tabName || 'profile';
+        if (target === 'admin' && !isAdminUser()) {
+            target = 'profile';
+        }
+        activeAccountTab = target;
+
+        var tabs = document.querySelectorAll('[data-account-tab]');
+        var panels = document.querySelectorAll('[data-account-panel]');
+        Array.prototype.forEach.call(tabs, function (node) {
+            node.classList.toggle('active', node.getAttribute('data-account-tab') === target);
+        });
+        Array.prototype.forEach.call(panels, function (node) {
+            node.classList.toggle('show', node.getAttribute('data-account-panel') === target);
+        });
     }
 
     function openAccountCenter() {
@@ -150,6 +175,134 @@
         }).join('');
     }
 
+    function formatBirthLabel(birth) {
+        if (!birth) {
+            return '未填写';
+        }
+        var parts = [birth.year, birth.month, birth.day, birth.hour, birth.minute].filter(function (item) {
+            return item !== undefined && item !== null && item !== '';
+        });
+        return parts.length ? parts.join('-') : '未填写';
+    }
+
+    function clampAdminActivityPage(totalItems) {
+        var totalPages = Math.max(1, Math.ceil((totalItems || 0) / ADMIN_ACTIVITY_PAGE_SIZE));
+        if (adminActivityPage < 1) {
+            adminActivityPage = 1;
+        }
+        if (adminActivityPage > totalPages) {
+            adminActivityPage = totalPages;
+        }
+        return totalPages;
+    }
+
+    function renderAdminPanel() {
+        var panel = document.getElementById('adminPanel');
+        var adminTab = document.getElementById('adminSectionTab');
+        var summaryGrid = document.getElementById('adminSummaryGrid');
+        var userTableBody = document.getElementById('adminUserTableBody');
+        var recentActivity = document.getElementById('adminRecentActivity');
+        var paginationInfo = document.getElementById('adminPaginationInfo');
+        var prevPageBtn = document.getElementById('adminPrevPageBtn');
+        var nextPageBtn = document.getElementById('adminNextPageBtn');
+        if (!panel || !adminTab || !summaryGrid || !userTableBody || !recentActivity || !paginationInfo || !prevPageBtn || !nextPageBtn) {
+            return;
+        }
+
+        if (!currentUser || !isAdminUser()) {
+            adminTab.style.display = 'none';
+            summaryGrid.innerHTML = '';
+            userTableBody.innerHTML = '';
+            recentActivity.innerHTML = '';
+            paginationInfo.textContent = '';
+            prevPageBtn.disabled = true;
+            nextPageBtn.disabled = true;
+            if (activeAccountTab === 'admin') {
+                switchAccountTab('profile');
+            }
+            return;
+        }
+
+        adminTab.style.display = '';
+        var usersData = adminDashboard && adminDashboard.users ? adminDashboard.users : {};
+        var usageData = adminDashboard && adminDashboard.usage ? adminDashboard.usage : {};
+        var totals = usersData.totals || {};
+        var statItems = [
+            { label: '总用户数', value: totals.users || 0 },
+            { label: '管理员', value: totals.admins || 0 },
+            { label: '普通用户', value: totals.regular_users || 0 },
+            { label: '已填地点', value: totals.with_location || 0 },
+            { label: '已填生辰', value: totals.with_birth || 0 },
+            { label: '累计问事', value: usageData.total_consults || 0 }
+        ];
+        summaryGrid.innerHTML = statItems.map(function (item) {
+            return [
+                '<div class="admin-stat-card">',
+                '  <span class="label">' + esc(item.label) + '</span>',
+                '  <span class="value">' + esc(item.value) + '</span>',
+                '</div>'
+            ].join('');
+        }).join('');
+
+        var users = Array.isArray(usersData.users) ? usersData.users : [];
+        userTableBody.innerHTML = users.map(function (item) {
+            var profile = item.profile || {};
+            return [
+                '<tr>',
+                '  <td><strong>' + esc(item.display_name || '未命名用户') + '</strong><br><span style="color: var(--color-text-secondary);">' + esc(item.email || '') + '</span></td>',
+                '  <td>' + esc(item.role === 'admin' ? '管理员' : '用户') + '</td>',
+                '  <td>' + esc(profile.gender || '未填') + '</td>',
+                '  <td>' + esc(profile.location || '未填') + '</td>',
+                '  <td>' + esc(formatBirthLabel(profile.birth)) + '</td>',
+                '  <td>' + esc(item.updated_at || item.created_at || '') + '</td>',
+                '</tr>'
+            ].join('');
+        }).join('') || '<tr><td colspan="6" style="text-align:center; color: var(--color-text-tertiary);">暂无用户数据</td></tr>';
+
+        var activityItems = Array.isArray(usageData.recent_activity) ? usageData.recent_activity : [];
+        var moduleBreakdown = Array.isArray(usageData.module_breakdown) ? usageData.module_breakdown.slice(0, 6) : [];
+        var purposeBreakdown = Array.isArray(usageData.purpose_breakdown) ? usageData.purpose_breakdown.slice(0, 6) : [];
+        var totalPages = clampAdminActivityPage(activityItems.length);
+        var startIndex = (adminActivityPage - 1) * ADMIN_ACTIVITY_PAGE_SIZE;
+        var pagedActivityItems = activityItems.slice(startIndex, startIndex + ADMIN_ACTIVITY_PAGE_SIZE);
+        recentActivity.innerHTML = [
+            moduleBreakdown.length ? [
+                '<div class="admin-list-item">',
+                '  <strong>模块分布</strong>',
+                '  <div class="admin-chip-row">' + moduleBreakdown.map(function (item) {
+                    return '<span class="admin-chip">' + esc(moduleLabel(item.name)) + ' ' + esc(item.count) + '</span>';
+                }).join('') + '</div>',
+                '</div>'
+            ].join('') : '',
+            purposeBreakdown.length ? [
+                '<div class="admin-list-item">',
+                '  <strong>问事用途</strong>',
+                '  <div class="admin-chip-row">' + purposeBreakdown.map(function (item) {
+                    return '<span class="admin-chip">' + esc(item.name) + ' ' + esc(item.count) + '</span>';
+                }).join('') + '</div>',
+                '</div>'
+            ].join('') : '',
+            pagedActivityItems.map(function (item) {
+                return [
+                    '<div class="admin-list-item">',
+                    '  <strong>' + esc(item.question || '未命名问事') + '</strong>',
+                    '  <div class="meta">时间：' + esc(item.created_at || '') + '</div>',
+                    '  <div class="meta">用户 ID：' + esc(item.user_id || '') + '</div>',
+                    '  <div class="meta">摘要：' + esc(item.brief_answer || '已生成综合结论') + '</div>',
+                    '  <div class="admin-chip-row">' + (item.modules || []).map(function (moduleName) {
+                        return '<span class="admin-chip">' + esc(moduleLabel(moduleName)) + '</span>';
+                    }).join('') + '</div>',
+                    '</div>'
+                ].join('');
+            }).join('')
+        ].join('') || '<div class="history-empty">暂无使用记录</div>';
+        paginationInfo.textContent = activityItems.length
+            ? ('第 ' + adminActivityPage + ' / ' + totalPages + ' 页 · 共 ' + activityItems.length + ' 条')
+            : '暂无使用记录';
+        prevPageBtn.disabled = adminActivityPage <= 1;
+        nextPageBtn.disabled = adminActivityPage >= totalPages;
+    }
+
     function renderAccount() {
         var gate = document.getElementById('accountGuestGate');
         var content = document.getElementById('accountAuthedContent');
@@ -167,6 +320,9 @@
             title.textContent = '登录后才能使用统一问事';
             meta.textContent = '账号用于开启系统问事、保存资料，并回看个人历史记录。';
             emailPill.textContent = '统一问事仅对已登录账号开放';
+            adminDashboard = null;
+            renderAdminPanel();
+            switchAccountTab('profile');
             renderHistoryList([]);
             renderHistoryDetail(null);
             renderConsultPresetGrid();
@@ -191,6 +347,8 @@
         document.getElementById('profileMinute').value = birth.minute || '';
         document.getElementById('profileCurrentPassword').value = '';
         document.getElementById('profileNewPassword').value = '';
+        renderAdminPanel();
+        switchAccountTab(activeAccountTab);
         renderConsultPresetGrid();
     }
 
@@ -286,6 +444,7 @@
         if (!getToken()) {
             currentUser = null;
             consultPresets = [];
+            adminDashboard = null;
             renderHeader();
             renderAccount();
             return null;
@@ -298,6 +457,7 @@
             setToken('');
             currentUser = null;
             consultPresets = [];
+            adminDashboard = null;
         }
 
         renderHeader();
@@ -372,6 +532,20 @@
         }
     }
 
+    async function refreshAdminDashboard() {
+        if (!currentUser || !isAdminUser()) {
+            adminDashboard = null;
+            adminActivityPage = 1;
+            renderAdminPanel();
+            return null;
+        }
+        var response = await window.apiClient.get('/api/admin/dashboard');
+        adminDashboard = response && response.data ? response.data : null;
+        adminActivityPage = 1;
+        renderAdminPanel();
+        return adminDashboard;
+    }
+
     async function openHistoryDetail(historyId) {
         if (!currentUser || !historyId) {
             return;
@@ -418,6 +592,15 @@
             return null;
         }
         return parseInt(node.value, 10);
+    }
+
+    function optionalTrimmedValue(id) {
+        var node = document.getElementById(id);
+        if (!node) {
+            return null;
+        }
+        var value = String(node.value || '').trim();
+        return value ? value : null;
     }
 
     function parseCoordinate(raw) {
@@ -557,6 +740,8 @@
         var registerTab = document.getElementById('authTabRegister');
         var historyList = document.getElementById('historyList');
         var savedPresetGrid = document.getElementById('savedPresetGrid');
+        var adminPrevPageBtn = document.getElementById('adminPrevPageBtn');
+        var adminNextPageBtn = document.getElementById('adminNextPageBtn');
 
         if (loginBtn) {
             loginBtn.addEventListener('click', function () {
@@ -581,6 +766,7 @@
                 setToken('');
                 currentUser = null;
                 consultPresets = [];
+                adminDashboard = null;
                 renderHeader();
                 renderAccount();
                 renderHistoryList([]);
@@ -623,12 +809,23 @@
                 switchTab('register');
             });
         }
+        var accountSectionTabs = document.getElementById('accountSectionTabs');
+        if (accountSectionTabs) {
+            accountSectionTabs.addEventListener('click', function (event) {
+                var target = event.target.closest('[data-account-tab]');
+                if (!target) {
+                    return;
+                }
+                switchAccountTab(target.getAttribute('data-account-tab'));
+            });
+        }
         if (historyList) {
             historyList.addEventListener('click', function (event) {
                 var target = event.target.closest('[data-history-id]');
                 if (!target) {
                     return;
                 }
+                switchAccountTab('history');
                 openHistoryDetail(target.getAttribute('data-history-id')).catch(function (error) {
                     if (window.showToast) {
                         window.showToast('读取历史失败：' + error.message, 'error');
@@ -687,6 +884,20 @@
                 }
             });
         }
+        if (adminPrevPageBtn) {
+            adminPrevPageBtn.addEventListener('click', function () {
+                if (adminActivityPage > 1) {
+                    adminActivityPage -= 1;
+                    renderAdminPanel();
+                }
+            });
+        }
+        if (adminNextPageBtn) {
+            adminNextPageBtn.addEventListener('click', function () {
+                adminActivityPage += 1;
+                renderAdminPanel();
+            });
+        }
 
         var loginForm = document.getElementById('loginForm');
         if (loginForm) {
@@ -704,6 +915,7 @@
                     toggleAuthModal(false);
                     await refreshHistory();
                     await refreshConsultPresets();
+                    await refreshAdminDashboard();
                     openAccountCenter();
                     if (window.showToast) {
                         window.showToast('登录成功。', 'success');
@@ -733,6 +945,7 @@
                     toggleAuthModal(false);
                     await refreshHistory();
                     await refreshConsultPresets();
+                    await refreshAdminDashboard();
                     openAccountCenter();
                     if (window.showToast) {
                         window.showToast('注册成功，已自动登录。', 'success');
@@ -765,14 +978,15 @@
                             day: optionalInt('profileDay'),
                             hour: optionalInt('profileHour'),
                             minute: optionalInt('profileMinute'),
-                            current_password: document.getElementById('profileCurrentPassword').value,
-                            new_password: document.getElementById('profileNewPassword').value
+                            current_password: optionalTrimmedValue('profileCurrentPassword'),
+                            new_password: optionalTrimmedValue('profileNewPassword')
                         }
                     });
                     currentUser = response.data.user;
                     renderHeader();
                     renderAccount();
                     renderConsultPresetGrid();
+                    await refreshAdminDashboard();
                     if (window.showToast) {
                         window.showToast('账号资料已保存。', 'success');
                     }
@@ -796,11 +1010,13 @@
         renderHistoryList([]);
         renderHistoryDetail(null);
         renderConsultPresetGrid();
+        switchAccountTab('profile');
         switchTab('login');
         await refreshSession();
         if (currentUser) {
             await refreshHistory();
             await refreshConsultPresets();
+            await refreshAdminDashboard();
             if (window.consultPanel && window.consultPanel.applyDefaultSavedCondition) {
                 window.consultPanel.applyDefaultSavedCondition();
             }
@@ -811,6 +1027,7 @@
         initialize: initialize,
         refreshSession: refreshSession,
         refreshHistory: refreshHistory,
+        refreshAdminDashboard: refreshAdminDashboard,
         refreshConsultPresets: refreshConsultPresets,
         saveConsultPreset: saveConsultPreset,
         getConsultPresets: getConsultPresets,

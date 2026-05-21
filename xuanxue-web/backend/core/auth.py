@@ -8,6 +8,7 @@ import hmac
 import re
 import secrets
 from datetime import datetime, timedelta, timezone
+from collections import Counter
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
 
@@ -19,6 +20,9 @@ from .runtime.store import read_json_file, resolve_runtime_path, update_json_fil
 EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 PASSWORD_ITERATIONS = 120000
 SESSION_TTL_DAYS = 30
+SUPERADMIN_EMAIL = "superadmin@xuanxue.local"
+SUPERADMIN_PASSWORD = "SuperAdmin2026!"
+SUPERADMIN_DISPLAY_NAME = "Super Admin"
 
 
 def _users_path():
@@ -138,6 +142,12 @@ def _sanitize_birth(profile: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     return result
 
 
+def _is_admin_user(user: Optional[Dict[str, Any]]) -> bool:
+    if not isinstance(user, dict):
+        return False
+    return str(user.get("role") or "") == "admin"
+
+
 def public_user(user: Dict[str, Any]) -> Dict[str, Any]:
     profile = user.get("profile") if isinstance(user.get("profile"), dict) else {}
     display_name = str(user.get("display_name") or profile.get("display_name") or "").strip()
@@ -145,6 +155,8 @@ def public_user(user: Dict[str, Any]) -> Dict[str, Any]:
         "user_id": user.get("user_id"),
         "email": user.get("email"),
         "display_name": display_name or _normalize_email(str(user.get("email") or "")).split("@")[0],
+        "role": "admin" if _is_admin_user(user) else "user",
+        "is_admin": _is_admin_user(user),
         "profile": {
             "gender": profile.get("gender"),
             "birth": _sanitize_birth(profile),
@@ -224,6 +236,47 @@ def _normalize_consult_preset(data: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def ensure_superadmin_account() -> Dict[str, Any]:
+    normalized_email = _normalize_email(SUPERADMIN_EMAIL)
+    now = _now_iso()
+    password_salt, password_hash = _hash_password(SUPERADMIN_PASSWORD)
+    ensured_user: Optional[Dict[str, Any]] = None
+
+    def updater(payload: Dict[str, Any]) -> Dict[str, Any]:
+        nonlocal ensured_user
+        users = _extract_users(payload)
+        for user in users:
+            if _normalize_email(str(user.get("email") or "")) != normalized_email:
+                continue
+            user["display_name"] = str(user.get("display_name") or SUPERADMIN_DISPLAY_NAME).strip() or SUPERADMIN_DISPLAY_NAME
+            user["role"] = "admin"
+            user["profile"] = user.get("profile") if isinstance(user.get("profile"), dict) else {"gender": None, "birth": None, "location": ""}
+            user["updated_at"] = user.get("updated_at") or now
+            ensured_user = user
+            return {"users": users}
+
+        ensured_user = {
+            "user_id": str(uuid4()),
+            "email": normalized_email,
+            "display_name": SUPERADMIN_DISPLAY_NAME,
+            "role": "admin",
+            "password_salt": password_salt,
+            "password_hash": password_hash,
+            "profile": {
+                "gender": None,
+                "birth": None,
+                "location": "",
+            },
+            "created_at": now,
+            "updated_at": now,
+        }
+        users.append(ensured_user)
+        return {"users": users}
+
+    update_json_file(_users_path(), {"users": []}, updater)
+    return ensured_user or {}
+
+
 def create_session(user_id: str) -> Dict[str, Any]:
     token = secrets.token_urlsafe(32)
     expires_at = (datetime.now(timezone.utc) + timedelta(days=SESSION_TTL_DAYS)).isoformat(timespec="seconds")
@@ -249,6 +302,7 @@ def create_session(user_id: str) -> Dict[str, Any]:
 
 
 def register_user(email: str, password: str, display_name: Optional[str] = None) -> Dict[str, Any]:
+    ensure_superadmin_account()
     normalized_email = _validate_email(email)
     _validate_password(password)
     now = _now_iso()
@@ -258,6 +312,7 @@ def register_user(email: str, password: str, display_name: Optional[str] = None)
         "user_id": str(uuid4()),
         "email": normalized_email,
         "display_name": safe_display_name,
+        "role": "user",
         "password_salt": password_salt,
         "password_hash": password_hash,
         "profile": {
@@ -290,6 +345,7 @@ def register_user(email: str, password: str, display_name: Optional[str] = None)
 
 
 def login_user(email: str, password: str) -> Dict[str, Any]:
+    ensure_superadmin_account()
     normalized_email = _validate_email(email)
     user = _find_user_by_email(normalized_email)
     if not user or not _verify_password(password, user):
@@ -307,6 +363,7 @@ def login_user(email: str, password: str) -> Dict[str, Any]:
 
 
 def get_user_by_token(token: str) -> Optional[Dict[str, Any]]:
+    ensure_superadmin_account()
     if not token:
         return None
 
@@ -514,3 +571,60 @@ def resolve_authenticated_user(request: Request, required: bool = True) -> Optio
             detail={"code": "unauthorized", "message": "登录状态已失效，请重新登录", "retryable": False},
         )
     return user
+
+
+def resolve_admin_user(request: Request) -> Dict[str, Any]:
+    user = resolve_authenticated_user(request, required=True)
+    if not _is_admin_user(user):
+        raise HTTPException(
+            status_code=403,
+            detail={"code": "forbidden", "message": "仅管理员可访问该接口", "retryable": False},
+        )
+    return user
+
+
+def list_all_users() -> List[Dict[str, Any]]:
+    ensure_superadmin_account()
+    users = [_build_user_summary(item) for item in _read_users()]
+    users.sort(key=lambda item: (item.get("role") != "admin", item.get("created_at") or ""), reverse=False)
+    return users
+
+
+def _build_user_summary(user: Dict[str, Any]) -> Dict[str, Any]:
+    public = public_user(user)
+    profile = public.get("profile") if isinstance(public.get("profile"), dict) else {}
+    return {
+        "user_id": public.get("user_id"),
+        "email": public.get("email"),
+        "display_name": public.get("display_name"),
+        "role": public.get("role"),
+        "is_admin": bool(public.get("is_admin")),
+        "profile": {
+            "gender": profile.get("gender"),
+            "birth": profile.get("birth"),
+            "location": profile.get("location") or "",
+        },
+        "created_at": public.get("created_at"),
+        "updated_at": public.get("updated_at"),
+    }
+
+
+def build_admin_user_metrics() -> Dict[str, Any]:
+    users = list_all_users()
+    total_users = len(users)
+    admin_users = sum(1 for item in users if item.get("is_admin"))
+    regular_users = total_users - admin_users
+    location_count = sum(1 for item in users if str(((item.get("profile") or {}).get("location") or "")).strip())
+    birth_count = sum(1 for item in users if ((item.get("profile") or {}).get("birth") or None))
+    recent_users = sorted(users, key=lambda item: item.get("updated_at") or "", reverse=True)[:10]
+    return {
+        "totals": {
+            "users": total_users,
+            "admins": admin_users,
+            "regular_users": regular_users,
+            "with_location": location_count,
+            "with_birth": birth_count,
+        },
+        "recent_users": recent_users,
+        "users": users,
+    }

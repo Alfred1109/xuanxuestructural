@@ -4,6 +4,7 @@ Per-user consultation history stored in JSONL.
 """
 
 from datetime import datetime, timezone
+from collections import Counter
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
@@ -97,3 +98,50 @@ def get_consult_history_detail(user_id: str, history_id: str) -> Optional[Dict[s
                 "ai": item.get("ai") or {},
             }
     return None
+
+
+def list_recent_consult_activity(limit: int = 50) -> List[Dict[str, Any]]:
+    items: List[Dict[str, Any]] = []
+    for item in reversed(read_jsonl(_history_path())):
+        intent = item.get("intent") if isinstance(item.get("intent"), dict) else {}
+        items.append({
+            "history_id": item.get("history_id"),
+            "user_id": item.get("user_id"),
+            "created_at": item.get("created_at"),
+            "question": item.get("question") or "",
+            "brief_answer": item.get("brief_answer") or "",
+            "modules": intent.get("modules") or [],
+            "matter_type": intent.get("matter_type") or "通用",
+            "purpose": intent.get("purpose") or "通用",
+        })
+        if len(items) >= limit:
+            break
+    return items
+
+
+def build_consult_activity_summary(limit: int = 200) -> Dict[str, Any]:
+    entries = read_jsonl(_history_path())
+    recent = list_recent_consult_activity(limit=min(limit, 50))
+    module_counter: Counter[str] = Counter()
+    purpose_counter: Counter[str] = Counter()
+    daily_counter: Counter[str] = Counter()
+    recent_user_counter: Counter[str] = Counter()
+
+    for item in entries[-limit:]:
+        created_at = str(item.get("created_at") or "")
+        if "T" in created_at:
+            daily_counter[created_at.split("T", 1)[0]] += 1
+        intent = item.get("intent") if isinstance(item.get("intent"), dict) else {}
+        for module_name in intent.get("modules") or []:
+            module_counter[str(module_name)] += 1
+        purpose_counter[str(intent.get("purpose") or "通用")] += 1
+        recent_user_counter[str(item.get("user_id") or "")] += 1
+
+    return {
+        "total_consults": len(entries),
+        "recent_activity": recent,
+        "module_breakdown": [{"name": key, "count": value} for key, value in module_counter.most_common()],
+        "purpose_breakdown": [{"name": key, "count": value} for key, value in purpose_counter.most_common()],
+        "daily_breakdown": [{"date": key, "count": daily_counter[key]} for key in sorted(daily_counter.keys(), reverse=True)[:14]],
+        "active_users": [{"user_id": key, "count": value} for key, value in recent_user_counter.most_common(10) if key],
+    }
