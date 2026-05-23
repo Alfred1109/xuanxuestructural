@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI玄学助手 - 统一问答</title>
-    <link rel="stylesheet" href="common-header.css?v=20260511-zen">
-    <link rel="stylesheet" href="common-theme.css?v=20260511-zen">
+    <link rel="stylesheet" href="common-header.css?v=20260523-brush-title-fix">
+    <link rel="stylesheet" href="common-theme.css?v=20260523-visual-refresh">
     <style>
         * {
             box-sizing: border-box;
@@ -18,13 +18,80 @@
                 radial-gradient(circle at 88% 8%, rgba(231, 241, 248, 0.92) 0%, transparent 36%),
                 linear-gradient(180deg, var(--color-bg-mid) 0%, var(--color-bg-bottom) 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 18px 18px 28px;
             overflow-x: hidden;
         }
 
         .container {
             max-width: 1100px;
             margin: 0 auto;
+        }
+
+        .chat-shell {
+            display: grid;
+            gap: 18px;
+            padding-top: 18px;
+        }
+
+        .chat-hero {
+            display: grid;
+            grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr);
+            gap: 18px;
+            align-items: stretch;
+        }
+
+        .chat-intro-card,
+        .chat-side-card {
+            border-radius: 24px;
+            border: 1px solid rgba(44, 91, 79, 0.1);
+            background:
+                radial-gradient(circle at top left, rgba(168, 116, 60, 0.1) 0%, transparent 28%),
+                linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(247, 249, 246, 0.98) 100%);
+            box-shadow: 0 18px 40px rgba(23, 45, 62, 0.06);
+            padding: 22px;
+        }
+
+        .chat-side-card {
+            display: grid;
+            gap: 12px;
+            align-content: start;
+            background:
+                radial-gradient(circle at 100% 0%, rgba(79, 131, 148, 0.12) 0%, transparent 30%),
+                linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(247, 249, 246, 0.98) 100%);
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            width: fit-content;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 11px;
+            border-radius: 999px;
+            background: rgba(44, 91, 79, 0.08);
+            color: var(--color-primary-dark);
+            font-size: 0.74rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .chat-intro-card h2 {
+            margin: 14px 0 10px;
+            font-size: clamp(1.7rem, 2.8vw, 2.35rem);
+            line-height: 1.14;
+            letter-spacing: -0.02em;
+        }
+
+        .chat-intro-card p,
+        .chat-side-card p {
+            margin: 0;
+            color: var(--color-text-secondary);
+            line-height: 1.75;
+        }
+
+        .chat-side-card strong {
+            color: var(--color-primary-strong);
+            font-size: 0.95rem;
         }
 
         .ai-status {
@@ -39,6 +106,7 @@
             justify-content: space-between;
             box-shadow: 0 8px 18px rgba(23, 45, 62, 0.04);
             color: #7a5a2f;
+            gap: 14px;
         }
 
         .ai-status-text {
@@ -70,10 +138,11 @@
 
         .chat-container {
             background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(253, 251, 247, 0.97) 100%);
-            border: 1px solid rgba(215, 225, 234, 0.9);
-            border-radius: 20px;
-            box-shadow: 0 18px 38px rgba(20, 46, 64, 0.12);
-            height: 600px;
+            border: 1px solid rgba(44, 91, 79, 0.1);
+            border-radius: 28px;
+            box-shadow: 0 24px 48px rgba(20, 46, 64, 0.1);
+            min-height: 640px;
+            height: calc(100vh - 320px);
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -82,14 +151,16 @@
         .chat-messages {
             flex: 1;
             overflow-y: auto;
-            padding: 20px;
-            background: linear-gradient(180deg, #f8fbfe 0%, #f4f8fb 100%);
+            padding: 24px;
+            background:
+                radial-gradient(circle at top right, rgba(79, 131, 148, 0.08) 0%, transparent 24%),
+                linear-gradient(180deg, #f8fbfe 0%, #f3f7f5 100%);
         }
 
         .message {
-            margin-bottom: 15px;
+            margin-bottom: 18px;
             display: flex;
-            gap: 10px;
+            gap: 12px;
         }
 
         .message > div:not(.message-avatar) {
@@ -101,14 +172,15 @@
         }
 
         .message-avatar {
-            width: 40px;
-            height: 40px;
+            width: 42px;
+            height: 42px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: 18px;
             flex-shrink: 0;
+            box-shadow: 0 8px 18px rgba(23, 45, 62, 0.12);
         }
 
         .message.user .message-avatar {
@@ -120,10 +192,10 @@
         }
 
         .message-content {
-            max-width: 70%;
-            padding: 12px 16px;
-            border-radius: 15px;
-            line-height: 1.6;
+            max-width: min(72%, 760px);
+            padding: 14px 16px;
+            border-radius: 18px;
+            line-height: 1.72;
             white-space: pre-wrap;
             word-wrap: break-word;
             overflow-wrap: anywhere;
@@ -139,21 +211,23 @@
         .message.ai .message-content {
             background: white;
             color: var(--color-text);
-            border: 1px solid #dde6ef;
-            border-radius: 15px 15px 15px 0;
+            border: 1px solid rgba(44, 91, 79, 0.1);
+            border-radius: 18px 18px 18px 4px;
             box-shadow: 0 6px 14px rgba(23, 45, 62, 0.04);
         }
 
         .message-time {
             font-size: 12px;
-            color: #999;
-            margin-top: 5px;
+            color: var(--color-text-tertiary);
+            margin-top: 6px;
+            padding-inline: 4px;
         }
 
         .chat-input-area {
-            padding: 20px;
-            border-top: 1px solid #e4edf5;
-            background: white;
+            padding: 18px 20px 20px;
+            border-top: 1px solid rgba(44, 91, 79, 0.1);
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(10px);
         }
 
         .chat-input-form {
@@ -163,33 +237,39 @@
 
         .chat-input {
             flex: 1;
-            padding: 12px 16px;
-            border: 1px solid #d7e1ea;
+            min-height: 48px;
+            padding: 12px 18px;
+            border: 1px solid rgba(44, 91, 79, 0.14);
             border-radius: 999px;
             font-size: 16px;
-            outline: none;
-            transition: border-color 0.3s, box-shadow 0.3s;
+            background: rgba(248, 250, 248, 0.96);
+            color: var(--color-text);
+            transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s;
         }
 
         .chat-input:focus {
             border-color: var(--color-primary);
-            box-shadow: 0 0 0 3px rgba(31, 95, 139, 0.14);
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(44, 91, 79, 0.12);
         }
 
         .send-btn {
-            background: linear-gradient(135deg, var(--color-primary) 0%, #2f7ea7 100%);
+            background: linear-gradient(135deg, var(--color-primary) 0%, #356f61 100%);
             color: white;
-            border: none;
-            padding: 12px 30px;
+            border: 1px solid transparent;
+            padding: 12px 26px;
             border-radius: 999px;
-            font-size: 16px;
+            min-height: 48px;
+            font-size: 15px;
+            font-weight: 700;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+            box-shadow: 0 12px 24px rgba(44, 91, 79, 0.2);
         }
 
         .send-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 18px rgba(31, 95, 139, 0.24);
+            box-shadow: 0 16px 28px rgba(44, 91, 79, 0.24);
         }
 
         .send-btn:disabled {
@@ -200,10 +280,10 @@
 
         .typing-indicator {
             display: none;
-            padding: 10px 16px;
+            padding: 11px 16px;
             background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 15px;
+            border: 1px solid rgba(44, 91, 79, 0.1);
+            border-radius: 18px;
             width: fit-content;
         }
 
@@ -238,51 +318,57 @@
         }
 
         .quick-questions {
-            padding: 15px 20px;
-            background: #f8fbfe;
-            border-top: 1px solid #e4edf5;
+            padding: 16px 20px 18px;
+            background: rgba(245, 248, 247, 0.92);
+            border-top: 1px solid rgba(44, 91, 79, 0.08);
         }
 
         .quick-questions-title {
-            font-size: 14px;
-            color: #666;
+            font-size: 13px;
+            color: var(--color-text-secondary);
             margin-bottom: 10px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
         }
 
         .quick-question-btn {
-            display: inline-block;
-            padding: 8px 15px;
+            display: inline-flex;
+            align-items: center;
+            min-height: 38px;
+            padding: 8px 14px;
             margin: 5px;
-            background: rgba(255, 255, 255, 0.96);
-            border: 1px solid #dce5ed;
-            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.98);
+            border: 1px solid rgba(44, 91, 79, 0.1);
+            border-radius: 999px;
             font-size: 14px;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
             color: var(--color-text);
         }
 
         .quick-question-btn:hover {
-            background: linear-gradient(135deg, var(--color-primary) 0%, #2f7ea7 100%);
+            background: linear-gradient(135deg, var(--color-primary) 0%, #356f61 100%);
             color: white;
             border-color: transparent;
+            transform: translateY(-1px);
         }
 
         .welcome-message {
             text-align: center;
-            padding: 40px 20px;
+            padding: 54px 20px 42px;
             color: var(--color-text-soft);
         }
 
         .welcome-message h3 {
             color: var(--color-primary);
-            margin-bottom: 15px;
+            margin-bottom: 12px;
+            font-size: 1.35rem;
         }
 
         .error-message {
             background: #fff7e9;
             border: 1px solid rgba(194, 124, 26, 0.22);
-            border-radius: 10px;
+            border-radius: 14px;
             padding: 15px;
             margin: 10px 20px;
             color: #7a5a2f;
@@ -290,7 +376,16 @@
 
         @media (max-width: 768px) {
             body {
-                padding: 10px;
+                padding: 10px 10px 18px;
+            }
+
+            .chat-shell {
+                gap: 14px;
+                padding-top: 14px;
+            }
+
+            .chat-hero {
+                grid-template-columns: 1fr;
             }
 
             .ai-status {
@@ -300,7 +395,9 @@
             }
 
             .chat-container {
-                height: 72vh;
+                min-height: 0;
+                height: calc(100vh - 292px);
+                border-radius: 22px;
             }
 
             .chat-input-form {
@@ -312,7 +409,19 @@
             }
 
             .message-content {
-                max-width: 85%;
+                max-width: 100%;
+            }
+
+            .chat-messages {
+                padding: 18px 14px;
+            }
+
+            .quick-questions,
+            .chat-input-area,
+            .chat-intro-card,
+            .chat-side-card {
+                padding-left: 16px;
+                padding-right: 16px;
             }
         }
     </style>
@@ -322,55 +431,91 @@
     <div class="unified-header">
         <div class="container">
             <div class="site-title">
-                <h1>☯ 玄学预测系统</h1>
+                <h1><span class="brand-mark" aria-hidden="true">☯</span><span class="brand-calligraphy">玄学预测系统</span></h1>
                 <p>传统命理学 · 现代科技 · 智能分析</p>
             </div>
         </div>
     </div>
 
     <div class="container">
-
-        <div class="ai-status" id="aiStatus">
-            <div class="ai-status-text">
-                <div class="status-dot" id="statusDot"></div>
-                <span id="statusText">正在检查AI服务状态...</span>
-            </div>
-            <span id="statusModel"></span>
-        </div>
-
-        <div class="chat-container">
-            <div class="chat-messages" id="chatMessages">
-                <div class="welcome-message">
-                    <h3>👋 欢迎使用AI智能助手</h3>
-                    <p>我可以回答关于八字命理、六爻占卜、奇门遁甲、择日学等玄学知识的问题。</p>
-                    <p style="margin-top: 10px;">请在下方输入您的问题，或点击快捷问题开始对话。</p>
+        <div class="chat-shell">
+            <section class="chat-hero">
+                <div class="chat-intro-card">
+                    <span class="eyebrow">AI Assistant</span>
+                    <h2>更像顾问，而不是一个空白聊天框</h2>
+                    <p>当前入口已经能完成问答，但首屏引导、状态反馈和提问建议偏弱。这里先补足信息层级，让用户更快理解能问什么、当前服务是否可用，以及提问后会发生什么。</p>
                 </div>
+                <aside class="chat-side-card">
+                    <span class="eyebrow">使用建议</span>
+                    <strong>适合的问题</strong>
+                    <p>概念解释、术数区别、基础入门、已有结果的二次追问，都会比开放式闲聊更高效。</p>
+                    <strong>更好的输入方式</strong>
+                    <p>直接写清背景、时间和想判断的目标，系统会更容易给出可执行的回答。</p>
+                </aside>
+            </section>
+
+            <div class="ai-status" id="aiStatus">
+                <div class="ai-status-text">
+                    <div class="status-dot" id="statusDot"></div>
+                    <span id="statusText">正在检查AI服务状态...</span>
+                </div>
+                <span id="statusModel"></span>
             </div>
 
-            <div class="quick-questions">
-                <div class="quick-questions-title">💡 快捷问题：</div>
-                <button class="quick-question-btn" onclick="askQuestion('什么是八字命理？')">什么是八字命理？</button>
-                <button class="quick-question-btn" onclick="askQuestion('如何看自己的五行属性？')">如何看自己的五行属性？</button>
-                <button class="quick-question-btn" onclick="askQuestion('六爻占卜准确吗？')">六爻占卜准确吗？</button>
-                <button class="quick-question-btn" onclick="askQuestion('奇门遁甲是什么？')">奇门遁甲是什么？</button>
-                <button class="quick-question-btn" onclick="askQuestion('如何选择吉日？')">如何选择吉日？</button>
-            </div>
+            <div class="chat-container">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="welcome-message">
+                        <h3>欢迎使用 AI 智能助手</h3>
+                        <p>可以先从概念理解、方法区别、结果复盘这三类问题开始。</p>
+                        <p style="margin-top: 10px;">如果你已经有具体场景，直接把背景和目标一起写出来，回答会明显更有针对性。</p>
+                    </div>
+                </div>
 
-            <div class="chat-input-area">
-                <form class="chat-input-form" id="chatForm">
-                    <input 
-                        type="text" 
-                        class="chat-input" 
-                        id="chatInput" 
-                        placeholder="输入您的问题..." 
-                        autocomplete="off"
-                        required
-                    >
-                    <button type="submit" class="send-btn" id="sendBtn">发送</button>
-                </form>
+                <div class="quick-questions">
+                    <div class="quick-questions-title">建议从这些问题开始</div>
+                    <button class="quick-question-btn" onclick="askQuestion('什么是八字命理？')">什么是八字命理？</button>
+                    <button class="quick-question-btn" onclick="askQuestion('如何看自己的五行属性？')">如何看自己的五行属性？</button>
+                    <button class="quick-question-btn" onclick="askQuestion('六爻占卜准确吗？')">六爻占卜准确吗？</button>
+                    <button class="quick-question-btn" onclick="askQuestion('奇门遁甲是什么？')">奇门遁甲是什么？</button>
+                    <button class="quick-question-btn" onclick="askQuestion('如何选择吉日？')">如何选择吉日？</button>
+                </div>
+
+                <div class="chat-input-area">
+                    <form class="chat-input-form" id="chatForm">
+                        <input
+                            type="text"
+                            class="chat-input"
+                            id="chatInput"
+                            placeholder="例如：我想换工作，适合先看八字还是奇门？"
+                            autocomplete="off"
+                            required
+                        >
+                        <button type="submit" class="send-btn" id="sendBtn">发送问题</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="site-footer-card">
+                <div class="site-footer-copy">
+                    <span class="site-footer-kicker">AI Assistant</span>
+                    <p class="site-footer-title">AI 玄学助手</p>
+                    <p class="site-footer-text">用于术数概念解释、结果追问与基础问题整理，帮助用户更快进入有效提问。</p>
+                </div>
+                <div class="site-footer-meta">
+                    <div class="site-footer-pill-row">
+                        <span class="site-footer-pill">概念问答</span>
+                        <span class="site-footer-pill">结果追问</span>
+                        <span class="site-footer-pill">方法解释</span>
+                    </div>
+                    <div class="site-footer-note">回答内容用于辅助理解，不替代个人判断</div>
+                </div>
+            </div>
+        </div>
+    </footer>
 
     <script src="config.js"></script>
     <script src="common-links.js"></script>

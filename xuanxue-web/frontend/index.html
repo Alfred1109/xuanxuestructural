@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hermes 玄学系统 - 统一问事中心</title>
-    <link rel="stylesheet" href="common-header.css?v=20260513-home-cleanup">
-    <link rel="stylesheet" href="common-theme.css?v=20260513-home-cleanup">
+    <link rel="stylesheet" href="common-header.css?v=20260523-brush-title-fix">
+    <link rel="stylesheet" href="common-theme.css?v=20260523-visual-refresh">
     <style>
         .page-title {
             margin-bottom: var(--spacing-lg);
@@ -44,14 +44,14 @@
         .consult-primary-card {
             display: grid;
             gap: 18px;
-            padding: 24px;
-            border-radius: 28px;
+            padding: 30px;
+            border-radius: 30px;
             background:
-                radial-gradient(circle at 8% 0%, rgba(168, 116, 60, 0.12) 0%, transparent 30%),
-                radial-gradient(circle at 90% 12%, rgba(44, 91, 79, 0.14) 0%, transparent 30%),
-                linear-gradient(145deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 249, 245, 0.98) 100%);
-            border: 1px solid rgba(44, 91, 79, 0.1);
-            box-shadow: 0 20px 40px rgba(23, 45, 62, 0.05);
+                radial-gradient(circle at 8% 0%, rgba(194, 149, 87, 0.18) 0%, transparent 30%),
+                radial-gradient(circle at 90% 12%, rgba(39, 78, 70, 0.1) 0%, transparent 28%),
+                linear-gradient(145deg, rgba(255, 252, 247, 0.98) 0%, rgba(247, 240, 231, 0.98) 100%);
+            border: 1px solid rgba(57, 41, 28, 0.1);
+            box-shadow: 0 26px 52px rgba(57, 41, 28, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.74);
         }
 
         .consult-primary-head {
@@ -66,40 +66,42 @@
         }
 
         .consult-primary-copy h3 {
-            margin: 10px 0 10px;
-            font-size: clamp(1.45rem, 2vw, 1.95rem);
-            line-height: 1.2;
-            letter-spacing: -0.02em;
+            margin: 12px 0 12px;
+            font-family: var(--font-display);
+            font-size: clamp(1.8rem, 2.4vw, 2.35rem);
+            line-height: 1.14;
+            letter-spacing: -0.03em;
         }
 
         .consult-primary-copy p {
             margin: 0;
-            max-width: 50ch;
+            max-width: 54ch;
             color: var(--color-text-secondary);
-            font-size: 0.97rem;
-            line-height: 1.78;
+            font-size: 1rem;
+            line-height: 1.9;
         }
 
         .consult-focus-pill {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            padding: 8px 12px;
+            padding: 9px 13px;
             border-radius: 999px;
-            background: rgba(44, 91, 79, 0.08);
+            background: rgba(39, 78, 70, 0.07);
             color: var(--color-primary-dark);
-            font-size: 0.76rem;
+            font-size: 0.72rem;
             font-weight: 700;
-            letter-spacing: 0.08em;
+            letter-spacing: 0.12em;
             text-transform: uppercase;
         }
 
         .consult-progress-card {
             min-width: 220px;
-            padding: 16px 16px 14px;
-            border-radius: 20px;
-            background: rgba(255, 255, 255, 0.92);
-            border: 1px solid rgba(44, 91, 79, 0.08);
+            padding: 18px 18px 16px;
+            border-radius: 22px;
+            background: rgba(255, 251, 246, 0.8);
+            border: 1px solid rgba(57, 41, 28, 0.09);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
         }
 
         .consult-progress-card strong {
@@ -123,13 +125,13 @@
             min-height: 100%;
             grid-template-columns: 1fr;
             grid-template-rows: auto minmax(0, 1fr) auto;
-            padding: 24px;
-            border-radius: 28px;
+            padding: 28px;
+            border-radius: 30px;
             background:
-                radial-gradient(circle at 100% 0%, rgba(168, 116, 60, 0.08) 0%, transparent 28%),
-                linear-gradient(145deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 249, 245, 0.98) 100%);
-            border: 1px solid rgba(44, 91, 79, 0.1);
-            box-shadow: 0 20px 40px rgba(23, 45, 62, 0.05);
+                radial-gradient(circle at 100% 0%, rgba(194, 149, 87, 0.1) 0%, transparent 30%),
+                linear-gradient(145deg, rgba(255, 251, 246, 0.98) 0%, rgba(246, 239, 230, 0.98) 100%);
+            border: 1px solid rgba(57, 41, 28, 0.1);
+            box-shadow: 0 26px 52px rgba(57, 41, 28, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.74);
         }
 
         .consult-side-card {
@@ -147,16 +149,17 @@
             display: inline-flex;
             margin-bottom: 10px;
             color: var(--color-accent);
-            font-size: 0.74rem;
+            font-size: 0.7rem;
             font-weight: 700;
-            letter-spacing: 0.08em;
+            letter-spacing: 0.14em;
             text-transform: uppercase;
         }
 
         .consult-side-card h3 {
             margin: 0 0 12px;
-            font-size: 1.18rem;
-            line-height: 1.4;
+            font-family: var(--font-display);
+            font-size: 1.32rem;
+            line-height: 1.32;
         }
 
         .consult-side-card p {
@@ -182,13 +185,21 @@
             align-items: center;
             justify-content: space-between;
             gap: 10px;
-            padding: 14px 16px;
-            border-radius: 18px;
-            background: rgba(44, 91, 79, 0.04);
+            padding: 15px 17px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.58);
+            border: 1px solid rgba(57, 41, 28, 0.08);
             color: var(--color-primary-dark);
             text-decoration: none;
-            font-size: 0.9rem;
+            font-size: 0.92rem;
             font-weight: 600;
+            transition: transform 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+        }
+
+        .consult-link-item:hover {
+            transform: translateX(2px);
+            border-color: rgba(57, 41, 28, 0.16);
+            background: rgba(255, 255, 255, 0.82);
         }
 
         .consult-loading {
@@ -267,11 +278,11 @@
         .consult-panel {
             display: grid;
             gap: 14px;
-            padding: 20px;
-            border-radius: 24px;
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(246, 248, 245, 0.98) 100%);
-            border: 1px solid rgba(44, 91, 79, 0.08);
-            box-shadow: 0 14px 28px rgba(23, 45, 62, 0.035);
+            padding: 24px;
+            border-radius: 26px;
+            background: linear-gradient(180deg, rgba(255, 252, 247, 0.98) 0%, rgba(247, 241, 234, 0.98) 100%);
+            border: 1px solid rgba(57, 41, 28, 0.09);
+            box-shadow: 0 18px 34px rgba(57, 41, 28, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.74);
         }
 
         .consult-panel-head {
@@ -285,17 +296,18 @@
             width: fit-content;
             padding: 6px 10px;
             border-radius: 999px;
-            background: rgba(44, 91, 79, 0.08);
+            background: rgba(39, 78, 70, 0.07);
             color: var(--color-primary-dark);
-            font-size: 0.76rem;
+            font-size: 0.7rem;
             font-weight: 700;
-            letter-spacing: 0.06em;
+            letter-spacing: 0.14em;
             text-transform: uppercase;
         }
 
         .consult-panel-head strong {
             color: var(--color-text);
-            font-size: 1rem;
+            font-family: var(--font-display);
+            font-size: 1.22rem;
         }
 
         .consult-panel-head span {
@@ -317,21 +329,22 @@
 
         .consult-question {
             min-height: 140px;
-            border: 1px solid var(--color-line);
-            border-radius: var(--radius-sm);
-            padding: 12px 16px;
+            border: 1px solid rgba(57, 41, 28, 0.12);
+            border-radius: 16px;
+            padding: 14px 16px;
             font-size: var(--font-size-base);
             font-weight: var(--font-weight-normal);
-            line-height: var(--line-height-relaxed);
+            line-height: 1.82;
             transition: border-color 0.2s ease, box-shadow 0.2s ease;
             font-family: var(--font-sans);
-            background: #ffffff;
+            background: rgba(255, 252, 248, 0.94);
         }
 
         .consult-question:focus {
             outline: none;
             border-color: var(--color-primary);
-            box-shadow: 0 0 0 3px rgba(44, 91, 79, 0.1);
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 0 0 3px rgba(39, 78, 70, 0.1);
         }
 
         .consult-question::placeholder {
@@ -409,10 +422,13 @@
             padding: 7px 10px;
             font-size: 0.76rem;
             cursor: pointer;
+            transition: transform 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
         }
 
         .saved-preset-item .mini-btn:hover {
             background: rgba(44, 91, 79, 0.08);
+            border-color: rgba(44, 91, 79, 0.22);
+            transform: translateY(-1px);
         }
 
         .saved-preset-item .mini-btn.default {
@@ -431,11 +447,21 @@
             top: 10px;
             right: 10px;
             appearance: none;
-            border: none;
-            background: transparent;
+            border: 1px solid transparent;
+            background: rgba(44, 91, 79, 0.04);
             color: var(--color-text-tertiary);
-            font-size: 1rem;
+            width: 28px;
+            height: 28px;
+            border-radius: 999px;
+            font-size: 0.95rem;
             cursor: pointer;
+            transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+        }
+
+        .saved-preset-item .danger-btn:hover {
+            background: rgba(170, 85, 72, 0.1);
+            color: var(--color-error);
+            transform: scale(1.04);
         }
 
         .saved-preset-empty {
@@ -528,10 +554,13 @@
             font-size: 0.82rem;
             font-weight: 600;
             cursor: pointer;
+            transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
         }
 
         .visual-context-btn:hover {
             background: rgba(255, 255, 255, 0.16);
+            border-color: rgba(255, 255, 255, 0.28);
+            transform: translateY(-1px);
         }
 
         .preset-modal {
@@ -543,6 +572,7 @@
             justify-content: center;
             padding: 20px;
             z-index: 10001;
+            backdrop-filter: blur(10px);
         }
 
         .preset-modal.show {
@@ -567,6 +597,7 @@
             justify-content: center;
             padding: 22px;
             z-index: 10002;
+            backdrop-filter: blur(12px);
         }
 
         .visual-modal.show {
@@ -618,6 +649,13 @@
             font-size: 0.84rem;
             font-weight: 600;
             cursor: pointer;
+            transition: transform 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
+        }
+
+        .visual-modal-close:hover {
+            background: rgba(44, 91, 79, 0.08);
+            border-color: rgba(44, 91, 79, 0.2);
+            transform: translateY(-1px);
         }
 
         .visual-modal-frame {
@@ -685,39 +723,8 @@
             margin-top: 16px;
         }
 
-        .scenario-preset {
-            appearance: none;
-            text-align: left;
-            width: 100%;
-            border: 1px solid rgba(44, 91, 79, 0.1);
-            border-radius: 16px;
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(246, 248, 245, 0.96) 100%);
-            padding: 14px;
-            cursor: pointer;
-            transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
-        }
-
-        .scenario-preset:hover {
-            transform: translateY(-1px);
-            border-color: rgba(44, 91, 79, 0.26);
-            box-shadow: 0 10px 18px rgba(23, 45, 62, 0.05);
-        }
-
-        .scenario-preset.active {
-            border-color: rgba(44, 91, 79, 0.42);
-            box-shadow: 0 0 0 3px rgba(44, 91, 79, 0.08);
-            background: linear-gradient(180deg, rgba(249, 243, 230, 0.96) 0%, rgba(255, 255, 255, 0.98) 100%);
-        }
-
         .scenario-preset .kicker {
-            display: inline-flex;
-            align-items: center;
-            padding: 5px 8px;
-            border-radius: 999px;
-            background: rgba(44, 91, 79, 0.08);
-            color: var(--color-primary-dark);
-            font-size: 0.72rem;
-            margin-bottom: 10px;
+            letter-spacing: 0.02em;
         }
 
         .scenario-preset .title {
@@ -787,10 +794,14 @@
             font-weight: 600;
             cursor: pointer;
             white-space: nowrap;
+            transition: transform 0.18s ease, background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
         }
 
         .location-ghost-btn:hover {
             background: rgba(44, 91, 79, 0.1);
+            border-color: rgba(44, 91, 79, 0.24);
+            box-shadow: 0 8px 16px rgba(23, 45, 62, 0.04);
+            transform: translateY(-1px);
         }
 
         .visual-entry-btn {
@@ -804,10 +815,14 @@
             font-weight: 600;
             cursor: pointer;
             white-space: nowrap;
+            transition: transform 0.18s ease, background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
         }
 
         .visual-entry-btn:hover {
             background: rgba(168, 116, 60, 0.14);
+            border-color: rgba(168, 116, 60, 0.28);
+            box-shadow: 0 8px 16px rgba(168, 116, 60, 0.1);
+            transform: translateY(-1px);
         }
 
         .field-help {
@@ -1135,12 +1150,23 @@
             align-items: center;
             justify-content: space-between;
             gap: 18px;
-            padding: 16px 18px;
-            border-radius: 22px;
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.08) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            box-shadow: 0 14px 30px rgba(7, 20, 17, 0.12);
-            backdrop-filter: blur(14px);
+            padding: 18px 20px;
+            border-radius: 24px;
+            background: linear-gradient(180deg, rgba(255, 248, 238, 0.12) 0%, rgba(255, 251, 244, 0.07) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 18px 34px rgba(8, 18, 15, 0.14);
+            backdrop-filter: blur(16px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-account-card::after {
+            content: "";
+            position: absolute;
+            inset: 0 auto 0 0;
+            width: 1px;
+            background: linear-gradient(180deg, transparent 0%, rgba(255, 244, 228, 0.52) 20%, rgba(255, 244, 228, 0.18) 80%, transparent 100%);
+            opacity: 0.6;
         }
 
         .header-account-copy {
@@ -1150,14 +1176,18 @@
         }
 
         .header-account-copy strong {
-            font-size: 1rem;
-            font-weight: 700;
+            font-family: var(--font-display);
+            font-size: 1.08rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
             color: #ffffff;
         }
 
         .header-account-copy span {
-            font-size: 0.82rem;
-            color: rgba(255, 255, 255, 0.76);
+            font-size: 0.78rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(255, 243, 226, 0.7);
         }
 
         .header-account-actions {
@@ -1165,136 +1195,6 @@
             flex-wrap: wrap;
             justify-content: flex-end;
             gap: 10px;
-        }
-
-        .header-ghost-btn {
-            appearance: none;
-            border: 1px solid rgba(255, 255, 255, 0.22);
-            background: rgba(255, 255, 255, 0.08);
-            color: #ffffff;
-            border-radius: 999px;
-            padding: 10px 16px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
-        }
-
-        .header-ghost-btn:hover {
-            background: rgba(255, 255, 255, 0.16);
-            border-color: rgba(255, 255, 255, 0.3);
-            transform: translateY(-1px);
-        }
-
-        .auth-modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(10, 20, 18, 0.48);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            z-index: 10000;
-        }
-
-        .auth-modal.show {
-            display: flex;
-        }
-
-        .auth-dialog {
-            width: min(100%, 920px);
-            display: grid;
-            grid-template-columns: minmax(260px, 0.95fr) minmax(320px, 1.05fr);
-            background: #fbfaf7;
-            border-radius: 24px;
-            overflow: hidden;
-            box-shadow: 0 26px 60px rgba(10, 20, 18, 0.22);
-        }
-
-        .auth-aside {
-            padding: 28px;
-            background: linear-gradient(160deg, #20473f 0%, #1a3a34 55%, #4b6a4d 100%);
-            color: #ffffff;
-        }
-
-        .auth-aside .kicker {
-            display: inline-block;
-            margin-bottom: 12px;
-            font-size: 0.75rem;
-            opacity: 0.72;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-        }
-
-        .auth-aside h3 {
-            color: #ffffff;
-            margin-bottom: 12px;
-        }
-
-        .auth-aside p {
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        .auth-list {
-            display: grid;
-            gap: 10px;
-            margin-top: 18px;
-        }
-
-        .auth-list-item {
-            padding: 12px 14px;
-            border-radius: 14px;
-            background: rgba(255, 255, 255, 0.08);
-            color: rgba(255, 255, 255, 0.92);
-            font-size: 0.86rem;
-        }
-
-        .auth-main {
-            padding: 24px;
-            background: #fbfaf7;
-        }
-
-        .auth-main-head {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            margin-bottom: 18px;
-        }
-
-        .auth-main-head h3 {
-            margin-bottom: 0;
-        }
-
-        .auth-close {
-            appearance: none;
-            border: none;
-            background: transparent;
-            color: var(--color-text-tertiary);
-            font-size: 1.4rem;
-            cursor: pointer;
-        }
-
-        .auth-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 18px;
-        }
-
-        .auth-tab {
-            appearance: none;
-            border: 1px solid rgba(44, 91, 79, 0.12);
-            background: rgba(44, 91, 79, 0.04);
-            color: var(--color-text-secondary);
-            border-radius: 999px;
-            padding: 10px 16px;
-            cursor: pointer;
-        }
-
-        .auth-tab.active {
-            background: var(--color-primary);
-            color: #ffffff;
-            border-color: var(--color-primary);
         }
 
         .trace-card-head {
@@ -1658,13 +1558,13 @@
         }
 
         .shell-container > .card {
-            background: rgba(255, 255, 255, 0.72);
-            border: 1px solid rgba(217, 226, 220, 0.46);
-            border-radius: 28px;
-            padding: 28px;
+            background: rgba(255, 250, 244, 0.72);
+            border: 1px solid rgba(57, 41, 28, 0.1);
+            border-radius: 30px;
+            padding: 30px;
             margin-bottom: 24px;
-            box-shadow: 0 20px 44px rgba(23, 45, 62, 0.06);
-            backdrop-filter: blur(20px);
+            box-shadow: 0 24px 48px rgba(57, 41, 28, 0.08);
+            backdrop-filter: blur(18px);
         }
 
         .ai-status-inline {
@@ -2252,7 +2152,7 @@
     <div class="unified-header">
         <div class="container">
             <div class="site-title">
-                <h1>☯ 玄学预测系统</h1>
+                <h1><span class="brand-mark" aria-hidden="true">☯</span><span class="brand-calligraphy">玄学预测系统</span></h1>
                 <p>传统命理学 · 现代科技 · 智能分析</p>
             </div>
             <div class="header-account">
@@ -2385,28 +2285,28 @@
                         <h3>先选一个贴近的场景，问事会更快进入状态</h3>
                         <p>这些模板只是起点。点一个后，问题和基础条件会自动填入，你可以继续改成自己的实际情况。</p>
                         <div class="scenario-preset-grid" id="scenarioPresetGrid">
-                            <button type="button" class="scenario-preset" data-scenario="career_switch">
-                                <span class="kicker">事业决策</span>
+                            <button type="button" class="scenario-preset ui-select-card" data-scenario="career_switch">
+                                <span class="kicker ui-card-kicker">事业决策</span>
                                 <span class="title">换工作 / 跳槽</span>
                             </button>
-                            <button type="button" class="scenario-preset" data-scenario="relationship">
-                                <span class="kicker">关系判断</span>
+                            <button type="button" class="scenario-preset ui-select-card" data-scenario="relationship">
+                                <span class="kicker ui-card-kicker">关系判断</span>
                                 <span class="title">感情能否继续</span>
                             </button>
-                            <button type="button" class="scenario-preset" data-scenario="startup_date">
-                                <span class="kicker">时间选择</span>
+                            <button type="button" class="scenario-preset ui-select-card" data-scenario="startup_date">
+                                <span class="kicker ui-card-kicker">时间选择</span>
                                 <span class="title">开业 / 启动项目</span>
                             </button>
-                            <button type="button" class="scenario-preset" data-scenario="exam">
-                                <span class="kicker">学业考试</span>
+                            <button type="button" class="scenario-preset ui-select-card" data-scenario="exam">
+                                <span class="kicker ui-card-kicker">学业考试</span>
                                 <span class="title">考试能否顺利</span>
                             </button>
-                            <button type="button" class="scenario-preset" data-scenario="investment">
-                                <span class="kicker">财务决策</span>
+                            <button type="button" class="scenario-preset ui-select-card" data-scenario="investment">
+                                <span class="kicker ui-card-kicker">财务决策</span>
                                 <span class="title">投资 / 求财</span>
                             </button>
-                            <button type="button" class="scenario-preset" data-scenario="relocation">
-                                <span class="kicker">空间与变动</span>
+                            <button type="button" class="scenario-preset ui-select-card" data-scenario="relocation">
+                                <span class="kicker ui-card-kicker">空间与变动</span>
                                 <span class="title">搬家 / 入宅</span>
                             </button>
                         </div>
@@ -2470,8 +2370,8 @@
                     <button type="button" class="auth-close" id="authModalClose">×</button>
                 </div>
                 <div class="auth-tabs">
-                    <button type="button" class="auth-tab active" id="authTabLogin">登录</button>
-                    <button type="button" class="auth-tab" id="authTabRegister">注册</button>
+                    <button type="button" class="auth-tab ui-pill-tab active" id="authTabLogin">登录</button>
+                    <button type="button" class="auth-tab ui-pill-tab" id="authTabRegister">注册</button>
                 </div>
                 <div id="authLoginPanel">
                     <form id="loginForm">
@@ -2552,6 +2452,26 @@
             ></iframe>
         </div>
     </div>
+
+    <footer class="site-footer">
+        <div class="container shell-container">
+            <div class="site-footer-card">
+                <div class="site-footer-copy">
+                    <span class="site-footer-kicker">Hermes System</span>
+                    <p class="site-footer-title">Hermes 玄学系统</p>
+                    <p class="site-footer-text">统一问事、结果工作台与账号档案集中管理，适合把一次判断从输入到复盘完整保存。</p>
+                </div>
+                <div class="site-footer-meta">
+                    <div class="site-footer-pill-row">
+                        <span class="site-footer-pill">统一问事中心</span>
+                        <span class="site-footer-pill">结果工作台</span>
+                        <span class="site-footer-pill">账号档案</span>
+                    </div>
+                    <div class="site-footer-note">传统术数辅助分析 · 内容仅供学习与参考</div>
+                </div>
+            </div>
+        </div>
+    </footer>
 
     <script src="config.js?v=20260513-home-cleanup-2"></script>
     <script src="common-links.js?v=20260513-home-cleanup-2"></script>

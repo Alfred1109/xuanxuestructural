@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hermes 玄学系统 - 统一问事结果</title>
-    <link rel="stylesheet" href="common-header.css?v=20260519-result-workspace">
-    <link rel="stylesheet" href="common-theme.css?v=20260519-result-workspace">
+    <link rel="stylesheet" href="common-header.css?v=20260523-brush-title-fix">
+    <link rel="stylesheet" href="common-theme.css?v=20260523-visual-refresh">
     <style>
         .workspace-shell {
             max-width: 1280px;
@@ -23,12 +23,23 @@
             align-items: center;
             justify-content: space-between;
             gap: 18px;
-            padding: 16px 18px;
-            border-radius: 22px;
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.08) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            box-shadow: 0 14px 30px rgba(7, 20, 17, 0.12);
-            backdrop-filter: blur(14px);
+            padding: 18px 20px;
+            border-radius: 24px;
+            background: linear-gradient(180deg, rgba(255, 248, 238, 0.12) 0%, rgba(255, 251, 244, 0.07) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 18px 34px rgba(8, 18, 15, 0.14);
+            backdrop-filter: blur(16px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-account-card::after {
+            content: "";
+            position: absolute;
+            inset: 0 auto 0 0;
+            width: 1px;
+            background: linear-gradient(180deg, transparent 0%, rgba(255, 244, 228, 0.52) 20%, rgba(255, 244, 228, 0.18) 80%, transparent 100%);
+            opacity: 0.6;
         }
 
         .header-account-copy {
@@ -38,14 +49,18 @@
         }
 
         .header-account-copy strong {
-            font-size: 1rem;
-            font-weight: 700;
+            font-family: var(--font-display);
+            font-size: 1.08rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
             color: #ffffff;
         }
 
         .header-account-copy span {
-            font-size: 0.82rem;
-            color: rgba(255, 255, 255, 0.76);
+            font-size: 0.78rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(255, 243, 226, 0.7);
         }
 
         .header-account-actions {
@@ -53,25 +68,6 @@
             flex-wrap: wrap;
             justify-content: flex-end;
             gap: 10px;
-        }
-
-        .header-ghost-btn {
-            appearance: none;
-            border: 1px solid rgba(255, 255, 255, 0.22);
-            background: rgba(255, 255, 255, 0.08);
-            color: #ffffff;
-            border-radius: 999px;
-            padding: 10px 16px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
-        }
-
-        .header-ghost-btn:hover {
-            background: rgba(255, 255, 255, 0.16);
-            border-color: rgba(255, 255, 255, 0.3);
-            transform: translateY(-1px);
         }
 
         .workspace-shell > .card {
@@ -180,12 +176,19 @@
             color: var(--color-primary-dark);
             text-decoration: none;
             font-weight: 600;
+            transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
         }
 
         .result-link-btn.primary {
             background: var(--color-primary);
             border-color: var(--color-primary);
             color: #fff;
+        }
+
+        .result-link-btn:hover {
+            transform: translateY(-1px);
+            border-color: rgba(44, 91, 79, 0.24);
+            box-shadow: 0 10px 20px rgba(23, 45, 62, 0.06);
         }
 
         .result-tabs-card {
@@ -198,6 +201,7 @@
             gap: 14px;
             padding-top: 18px;
             padding-bottom: 18px;
+            backdrop-filter: blur(14px);
         }
 
         .result-tabs {
@@ -206,22 +210,7 @@
             flex-wrap: wrap;
         }
 
-        .result-tab {
-            border: 1px solid rgba(44, 91, 79, 0.12);
-            background: rgba(255, 255, 255, 0.94);
-            color: var(--color-text-secondary);
-            border-radius: 999px;
-            padding: 10px 16px;
-            font: inherit;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.18s ease;
-        }
-
         .result-tab.active {
-            background: var(--color-primary);
-            border-color: var(--color-primary);
-            color: #fff;
             box-shadow: 0 12px 22px rgba(44, 91, 79, 0.18);
         }
 
@@ -688,117 +677,6 @@
             margin: 0 auto 18px;
         }
 
-        .auth-modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(10, 20, 18, 0.48);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            z-index: 10000;
-        }
-
-        .auth-modal.show {
-            display: flex;
-        }
-
-        .auth-dialog {
-            width: min(100%, 920px);
-            display: grid;
-            grid-template-columns: minmax(260px, 0.95fr) minmax(320px, 1.05fr);
-            background: #fbfaf7;
-            border-radius: 24px;
-            overflow: hidden;
-            box-shadow: 0 26px 60px rgba(10, 20, 18, 0.22);
-        }
-
-        .auth-aside {
-            padding: 28px;
-            background: linear-gradient(160deg, #20473f 0%, #1a3a34 55%, #4b6a4d 100%);
-            color: #ffffff;
-        }
-
-        .auth-aside .kicker {
-            display: inline-block;
-            margin-bottom: 12px;
-            font-size: 0.75rem;
-            opacity: 0.72;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-        }
-
-        .auth-aside h3 {
-            color: #ffffff;
-            margin-bottom: 12px;
-        }
-
-        .auth-aside p {
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        .auth-list {
-            display: grid;
-            gap: 10px;
-            margin-top: 18px;
-        }
-
-        .auth-list-item {
-            padding: 12px 14px;
-            border-radius: 14px;
-            background: rgba(255, 255, 255, 0.08);
-            color: rgba(255, 255, 255, 0.92);
-            font-size: 0.86rem;
-        }
-
-        .auth-main {
-            padding: 24px;
-            background: #fbfaf7;
-        }
-
-        .auth-main-head {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            margin-bottom: 18px;
-        }
-
-        .auth-main-head h3 {
-            margin-bottom: 0;
-        }
-
-        .auth-close {
-            appearance: none;
-            border: none;
-            background: transparent;
-            color: var(--color-text-tertiary);
-            font-size: 1.4rem;
-            cursor: pointer;
-        }
-
-        .auth-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 18px;
-        }
-
-        .auth-tab {
-            appearance: none;
-            border: 1px solid rgba(44, 91, 79, 0.12);
-            background: rgba(44, 91, 79, 0.04);
-            color: var(--color-text-secondary);
-            border-radius: 999px;
-            padding: 10px 16px;
-            cursor: pointer;
-        }
-
-        .auth-tab.active {
-            background: var(--color-primary);
-            color: #ffffff;
-            border-color: var(--color-primary);
-        }
-
         @media (max-width: 960px) {
             .result-hero,
             .result-panel-grid {
@@ -893,7 +771,7 @@
     <div class="unified-header">
         <div class="container">
             <div class="site-title">
-                <h1>☯ 玄学预测系统</h1>
+                <h1><span class="brand-mark" aria-hidden="true">☯</span><span class="brand-calligraphy">玄学预测系统</span></h1>
                 <p>传统命理学 · 现代科技 · 智能分析</p>
             </div>
             <div class="header-account">
@@ -940,10 +818,10 @@
 
             <section class="card result-tabs-card">
                 <div id="resultTabs" class="result-tabs" role="tablist" aria-label="统一问事结果分区">
-                    <button type="button" class="result-tab active" data-result-tab="summary" aria-selected="true">综合结论</button>
-                    <button type="button" class="result-tab" data-result-tab="decision" aria-selected="false">决策内核</button>
-                    <button type="button" class="result-tab" data-result-tab="modules" aria-selected="false">模块依据</button>
-                    <button type="button" class="result-tab" data-result-tab="trace" aria-selected="false">计算流程</button>
+                    <button type="button" class="result-tab ui-pill-tab active" data-result-tab="summary" aria-selected="true">综合结论</button>
+                    <button type="button" class="result-tab ui-pill-tab" data-result-tab="decision" aria-selected="false">决策内核</button>
+                    <button type="button" class="result-tab ui-pill-tab" data-result-tab="modules" aria-selected="false">模块依据</button>
+                    <button type="button" class="result-tab ui-pill-tab" data-result-tab="trace" aria-selected="false">计算流程</button>
                 </div>
                 <div class="result-tab-hint">从总判断一路看到模块依据和推演流程，不再在一个超长页面里来回找内容。</div>
             </section>
@@ -1005,8 +883,8 @@
                     <button type="button" class="auth-close" id="authModalClose">×</button>
                 </div>
                 <div class="auth-tabs">
-                    <button type="button" class="auth-tab active" id="authTabLogin">登录</button>
-                    <button type="button" class="auth-tab" id="authTabRegister">注册</button>
+                    <button type="button" class="auth-tab ui-pill-tab active" id="authTabLogin">登录</button>
+                    <button type="button" class="auth-tab ui-pill-tab" id="authTabRegister">注册</button>
                 </div>
                 <div id="authLoginPanel">
                     <form id="loginForm">
@@ -1045,6 +923,26 @@
             </div>
         </div>
     </div>
+
+    <footer class="site-footer">
+        <div class="container workspace-shell">
+            <div class="site-footer-card">
+                <div class="site-footer-copy">
+                    <span class="site-footer-kicker">Result Workspace</span>
+                    <p class="site-footer-title">统一问事结果</p>
+                    <p class="site-footer-text">结论、依据与推演流程分区保存，便于回看、比较和继续追问。</p>
+                </div>
+                <div class="site-footer-meta">
+                    <div class="site-footer-pill-row">
+                        <span class="site-footer-pill">综合结论</span>
+                        <span class="site-footer-pill">决策内核</span>
+                        <span class="site-footer-pill">计算流程</span>
+                    </div>
+                    <div class="site-footer-note">请结合现实情况审慎参考，不作为唯一决策依据</div>
+                </div>
+            </div>
+        </div>
+    </footer>
 
     <script src="config.js?v=20260519-result-workspace"></script>
     <script src="common-links.js?v=20260519-result-workspace"></script>
