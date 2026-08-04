@@ -250,6 +250,25 @@
             font-size: 1.02rem;
         }
 
+        .result-answer-heading {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .result-answer-heading .page-title {
+            margin-bottom: 0;
+        }
+
+        .result-answer-source {
+            margin: 0;
+            color: var(--color-text-secondary);
+            font-size: 0.86rem;
+            text-align: right;
+        }
+
         .result-meta {
             display: flex;
             gap: 8px;
@@ -828,7 +847,10 @@
 
             <div id="resultPanels">
                 <section id="result-panel-summary" class="card result-panel result-overview active" data-result-panel="summary" role="tabpanel" aria-labelledby="result-tab-summary">
-                    <h2 class="page-title">系统结论</h2>
+                    <div class="result-answer-heading">
+                        <h2 id="consultAnswerTitle" class="page-title">系统结论</h2>
+                        <p id="consultAnswerSource" class="result-answer-source"></p>
+                    </div>
                     <div id="consultAnswer" class="consult-answer"></div>
                     <div id="consultMeta" class="result-meta"></div>
                 </section>
@@ -950,13 +972,13 @@
     <script src="markdown-it.min.js"></script>
     <script src="markdown.js?v=20260519-result-workspace"></script>
     <script src="api-client.js?v=20260804-mounted-api-route"></script>
-    <script src="auth-client.js?v=20260519-result-workspace"></script>
+    <script src="auth-client.js?v=20260804-mounted-api-route"></script>
     <script src="ai-status.js?v=20260519-result-workspace"></script>
     <script src="common-renderers.js?v=20260519-result-workspace-2"></script>
     <script src="decision-panel.js?v=20260519-result-workspace-2"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script src="trace-panel.js?v=20260519-result-workspace"></script>
-    <script src="consult-panel.js?v=20260519-result-workspace"></script>
+    <script src="consult-panel.js?v=20260804-ai-result-fix"></script>
     <script>
         if (window.applyCommonLinks) {
             window.applyCommonLinks();

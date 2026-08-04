@@ -46,6 +46,24 @@ class LLMHelper:
     def is_available(self) -> bool:
         """检查LLM是否可用"""
         return self.client is not None
+
+    @staticmethod
+    def _needs_continuation(content: str, finish_reason: Optional[str]) -> bool:
+        """Detect truncated replies even when an upstream provider mislabels them."""
+        if not content:
+            return False
+        if finish_reason == "length":
+            return True
+
+        text = content.rstrip()
+        if not text:
+            return False
+
+        for opening, closing in (("(", ")"), ("（", "）"), ("[", "]"), ("【", "】"), ("{", "}")):
+            if text.count(opening) > text.count(closing):
+                return True
+
+        return text[-1] not in "。！？.!?…）】」』”\"'"
     
     def enhance_bazi_analysis(self, bazi_data: Dict) -> Optional[str]:
         """
@@ -332,7 +350,7 @@ class LLMHelper:
             first_content = (first_choice.message.content or "").strip()
             finish_reason = getattr(first_choice, "finish_reason", None)
 
-            if finish_reason != "length" or not first_content:
+            if not self._needs_continuation(first_content, finish_reason):
                 return first_content or None
 
             continuation_messages = list(messages)

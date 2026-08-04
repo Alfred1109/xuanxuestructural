@@ -124,7 +124,7 @@ cleanup_existing_services() {
             kill $backend_pids >/dev/null 2>&1 || true
         fi
     fi
-    if is_port_in_use "$FRONTEND_PORT"; then
+    if [ "$FRONTEND_MODE" = "local" ] && is_port_in_use "$FRONTEND_PORT"; then
         local frontend_pids
         frontend_pids="$(list_port_pids "$FRONTEND_PORT" | tr '\n' ' ')"
         if [ -n "$frontend_pids" ]; then

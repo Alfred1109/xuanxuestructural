@@ -1005,11 +1005,20 @@
         var summaries = payload.module_summaries || {};
         var intent = payload.intent || {};
         var trace = payload.trace && payload.trace.mermaid ? payload.trace : buildSyntheticTrace(payload);
+        var aiSynthesized = Boolean(payload.ai && payload.ai.synthesized);
 
         if (!elements || !elements.consultAnswer || !elements.consultMeta || !elements.consultModuleGrid) {
             return;
         }
 
+        if (elements.consultAnswerTitle) {
+            elements.consultAnswerTitle.textContent = aiSynthesized ? 'AI 综合解读' : '系统结论';
+        }
+        if (elements.consultAnswerSource) {
+            elements.consultAnswerSource.textContent = aiSynthesized
+                ? 'AI 基于本次模块结果生成'
+                : '基于规则与模块结果综合';
+        }
         elements.consultAnswer.innerHTML = renderMarkdown(payload.answer || '系统暂未生成结论。');
         elements.consultMeta.innerHTML = []
             .concat((intent.modules || []).map(function (moduleName) {
@@ -1018,7 +1027,7 @@
             .concat(intent.matter_type ? ['<span class="result-chip">事项：' + esc(intent.matter_type) + '</span>'] : [])
             .concat(intent.purpose ? ['<span class="result-chip">用途：' + esc(intent.purpose) + '</span>'] : [])
             .concat(payload.ai && payload.ai.fallback ? ['<span class="result-chip">兼容模式</span>'] : [])
-            .concat([payload.ai && payload.ai.synthesized ? '<span class="result-chip">AI 已综合</span>' : '<span class="result-chip">基础综合</span>'])
+            .concat([aiSynthesized ? '<span class="result-chip">AI 已综合</span>' : '<span class="result-chip">基础综合</span>'])
             .filter(Boolean)
             .join('');
         if (elements.consultTraceSummary) {
@@ -1162,6 +1171,8 @@
         var elements = {
             consultResult: workspace,
             consultAnswer: document.getElementById('consultAnswer'),
+            consultAnswerTitle: document.getElementById('consultAnswerTitle'),
+            consultAnswerSource: document.getElementById('consultAnswerSource'),
             consultMeta: document.getElementById('consultMeta'),
             consultDecisionGrid: document.getElementById('consultDecisionGrid'),
             consultModuleGrid: document.getElementById('consultModuleGrid'),
@@ -1215,6 +1226,8 @@
             consultLoadingLabel: document.getElementById('consultLoadingLabel'),
             consultResult: document.getElementById('consultResult'),
             consultAnswer: document.getElementById('consultAnswer'),
+            consultAnswerTitle: document.getElementById('consultAnswerTitle'),
+            consultAnswerSource: document.getElementById('consultAnswerSource'),
             consultMeta: document.getElementById('consultMeta'),
             consultDecisionGrid: document.getElementById('consultDecisionGrid'),
             consultModuleGrid: document.getElementById('consultModuleGrid'),
