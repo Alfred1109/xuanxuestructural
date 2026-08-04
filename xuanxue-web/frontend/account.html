@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>账号中心 - Hermes 玄学系统</title>
-    <link rel="stylesheet" href="common-header.css?v=20260523-brush-title-fix">
+    <link rel="stylesheet" href="common-header.css?v=20260804-app-nav">
     <link rel="stylesheet" href="common-theme.css?v=20260523-visual-refresh">
     <style>
         .page-shell {
@@ -831,37 +831,10 @@
 
     <div class="container page-shell">
         <section class="account-center" id="accountCenter">
-            <div class="card account-overview">
-                <div class="account-overview-inner">
-                    <div class="account-hero-copy">
-                        <span class="account-hero-kicker">Hermes Account</span>
-                        <p>这里集中管理你的登录资料、默认出生信息和统一问事历史。问事入口与账户管理分开后，路径会更清晰，也更符合正常的产品体验。</p>
-                    </div>
-                    <div class="account-meta-grid">
-                        <div class="account-meta-card">
-                            <span class="label">资料用途</span>
-                            <span class="value">保存昵称、性别、出生资料与常用地点</span>
-                        </div>
-                        <div class="account-meta-card">
-                            <span class="label">历史回看</span>
-                            <span class="value">按账号查看统一问事结论与模块摘要</span>
-                        </div>
-                        <div class="account-meta-card">
-                            <span class="label">登录后能力</span>
-                            <span class="value">开启统一问事并自动沉淀历史记录</span>
-                        </div>
-                        <div class="account-meta-card">
-                            <span class="label">主入口</span>
-                            <span class="value">统一问事中心</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <div class="card account-hero">
                 <div class="account-hero-top">
                     <div class="account-title-copy">
-                        <span class="account-hero-kicker" style="color: var(--color-text-tertiary); background: none; border: none; padding: 0;">Account Center</span>
+                        <span class="account-hero-kicker" style="color: var(--color-text-tertiary); background: none; border: none; padding: 0;">我的档案</span>
                         <h3 id="accountTitleText">登录后才能使用统一问事</h3>
                         <p id="accountTitleMeta">账号用于开启系统问事、保存资料，并回看个人历史记录。</p>
                     </div>
@@ -1092,12 +1065,12 @@
         </div>
     </footer>
 
-    <script src="config.js?v=20260512-auth-fix"></script>
-    <script src="common-links.js?v=20260512-auth-fix"></script>
+    <script src="config.js?v=20260804-xuanxue-api-route"></script>
+    <script src="common-links.js?v=20260804-app-nav"></script>
     <script src="common-ui.js?v=20260512-auth-fix"></script>
     <script src="markdown-it.min.js"></script>
     <script src="markdown.js?v=20260512-auth-fix"></script>
-    <script src="api-client.js?v=20260512-auth-fix"></script>
+    <script src="api-client.js?v=20260804-mounted-api-route"></script>
     <script src="auth-client.js?v=20260512-auth-fix"></script>
     <script>
         if (window.applyCommonLinks) {

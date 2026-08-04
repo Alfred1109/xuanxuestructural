@@ -156,6 +156,92 @@
     backdrop-filter: blur(10px);
 }
 
+.product-nav {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    width: fit-content;
+    max-width: 100%;
+    padding: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    background: rgba(8, 29, 25, 0.22);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.product-nav-link,
+.product-nav-tools > summary {
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
+    padding: 7px 10px;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    color: rgba(255, 244, 226, 0.76);
+    font-family: var(--font-sans);
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0;
+    text-decoration: none;
+    cursor: pointer;
+    list-style: none;
+}
+
+.product-nav-tools > summary::-webkit-details-marker {
+    display: none;
+}
+
+.product-nav-link:hover,
+.product-nav-tools > summary:hover,
+.product-nav-link:focus-visible,
+.product-nav-tools > summary:focus-visible {
+    background: rgba(255, 248, 236, 0.1);
+    color: #ffffff;
+    outline: none;
+}
+
+.product-nav-link.is-active,
+.product-nav-tools.is-active > summary {
+    background: rgba(235, 204, 145, 0.18);
+    color: #ffe5ae;
+    box-shadow: inset 0 0 0 1px rgba(247, 218, 159, 0.16);
+}
+
+.product-nav-tools {
+    position: relative;
+}
+
+.product-nav-menu {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(112px, 1fr));
+    gap: 3px;
+    width: max-content;
+    margin-top: 8px;
+    padding: 8px;
+    border: 1px solid rgba(226, 206, 170, 0.22);
+    border-radius: 8px;
+    background: #17362f;
+    box-shadow: 0 16px 30px rgba(3, 14, 12, 0.28);
+}
+
+.product-nav-menu a {
+    padding: 9px 10px;
+    border-radius: 4px;
+    color: rgba(255, 244, 226, 0.82);
+    font-size: 0.82rem;
+    line-height: 1.25;
+    text-decoration: none;
+}
+
+.product-nav-menu a:hover,
+.product-nav-menu a:focus-visible {
+    background: rgba(255, 248, 236, 0.11);
+    color: #ffffff;
+    outline: none;
+}
+
 @media (max-width: 768px) {
     .unified-header {
         padding: 24px 0 20px;
@@ -177,5 +263,25 @@
     .unified-header .site-title p {
         font-size: 0.72rem;
         padding: 7px 12px;
+    }
+
+    .product-nav {
+        width: 100%;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .product-nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .product-nav-link,
+    .product-nav-tools > summary {
+        flex: 0 0 auto;
+        font-size: 0.78rem;
+    }
+
+    .product-nav-menu {
+        grid-template-columns: repeat(2, minmax(104px, 1fr));
     }
 }

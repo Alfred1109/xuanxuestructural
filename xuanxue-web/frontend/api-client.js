@@ -1,11 +1,17 @@
 (function () {
     var AUTH_TOKEN_KEY = 'xuanxue_auth_token';
 
+    function isMountedUnderXuanxue() {
+        var path = String(window.location.pathname || '');
+        return path === '/xuanxue' || path.indexOf('/xuanxue/') === 0;
+    }
+
     function getBaseUrl() {
-        if (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) {
-            return window.APP_CONFIG.API_BASE_URL;
+        var config = window.APP_CONFIG || {};
+        if (isMountedUnderXuanxue() && !config.API_BASE_URL_FROM_QUERY) {
+            return window.location.origin + '/xuanxue-api';
         }
-        return window.location.origin;
+        return config.API_BASE_URL || window.location.origin;
     }
 
     function buildUrl(path, query) {

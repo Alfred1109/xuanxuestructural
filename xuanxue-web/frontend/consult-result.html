@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hermes 玄学系统 - 统一问事结果</title>
-    <link rel="stylesheet" href="common-header.css?v=20260523-brush-title-fix">
+    <link rel="stylesheet" href="common-header.css?v=20260804-app-nav">
     <link rel="stylesheet" href="common-theme.css?v=20260523-visual-refresh">
     <style>
         .workspace-shell {
@@ -818,32 +818,32 @@
 
             <section class="card result-tabs-card">
                 <div id="resultTabs" class="result-tabs" role="tablist" aria-label="统一问事结果分区">
-                    <button type="button" class="result-tab ui-pill-tab active" data-result-tab="summary" aria-selected="true">综合结论</button>
-                    <button type="button" class="result-tab ui-pill-tab" data-result-tab="decision" aria-selected="false">决策内核</button>
-                    <button type="button" class="result-tab ui-pill-tab" data-result-tab="modules" aria-selected="false">模块依据</button>
-                    <button type="button" class="result-tab ui-pill-tab" data-result-tab="trace" aria-selected="false">计算流程</button>
+                    <button id="result-tab-summary" type="button" class="result-tab ui-pill-tab active" data-result-tab="summary" role="tab" aria-controls="result-panel-summary" aria-selected="true">综合结论</button>
+                    <button id="result-tab-decision" type="button" class="result-tab ui-pill-tab" data-result-tab="decision" role="tab" aria-controls="result-panel-decision" aria-selected="false" tabindex="-1">决策内核</button>
+                    <button id="result-tab-modules" type="button" class="result-tab ui-pill-tab" data-result-tab="modules" role="tab" aria-controls="result-panel-modules" aria-selected="false" tabindex="-1">模块依据</button>
+                    <button id="result-tab-trace" type="button" class="result-tab ui-pill-tab" data-result-tab="trace" role="tab" aria-controls="result-panel-trace" aria-selected="false" tabindex="-1">计算流程</button>
                 </div>
                 <div class="result-tab-hint">从总判断一路看到模块依据和推演流程，不再在一个超长页面里来回找内容。</div>
             </section>
 
             <div id="resultPanels">
-                <section class="card result-panel result-overview active" data-result-panel="summary">
+                <section id="result-panel-summary" class="card result-panel result-overview active" data-result-panel="summary" role="tabpanel" aria-labelledby="result-tab-summary">
                     <h2 class="page-title">系统结论</h2>
                     <div id="consultAnswer" class="consult-answer"></div>
                     <div id="consultMeta" class="result-meta"></div>
                 </section>
 
-                <section class="card result-panel" data-result-panel="decision" hidden>
+                <section id="result-panel-decision" class="card result-panel" data-result-panel="decision" role="tabpanel" aria-labelledby="result-tab-decision" hidden>
                     <h2 class="page-title">决策内核</h2>
                     <div id="consultDecisionGrid" class="decision-grid"></div>
                 </section>
 
-                <section class="card result-panel" data-result-panel="modules" hidden>
+                <section id="result-panel-modules" class="card result-panel" data-result-panel="modules" role="tabpanel" aria-labelledby="result-tab-modules" hidden>
                     <h2 class="page-title">各模块依据</h2>
                     <div id="consultModuleGrid" class="module-summary-grid"></div>
                 </section>
 
-                <section class="card result-panel" data-result-panel="trace" hidden>
+                <section id="result-panel-trace" class="card result-panel" data-result-panel="trace" role="tabpanel" aria-labelledby="result-tab-trace" hidden>
                     <div class="trace-card-head">
                         <div>
                             <div class="trace-card-kicker">Flow · 推演脉络</div>
@@ -944,12 +944,12 @@
         </div>
     </footer>
 
-    <script src="config.js?v=20260519-result-workspace"></script>
-    <script src="common-links.js?v=20260519-result-workspace"></script>
+    <script src="config.js?v=20260804-xuanxue-api-route"></script>
+    <script src="common-links.js?v=20260804-app-nav"></script>
     <script src="common-ui.js?v=20260519-result-workspace"></script>
     <script src="markdown-it.min.js"></script>
     <script src="markdown.js?v=20260519-result-workspace"></script>
-    <script src="api-client.js?v=20260519-result-workspace"></script>
+    <script src="api-client.js?v=20260804-mounted-api-route"></script>
     <script src="auth-client.js?v=20260519-result-workspace"></script>
     <script src="ai-status.js?v=20260519-result-workspace"></script>
     <script src="common-renderers.js?v=20260519-result-workspace-2"></script>

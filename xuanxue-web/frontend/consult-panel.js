@@ -1108,12 +1108,44 @@
             var isActive = button.getAttribute('data-result-tab') === tabId;
             button.classList.toggle('active', isActive);
             button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            button.tabIndex = isActive ? 0 : -1;
         });
 
         Array.prototype.forEach.call(panelsRoot.querySelectorAll('[data-result-panel]'), function (panel) {
             var isActive = panel.getAttribute('data-result-panel') === tabId;
             panel.classList.toggle('active', isActive);
             panel.hidden = !isActive;
+        });
+    }
+
+    function bindResultTabKeyboardNavigation(tabsRoot, panelsRoot) {
+        tabsRoot.addEventListener('keydown', function (event) {
+            var keys = ['ArrowLeft', 'ArrowRight', 'Home', 'End'];
+            if (keys.indexOf(event.key) === -1) {
+                return;
+            }
+
+            var tabs = Array.prototype.slice.call(tabsRoot.querySelectorAll('[data-result-tab]'));
+            var currentIndex = tabs.indexOf(document.activeElement);
+            if (currentIndex === -1) {
+                return;
+            }
+
+            event.preventDefault();
+            var nextIndex = currentIndex;
+            if (event.key === 'ArrowLeft') {
+                nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+            } else if (event.key === 'ArrowRight') {
+                nextIndex = (currentIndex + 1) % tabs.length;
+            } else if (event.key === 'Home') {
+                nextIndex = 0;
+            } else if (event.key === 'End') {
+                nextIndex = tabs.length - 1;
+            }
+
+            var nextTab = tabs[nextIndex];
+            activateResultTab(nextTab.getAttribute('data-result-tab'), tabsRoot, panelsRoot);
+            nextTab.focus();
         });
     }
 
@@ -1164,6 +1196,7 @@
                     activateResultTab(button.getAttribute('data-result-tab'), tabsRoot, panelsRoot);
                 });
             });
+            bindResultTabKeyboardNavigation(tabsRoot, panelsRoot);
             activateResultTab('summary', tabsRoot, panelsRoot);
         }
     }
