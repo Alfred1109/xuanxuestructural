@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hermes 玄学系统 - 统一问事中心</title>
-    <link rel="stylesheet" href="common-header.css?v=20260804-app-nav">
-    <link rel="stylesheet" href="common-theme.css?v=20260523-visual-refresh">
+    <link rel="stylesheet" href="common-header.css?v=20260805-perf">
+    <link rel="stylesheet" href="common-theme.css?v=20260805-workbench">
     <style>
         .page-title {
             margin-bottom: var(--spacing-lg);
@@ -45,13 +45,11 @@
             display: grid;
             gap: 18px;
             padding: 30px;
-            border-radius: 30px;
-            background:
-                radial-gradient(circle at 8% 0%, rgba(194, 149, 87, 0.18) 0%, transparent 30%),
-                radial-gradient(circle at 90% 12%, rgba(39, 78, 70, 0.1) 0%, transparent 28%),
-                linear-gradient(145deg, rgba(255, 252, 247, 0.98) 0%, rgba(247, 240, 231, 0.98) 100%);
-            border: 1px solid rgba(57, 41, 28, 0.1);
-            box-shadow: 0 26px 52px rgba(57, 41, 28, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.74);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid var(--color-line);
+            border-top: 3px solid var(--color-primary);
+            box-shadow: var(--shadow-md);
         }
 
         .consult-primary-head {
@@ -70,7 +68,7 @@
             font-family: var(--font-display);
             font-size: clamp(1.8rem, 2.4vw, 2.35rem);
             line-height: 1.14;
-            letter-spacing: -0.03em;
+            letter-spacing: 0;
         }
 
         .consult-primary-copy p {
@@ -98,10 +96,10 @@
         .consult-progress-card {
             min-width: 220px;
             padding: 18px 18px 16px;
-            border-radius: 22px;
-            background: rgba(255, 251, 246, 0.8);
+            border-radius: var(--radius-md);
+            background: rgba(39, 78, 70, 0.045);
             border: 1px solid rgba(57, 41, 28, 0.09);
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+            box-shadow: none;
         }
 
         .consult-progress-card strong {
@@ -126,12 +124,10 @@
             grid-template-columns: 1fr;
             grid-template-rows: auto minmax(0, 1fr) auto;
             padding: 28px;
-            border-radius: 30px;
-            background:
-                radial-gradient(circle at 100% 0%, rgba(194, 149, 87, 0.1) 0%, transparent 30%),
-                linear-gradient(145deg, rgba(255, 251, 246, 0.98) 0%, rgba(246, 239, 230, 0.98) 100%);
+            border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.72);
             border: 1px solid rgba(57, 41, 28, 0.1);
-            box-shadow: 0 26px 52px rgba(57, 41, 28, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.74);
+            box-shadow: var(--shadow-sm);
         }
 
         .consult-side-card {
@@ -186,18 +182,17 @@
             justify-content: space-between;
             gap: 10px;
             padding: 15px 17px;
-            border-radius: 20px;
+            border-radius: var(--radius-md);
             background: rgba(255, 255, 255, 0.58);
             border: 1px solid rgba(57, 41, 28, 0.08);
             color: var(--color-primary-dark);
             text-decoration: none;
             font-size: 0.92rem;
             font-weight: 600;
-            transition: transform 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+            transition: border-color 0.18s ease, background-color 0.18s ease;
         }
 
         .consult-link-item:hover {
-            transform: translateX(2px);
             border-color: rgba(57, 41, 28, 0.16);
             background: rgba(255, 255, 255, 0.82);
         }
@@ -207,15 +202,26 @@
             gap: 10px;
             margin-top: 18px;
             padding: 16px 18px;
-            border-radius: 18px;
+            border-radius: var(--radius-md);
             border: 1px solid rgba(44, 91, 79, 0.1);
-            background:
-                radial-gradient(circle at 100% 0%, rgba(168, 116, 60, 0.08) 0%, transparent 28%),
-                linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(247, 249, 246, 0.98) 100%);
+            background: rgba(255, 255, 255, 0.94);
         }
 
         .consult-loading.show {
             display: grid;
+        }
+
+        .consult-cancel-btn {
+            justify-self: start;
+            margin-top: 8px;
+            padding: 7px 0;
+            border: 0;
+            background: transparent;
+            color: var(--color-text-secondary);
+            font: inherit;
+            font-size: 0.84rem;
+            text-decoration: underline;
+            cursor: pointer;
         }
 
         .consult-loading-head {
@@ -1149,13 +1155,13 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 18px;
-            padding: 18px 20px;
-            border-radius: 24px;
-            background: linear-gradient(180deg, rgba(255, 248, 238, 0.12) 0%, rgba(255, 251, 244, 0.07) 100%);
+            gap: 12px;
+            padding: 8px 10px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.06);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 18px 34px rgba(8, 18, 15, 0.14);
-            backdrop-filter: blur(16px);
+            box-shadow: none;
+            backdrop-filter: none;
             position: relative;
             overflow: hidden;
         }
@@ -1179,7 +1185,7 @@
             font-family: var(--font-display);
             font-size: 1.08rem;
             font-weight: 600;
-            letter-spacing: -0.02em;
+            letter-spacing: 0;
             color: #ffffff;
         }
 
@@ -1558,13 +1564,13 @@
         }
 
         .shell-container > .card {
-            background: rgba(255, 250, 244, 0.72);
-            border: 1px solid rgba(57, 41, 28, 0.1);
-            border-radius: 30px;
-            padding: 30px;
+            background: transparent;
+            border: 0;
+            border-radius: 0;
+            padding: 20px 0 0;
             margin-bottom: 24px;
-            box-shadow: 0 24px 48px rgba(57, 41, 28, 0.08);
-            backdrop-filter: blur(18px);
+            box-shadow: none;
+            backdrop-filter: none;
         }
 
         .ai-status-inline {
@@ -2145,6 +2151,44 @@
                 padding: 12px 14px;
             }
         }
+
+        /* The entry page uses the same compact tool surfaces at every breakpoint. */
+        .consult-panel,
+        .consult-question,
+        .saved-preset-item,
+        .saved-preset-empty,
+        .visual-context-banner,
+        .consult-optional,
+        .consult-secondary-actions,
+        .module-summary-card,
+        .trace-step,
+        .preset-dialog,
+        .visual-modal-dialog,
+        .trace-diagram-modal-dialog {
+            border-radius: var(--radius-md);
+        }
+
+        .consult-panel,
+        .consult-optional,
+        .result-overview {
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .consult-question {
+            background: #ffffff;
+        }
+
+        .visual-context-banner {
+            background: var(--color-primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .consult-actions {
+            border-radius: var(--radius-md);
+            box-shadow: none;
+            backdrop-filter: none;
+        }
     </style>
 </head>
 <body>
@@ -2178,7 +2222,7 @@
                 <form id="consultForm" class="consult-form consult-primary-card">
                     <div class="consult-primary-head">
                         <div class="consult-primary-copy">
-                            <span class="consult-focus-pill">Step 01 · 提出问题</span>
+                            <span class="consult-focus-pill">第一步 · 提出问题</span>
                             <h3>先把你最想问的事说清楚，系统再自动编排术数</h3>
                             <p>这一页只负责输入和发起问事。提交后会进入单独的结果工作台，在那里分区查看综合结论、决策内核、模块依据和计算流程。</p>
                         </div>
@@ -2206,7 +2250,7 @@
                         <div class="field-help">可先自动识别当前位置，再手动补充到更精确的楼宇、工位、房间或户型描述，便于风水/空间判断。</div>
                     </div>
 
-                    <details class="consult-optional" open>
+                    <details class="consult-optional">
                         <summary>
                             <div class="consult-optional-copy">
                                 <strong>补充出生信息</strong>
@@ -2250,8 +2294,8 @@
                     </details>
 
                     <div class="consult-actions">
-                        <button type="submit" class="btn">☯ 开始系统分析</button>
-                        <details class="consult-secondary-actions" open>
+                        <button type="submit" class="btn">开始系统分析</button>
+                        <details class="consult-secondary-actions">
                             <summary>
                                 <div class="consult-secondary-copy">
                                     <strong>更多操作</strong>
@@ -2267,11 +2311,12 @@
                         </details>
                     </div>
 
-                    <div class="consult-loading" id="consultLoading" aria-live="polite" aria-hidden="true">
+                        <div class="consult-loading" id="consultLoading" aria-live="polite" aria-hidden="true">
                         <div class="consult-loading-head">
                             <span class="consult-loading-label" id="consultLoadingLabel">正在汇总命理信息</span>
                             <span class="consult-loading-percent" id="consultLoadingPercent">0%</span>
                         </div>
+                        <button type="button" class="consult-cancel-btn" id="cancelConsultBtn" hidden>取消分析</button>
                         <div class="consult-loading-track" aria-hidden="true">
                             <div class="consult-loading-fill" id="consultLoadingFill"></div>
                         </div>
@@ -2281,7 +2326,7 @@
 
                 <div class="consult-secondary-grid">
                     <div class="consult-side-card">
-                        <span class="eyebrow">Quick Start</span>
+                        <span class="eyebrow">常用场景</span>
                         <h3>先选一个贴近的场景，问事会更快进入状态</h3>
                         <p>这些模板只是起点。点一个后，问题和基础条件会自动填入，你可以继续改成自己的实际情况。</p>
                         <div class="scenario-preset-grid" id="scenarioPresetGrid">
@@ -2337,7 +2382,7 @@
 
     </div>
 
-    <div id="authModal" class="auth-modal">
+    <div id="authModal" class="auth-modal" role="dialog" aria-modal="true" aria-labelledby="authModalTitle" aria-hidden="true">
         <div class="auth-dialog">
             <aside class="auth-aside">
                 <span class="kicker">Hermes Account</span>
@@ -2351,7 +2396,7 @@
             </aside>
             <div class="auth-main">
                 <div class="auth-main-head">
-                    <h3>登录与注册</h3>
+                    <h3 id="authModalTitle">登录与注册</h3>
                     <button type="button" class="auth-close" id="authModalClose">×</button>
                 </div>
                 <div class="auth-tabs">
@@ -2396,10 +2441,10 @@
         </div>
     </div>
 
-    <div id="presetSaveModal" class="preset-modal">
+    <div id="presetSaveModal" class="preset-modal" role="dialog" aria-modal="true" aria-labelledby="presetModalTitle" aria-hidden="true">
         <div class="preset-dialog">
             <div class="preset-dialog-head">
-                <h3>保存常用条件</h3>
+                <h3 id="presetModalTitle">保存常用条件</h3>
                 <button type="button" class="auth-close" id="presetModalClose">×</button>
             </div>
             <div class="preset-dialog-copy">给当前这组问事基础条件起个名字。保存后，下次登录可以直接一键套用。</div>
@@ -2420,11 +2465,11 @@
         </div>
     </div>
 
-    <div id="visualInsightModal" class="visual-modal">
+    <div id="visualInsightModal" class="visual-modal" role="dialog" aria-modal="true" aria-labelledby="visualInsightModalTitle" aria-hidden="true">
         <div class="visual-modal-dialog">
             <div class="visual-modal-head">
                 <div class="visual-modal-copy">
-                    <strong>拍照辅助分析</strong>
+                    <strong id="visualInsightModalTitle">拍照辅助分析</strong>
                     <span>拍完或上传后，条件会先保存，提交统一问事时再触发视觉识别。</span>
                 </div>
                 <button type="button" class="visual-modal-close" id="closeVisualInsightModalBtn">关闭</button>
@@ -2432,7 +2477,7 @@
             <iframe
                 id="visualInsightFrame"
                 class="visual-modal-frame"
-                src="visual-insight.html?embed=1"
+                data-src="visual-insight.html?embed=1"
                 title="拍照辅助分析"
             ></iframe>
         </div>
@@ -2465,13 +2510,10 @@
     <script src="markdown.js?v=20260513-home-cleanup-2"></script>
     <script src="api-client.js?v=20260804-mounted-api-route"></script>
     <script src="visual-context-store.js?v=20260513-visual-draft"></script>
-    <script src="auth-client.js?v=20260804-mounted-api-route"></script>
+    <script src="auth-client.js?v=20260805-lazy-account-data"></script>
     <script src="ai-status.js?v=20260513-home-cleanup-2"></script>
     <script src="common-renderers.js?v=20260519-home-render-fix"></script>
-    <script src="decision-panel.js?v=20260519-home-render-fix"></script>
-    <script src="trace-panel.js?v=20260513-home-cleanup-2"></script>
-    <script src="consult-panel.js?v=20260804-ai-result-fix"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script src="consult-panel.js?v=20260805-lazy-visual-frame"></script>
     <script>
         if (window.applyCommonLinks) {
             window.applyCommonLinks();

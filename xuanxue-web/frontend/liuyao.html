@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>六爻占卜 - 玄学预测系统</title>
-    <link rel="stylesheet" href="common-header.css?v=20260804-app-nav">
-    <link rel="stylesheet" href="common-theme.css?v=20260523-visual-refresh">
+    <link rel="stylesheet" href="common-header.css?v=20260805-perf">
+    <link rel="stylesheet" href="common-theme.css?v=20260805-workbench">
     <style>
         .page-title {
             margin-bottom: 16px;
@@ -107,7 +107,7 @@
         }
     </style>
 </head>
-<body>
+<body class="tool-page">
     <!-- 统一的顶部通栏 -->
     <div class="unified-header">
         <div class="container">
@@ -127,14 +127,14 @@
             </div>
 
             <div class="tips">
-                <strong>💡 占卜须知：</strong><br>
+                <strong>占卜须知：</strong><br>
                 1. 心诚则灵，占卜前请静心思考您的问题<br>
                 2. 问题要具体明确，避免模糊不清<br>
                 3. 同一问题不宜反复占卜<br>
                 4. 占卜结果仅供参考，不可过分依赖
             </div>
 
-            <h2 class="page-title">☯ 请输入您的问题</h2>
+            <h2 class="page-title">请输入您的问题</h2>
             <form id="liuyaoForm">
                 <div class="form-group">
                     <label>占卜问题（可选，但建议填写以获得更准确的解读）</label>
@@ -142,8 +142,8 @@
                 </div>
 
                 <div class="btn-row">
-                    <button type="submit" class="btn">🎲 开始占卜</button>
-                    <button type="button" class="btn btn-ai" onclick="divineWithAI()">🤖 AI深度解读</button>
+                    <button type="submit" class="btn">开始占卜</button>
+                    <button type="button" class="btn btn-ai" onclick="divineWithAI()">AI 深度解读</button>
                 </div>
             </form>
         </div>
@@ -155,7 +155,7 @@
 
         <div class="result" id="result">
             <div class="card">
-                <h2 class="page-title">📊 卦象结果</h2>
+                <h2 class="page-title">卦象结果</h2>
                 
                 <div class="info-section">
                     <h3>占卜信息</h3>
@@ -466,7 +466,7 @@
             if (hasAI && safeData.ai_interpretation) {
                 interpretationHTML += `
                     <div class="analysis-box ai">
-                        <h4>🤖 AI深度解读</h4>
+                        <h4>AI 深度解读</h4>
                         <div>${renderMarkdown(safeData.ai_interpretation)}</div>
                     </div>
                 `;

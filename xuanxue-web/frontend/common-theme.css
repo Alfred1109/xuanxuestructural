@@ -2,25 +2,25 @@
     --font-sans: "Avenir Next", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", sans-serif;
     --font-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", "Source Han Serif SC", "Noto Serif SC", "Songti SC", "STSong", serif;
 
-    --color-bg: #f2eadc;
-    --color-bg-mid: #ebe0ce;
-    --color-bg-bottom: #e1d5c4;
+    --color-bg: #f6f7f4;
+    --color-bg-mid: #f1f3ee;
+    --color-bg-bottom: #e9ede6;
 
-    --color-surface: rgba(255, 251, 245, 0.9);
-    --color-line: rgba(57, 41, 28, 0.12);
+    --color-surface: rgba(255, 255, 255, 0.92);
+    --color-line: rgba(27, 48, 42, 0.13);
 
-    --color-text: #211a14;
-    --color-text-secondary: #5c4c40;
-    --color-text-tertiary: #887669;
-    --color-text-soft: #8e7d70;
+    --color-text: #17231f;
+    --color-text-secondary: #46554e;
+    --color-text-tertiary: #718078;
+    --color-text-soft: #77847d;
 
     --color-primary: #274e46;
     --color-primary-dark: #17362f;
     --color-primary-light: #3d6a60;
     --color-primary-strong: #142f2a;
 
-    --color-accent: #9d6f37;
-    --color-accent-light: #c49557;
+    --color-accent: #a64e3b;
+    --color-accent-light: #cd8263;
 
     --color-success: #3d7a59;
     --color-info: #4f8394;
@@ -41,9 +41,9 @@
     --radius-md: 8px;
     --radius-lg: 12px;
 
-    --shadow-sm: 0 10px 24px rgba(71, 48, 27, 0.05);
-    --shadow-md: 0 16px 34px rgba(57, 38, 23, 0.08);
-    --shadow-lg: 0 26px 48px rgba(41, 28, 18, 0.12);
+    --shadow-sm: 0 4px 14px rgba(24, 45, 37, 0.05);
+    --shadow-md: 0 10px 24px rgba(24, 45, 37, 0.08);
+    --shadow-lg: 0 18px 40px rgba(24, 45, 37, 0.12);
 
     /* 字体大小系统 - 基于 1.25 比例 */
     --font-size-xs: 0.75rem;      /* 12px */
@@ -82,10 +82,7 @@ body {
     font-weight: var(--font-weight-normal);
     line-height: var(--line-height-normal);
     color: var(--color-text);
-    background:
-        radial-gradient(circle at top left, rgba(194, 149, 87, 0.12) 0%, transparent 26%),
-        radial-gradient(circle at 88% 12%, rgba(39, 78, 70, 0.08) 0%, transparent 24%),
-        linear-gradient(180deg, var(--color-bg) 0%, var(--color-bg-mid) 52%, var(--color-bg-bottom) 100%);
+    background: linear-gradient(180deg, var(--color-bg) 0%, var(--color-bg-mid) 58%, var(--color-bg-bottom) 100%);
     min-height: 100vh;
     padding: 0;
     overflow-x: hidden;
@@ -93,21 +90,8 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
-body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    opacity: 0.22;
-    background-image:
-        linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-    background-size: 32px 32px, 32px 32px;
-    mix-blend-mode: soft-light;
-}
-
 ::selection {
-    background: rgba(168, 116, 60, 0.18);
+    background: rgba(166, 78, 59, 0.16);
     color: var(--color-primary-strong);
 }
 
@@ -122,6 +106,10 @@ body > * {
 body.embed-page {
     padding: 0;
     background: var(--color-bg);
+}
+
+body.modal-open {
+    overflow: hidden;
 }
 
 body.embed-page::before {
@@ -141,25 +129,25 @@ body.embed-page .container {
 }
 
 .container {
-    width: min(100%, 1200px);
+    width: min(100%, 1180px);
     margin: 0 auto;
     padding: 0 var(--spacing-lg);
 }
 
 .card {
-    background: linear-gradient(180deg, rgba(255, 252, 247, 0.96) 0%, rgba(250, 245, 238, 0.92) 100%);
-    border: 1px solid rgba(57, 41, 28, 0.1);
-    border-radius: 18px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-md);
     padding: var(--spacing-xl);
-    box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    box-shadow: var(--shadow-sm);
     margin-bottom: var(--spacing-lg);
 }
 
 .result-card,
 .panel-card {
-    background: rgba(255, 255, 255, 0.86);
-    border: 1px solid rgba(217, 226, 220, 0.92);
-    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid var(--color-line);
+    border-radius: 6px;
     padding: 16px;
 }
 
@@ -193,9 +181,9 @@ body.embed-page .container {
 }
 
 .trace-item {
-    background: rgba(255, 255, 255, 0.84);
-    border: 1px solid rgba(217, 226, 220, 0.92);
-    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid var(--color-line);
+    border-radius: 6px;
     padding: 14px;
 }
 
@@ -218,7 +206,7 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: var(--font-weight-medium);
     line-height: var(--line-height-tight);
     color: var(--color-text);
-    letter-spacing: -0.02em;
+    letter-spacing: 0;
 }
 
 h1 {
@@ -278,8 +266,8 @@ p {
     width: 100%;
     padding: 11px 13px;
     border: 1px solid rgba(57, 41, 28, 0.13);
-    border-radius: 12px;
-    background: rgba(255, 252, 248, 0.92);
+    border-radius: 6px;
+    background: #ffffff;
     font-family: var(--font-sans);
     font-size: var(--font-size-base);
     font-weight: var(--font-weight-normal);
@@ -326,26 +314,26 @@ p {
     justify-content: center;
     padding: 12px 24px;
     border: 1px solid var(--color-primary);
-    border-radius: 999px;
+    border-radius: 6px;
     font-family: var(--font-sans);
     font-size: var(--font-size-base);
     font-weight: var(--font-weight-medium);
     line-height: var(--line-height-normal);
     cursor: pointer;
     color: #ffffff;
-    background: linear-gradient(135deg, var(--color-primary) 0%, #315f55 100%);
+    background: var(--color-primary);
     transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
     text-decoration: none;
     min-height: 44px;
     letter-spacing: 0.02em;
-    box-shadow: 0 14px 28px rgba(39, 78, 70, 0.16);
+    box-shadow: 0 4px 12px rgba(39, 78, 70, 0.16);
 }
 
 .btn:hover {
-    background: linear-gradient(135deg, var(--color-primary-dark) 0%, #244940 100%);
+    background: var(--color-primary-dark);
     border-color: var(--color-primary-dark);
     transform: translateY(-1px);
-    box-shadow: 0 18px 34px rgba(28, 53, 46, 0.2);
+    box-shadow: 0 6px 16px rgba(28, 53, 46, 0.2);
 }
 
 .btn:active {
@@ -353,13 +341,13 @@ p {
 }
 
 .btn.btn-accent {
-    background: linear-gradient(135deg, var(--color-accent) 0%, #b28245 100%);
+    background: var(--color-accent);
     border-color: var(--color-accent);
 }
 
 .btn.btn-accent:hover {
-    background: linear-gradient(135deg, #875d2c 0%, #9e723b 100%);
-    border-color: #875d2c;
+    background: #87392d;
+    border-color: #87392d;
 }
 
 .btn.btn-ai {
@@ -1125,13 +1113,11 @@ p {
     gap: 18px;
     align-items: start;
     padding: 22px 24px;
-    border-radius: 24px;
-    background:
-        radial-gradient(circle at 0% 0%, rgba(194, 149, 87, 0.12) 0%, transparent 24%),
-        linear-gradient(180deg, rgba(255, 251, 246, 0.84) 0%, rgba(246, 239, 230, 0.78) 100%);
-    border: 1px solid rgba(57, 41, 28, 0.1);
-    box-shadow: 0 18px 36px rgba(57, 41, 28, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.72);
-    backdrop-filter: blur(12px);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid var(--color-line);
+    box-shadow: none;
+    backdrop-filter: none;
 }
 
 .site-footer-copy {
@@ -1198,6 +1184,52 @@ p {
     color: var(--color-text-tertiary);
     font-size: 0.82rem;
     line-height: 1.7;
+}
+
+/* Standalone divination tools share one quiet workbench layout. */
+.tool-page > .container {
+    padding-top: 28px;
+    padding-bottom: 12px;
+}
+
+.tool-page > .container > .card:first-child {
+    position: relative;
+    padding: 28px;
+    border-top: 3px solid var(--color-primary);
+}
+
+.tool-page .page-title {
+    margin-bottom: 8px;
+    color: var(--color-primary-strong);
+}
+
+.tool-page .result {
+    margin-top: 16px;
+}
+
+.tool-page .result > .card {
+    margin-bottom: 14px;
+}
+
+.tool-page .ai-status-banner {
+    margin: -4px 0 20px;
+}
+
+/* Keep the older single-purpose tools visually aligned with the main workbench. */
+.tool-page .tips,
+.tool-page .info-section,
+.tool-page .time-info,
+.tool-page .dun-info {
+    border-radius: var(--radius-md);
+}
+
+.tool-page .tips {
+    background: rgba(247, 241, 228, 0.78);
+}
+
+.tool-page .page-title + p,
+.tool-page .card > p {
+    max-width: 68ch;
 }
 
 a,
@@ -1289,6 +1321,14 @@ textarea,
     .site-footer-card {
         grid-template-columns: 1fr;
         padding: 18px 18px 20px;
-        border-radius: 20px;
+        border-radius: 8px;
+    }
+
+    .tool-page > .container {
+        padding-top: 18px;
+    }
+
+    .tool-page > .container > .card:first-child {
+        padding: 20px 18px;
     }
 }

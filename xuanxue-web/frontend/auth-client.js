@@ -7,6 +7,7 @@
     var activeAccountTab = 'profile';
     var adminActivityPage = 1;
     var ADMIN_ACTIVITY_PAGE_SIZE = 8;
+    var authModalLastFocus = null;
     var moduleLabels = {
         bazi: '八字底盘',
         ziwei: '紫微命盘',
@@ -71,6 +72,7 @@
         if (target === 'admin' && !isAdminUser()) {
             target = 'profile';
         }
+        var changed = activeAccountTab !== target;
         activeAccountTab = target;
 
         var tabs = document.querySelectorAll('[data-account-tab]');
@@ -81,6 +83,21 @@
         Array.prototype.forEach.call(panels, function (node) {
             node.classList.toggle('show', node.getAttribute('data-account-panel') === target);
         });
+
+        if (changed && target === 'history') {
+            refreshHistory().catch(function (error) {
+                if (window.showToast) {
+                    window.showToast('读取历史失败：' + error.message, 'error');
+                }
+            });
+        }
+        if (changed && target === 'admin') {
+            refreshAdminDashboard().catch(function (error) {
+                if (window.showToast) {
+                    window.showToast('读取管理数据失败：' + error.message, 'error');
+                }
+            });
+        }
     }
 
     function openAccountCenter() {
@@ -565,9 +582,52 @@
         if (!modal) {
             return;
         }
+        if (show) {
+            authModalLastFocus = document.activeElement;
+        }
         modal.classList.toggle('show', !!show);
+        modal.setAttribute('aria-hidden', show ? 'false' : 'true');
+        document.body.classList.toggle('modal-open', !!show);
         if (show) {
             switchTab(tab || 'login');
+            window.setTimeout(function () {
+                var field = document.getElementById(tab === 'register' ? 'registerDisplayName' : 'loginEmail');
+                if (field) {
+                    field.focus();
+                }
+            }, 0);
+        } else if (authModalLastFocus && typeof authModalLastFocus.focus === 'function') {
+            authModalLastFocus.focus();
+            authModalLastFocus = null;
+        }
+    }
+
+    function trapFocusInAuthModal(event) {
+        var modal = document.getElementById('authModal');
+        if (!modal || !modal.classList.contains('show')) {
+            return;
+        }
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            toggleAuthModal(false);
+            return;
+        }
+        if (event.key !== 'Tab') {
+            return;
+        }
+        var focusable = Array.prototype.slice.call(modal.querySelectorAll('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href]'))
+            .filter(function (node) { return node.offsetParent !== null; });
+        if (!focusable.length) {
+            return;
+        }
+        var first = focusable[0];
+        var last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
         }
     }
 
@@ -799,6 +859,7 @@
                 }
             });
         }
+        document.addEventListener('keydown', trapFocusInAuthModal);
         if (loginTab) {
             loginTab.addEventListener('click', function () {
                 switchTab('login');
@@ -913,9 +974,9 @@
                     renderHeader();
                     renderAccount();
                     toggleAuthModal(false);
-                    await refreshHistory();
-                    await refreshConsultPresets();
-                    await refreshAdminDashboard();
+                    if (document.getElementById('savedPresetGrid')) {
+                        await refreshConsultPresets();
+                    }
                     openAccountCenter();
                     if (window.showToast) {
                         window.showToast('登录成功。', 'success');
@@ -943,9 +1004,9 @@
                     renderHeader();
                     renderAccount();
                     toggleAuthModal(false);
-                    await refreshHistory();
-                    await refreshConsultPresets();
-                    await refreshAdminDashboard();
+                    if (document.getElementById('savedPresetGrid')) {
+                        await refreshConsultPresets();
+                    }
                     openAccountCenter();
                     if (window.showToast) {
                         window.showToast('注册成功，已自动登录。', 'success');
@@ -986,7 +1047,6 @@
                     renderHeader();
                     renderAccount();
                     renderConsultPresetGrid();
-                    await refreshAdminDashboard();
                     if (window.showToast) {
                         window.showToast('账号资料已保存。', 'success');
                     }
@@ -1014,9 +1074,9 @@
         switchTab('login');
         await refreshSession();
         if (currentUser) {
-            await refreshHistory();
-            await refreshConsultPresets();
-            await refreshAdminDashboard();
+            if (document.getElementById('savedPresetGrid')) {
+                await refreshConsultPresets();
+            }
             if (window.consultPanel && window.consultPanel.applyDefaultSavedCondition) {
                 window.consultPanel.applyDefaultSavedCondition();
             }

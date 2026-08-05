@@ -6,14 +6,19 @@
     var CONSULT_RESULT_STORAGE_KEY = 'xuanxue_latest_consult_result';
     var CONSULT_RESULT_TIMESTAMP_KEY = 'xuanxue_latest_consult_result_at';
     var CONSULT_RESULT_URL = 'consult-result.html';
+    var presetModalLastFocus = null;
 
     function renderMarkdown(text) {
         return window.renderMarkdownSimple(text, '#173a34');
     }
 
-    function buildConsultResultUrl() {
+    function buildConsultResultUrl(historyId) {
         try {
-            return new URL(CONSULT_RESULT_URL, window.location.href).toString();
+            var url = new URL(CONSULT_RESULT_URL, window.location.href);
+            if (historyId) {
+                url.searchParams.set('history', historyId);
+            }
+            return url.toString();
         } catch (_error) {
             return CONSULT_RESULT_URL;
         }
@@ -60,7 +65,7 @@
         }
     }
 
-    async function resolveVisualContextForConsult() {
+    async function resolveVisualContextForConsult(signal, onProgress) {
         var manifest = readVisualContext();
         if (!manifest) {
             return null;
@@ -105,16 +110,25 @@
 
             return window.apiClient.request('/api/ai/visual-insight', {
                 method: 'POST',
-                body: formData
+                body: formData,
+                signal: signal,
+                timeoutMs: 110000
             }).then(function (response) {
                 return response.data || {};
             });
         }
 
-        var resolvedItems = [];
-        for (var i = 0; i < draft.items.length; i += 1) {
-            resolvedItems.push(await analyzeDraftItem(draft.items[i]));
-        }
+        var completed = 0;
+        var total = draft.items.length;
+        var resolvedItems = await Promise.all(draft.items.map(function (item) {
+            return analyzeDraftItem(item).then(function (result) {
+                completed += 1;
+                if (typeof onProgress === 'function') {
+                    onProgress(completed, total);
+                }
+                return result;
+            });
+        }));
 
         return {
             mode: 'bundle',
@@ -347,12 +361,20 @@
         if (!modal || !input || !defaultInput) {
             return;
         }
+        if (show) {
+            presetModalLastFocus = document.activeElement;
+        }
         modal.classList.toggle('show', !!show);
+        modal.setAttribute('aria-hidden', show ? 'false' : 'true');
+        document.body.classList.toggle('modal-open', !!show);
         if (show) {
             input.value = suggestedName || '';
             defaultInput.checked = false;
             input.focus();
             input.select();
+        } else if (presetModalLastFocus && typeof presetModalLastFocus.focus === 'function') {
+            presetModalLastFocus.focus();
+            presetModalLastFocus = null;
         }
     }
 
@@ -982,16 +1004,16 @@
         return chips.join('');
     }
 
-    async function requestConsultation(payload) {
+    async function requestConsultation(payload, options) {
         try {
-            return await window.apiClient.postJson('/api/system/consult', payload);
+            return await window.apiClient.postJson('/api/system/consult', payload, options);
         } catch (error) {
             if (error && (error.status === 404 || error.message === 'Not Found')) {
                 var context = buildConsultFallbackContext(payload);
                 var legacyResponse = await window.apiClient.postJson('/api/ai/chat', {
                     question: payload.question,
                     context: context
-                });
+                }, options);
                 return {
                     data: buildFallbackConsultation(payload, legacyResponse.data && legacyResponse.data.answer ? legacyResponse.data.answer : '系统暂未生成结论。')
                 };
@@ -1158,7 +1180,7 @@
         });
     }
 
-    function initializeResultWorkspace() {
+    async function initializeResultWorkspace() {
         var workspace = document.getElementById('consultResultWorkspace');
         if (!workspace) {
             return;
@@ -1185,6 +1207,25 @@
             resultTimestamp: document.getElementById('resultHeroTimestamp'),
             resultBackLink: document.getElementById('resultBackLink')
         };
+
+        if (!data) {
+            var historyId = '';
+            try {
+                historyId = new URLSearchParams(window.location.search).get('history') || '';
+            } catch (_error) {}
+            if (historyId && window.apiClient) {
+                try {
+                    var response = await window.apiClient.get('/api/auth/history/' + encodeURIComponent(historyId));
+                    var item = response && response.data ? response.data.item : null;
+                    data = item && item.workspace ? item.workspace : null;
+                    if (data) {
+                        saveLatestConsultation(data);
+                    }
+                } catch (_error) {
+                    data = null;
+                }
+            }
+        }
 
         if (!data) {
             workspace.style.display = 'none';
@@ -1243,6 +1284,7 @@
 
         var consultLoadingTimer = null;
         var consultLoadingValue = 0;
+        var activeConsultController = null;
         var consultLoadingSteps = [
             { threshold: 18, text: '正在整理问题、出生信息与场景条件...' },
             { threshold: 42, text: '正在生成命理分析所需参数...' },
@@ -1293,12 +1335,17 @@
             clearConsultLoadingTimer();
             elements.consultLoading.classList.add('show');
             elements.consultLoading.setAttribute('aria-hidden', 'false');
+            consultForm.setAttribute('aria-busy', 'true');
+            var cancelBtn = document.getElementById('cancelConsultBtn');
+            if (cancelBtn) {
+                cancelBtn.hidden = false;
+            }
             if (elements.consultLoadingLabel) {
                 elements.consultLoadingLabel.textContent = '正在汇总命理信息';
             }
             updateConsultLoading(6, consultLoadingSteps[0].text);
             consultLoadingTimer = window.setInterval(function () {
-                if (consultLoadingValue >= 92) {
+                if (consultLoadingValue >= 88) {
                     clearConsultLoadingTimer();
                     return;
                 }
@@ -1306,7 +1353,7 @@
                     ? consultLoadingValue + 7
                     : consultLoadingValue < 68
                         ? consultLoadingValue + 5
-                        : consultLoadingValue + 3;
+                        : consultLoadingValue + 2;
                 updateConsultLoading(nextValue);
             }, 520);
         }
@@ -1318,6 +1365,11 @@
             }
             elements.consultLoading.classList.remove('show');
             elements.consultLoading.setAttribute('aria-hidden', 'true');
+            consultForm.setAttribute('aria-busy', 'false');
+            var cancelBtn = document.getElementById('cancelConsultBtn');
+            if (cancelBtn) {
+                cancelBtn.hidden = true;
+            }
             updateConsultLoading(0, consultLoadingSteps[0].text);
         }
 
@@ -1394,14 +1446,30 @@
         }
 
         var visualInsightModal = document.getElementById('visualInsightModal');
+        var visualInsightFrame = document.getElementById('visualInsightFrame');
         var closeVisualInsightModalBtn = document.getElementById('closeVisualInsightModalBtn');
         var openVisualInsightModalBtn = document.getElementById('openVisualInsightModalBtn');
+        var visualInsightLastFocus = null;
 
         function openVisualInsightModal() {
             if (!visualInsightModal) {
                 return;
             }
+            visualInsightLastFocus = document.activeElement;
+            if (visualInsightFrame && !visualInsightFrame.getAttribute('src')) {
+                var source = visualInsightFrame.getAttribute('data-src');
+                if (source) {
+                    visualInsightFrame.setAttribute('src', source);
+                }
+            }
             visualInsightModal.classList.add('show');
+            visualInsightModal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+            window.setTimeout(function () {
+                if (closeVisualInsightModalBtn) {
+                    closeVisualInsightModalBtn.focus();
+                }
+            }, 0);
         }
 
         function closeVisualInsightModal() {
@@ -1409,6 +1477,12 @@
                 return;
             }
             visualInsightModal.classList.remove('show');
+            visualInsightModal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('modal-open');
+            if (visualInsightLastFocus && typeof visualInsightLastFocus.focus === 'function') {
+                visualInsightLastFocus.focus();
+                visualInsightLastFocus = null;
+            }
             renderVisualContextBanner();
         }
 
@@ -1430,6 +1504,9 @@
             });
         }
         window.addEventListener('message', function (event) {
+            if (event.origin !== window.location.origin) {
+                return;
+            }
             var data = event && event.data ? event.data : {};
             if (data.type === 'visual-context-updated') {
                 renderVisualContextBanner();
@@ -1437,6 +1514,42 @@
             }
             if (data.type === 'visual-context-close') {
                 closeVisualInsightModal();
+            }
+        });
+        function trapModalFocus(modal, event) {
+            var focusable = Array.prototype.slice.call(modal.querySelectorAll('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), iframe, a[href]'))
+                .filter(function (node) { return node.offsetParent !== null; });
+            if (!focusable.length || event.key !== 'Tab') {
+                return;
+            }
+            var first = focusable[0];
+            var last = focusable[focusable.length - 1];
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        }
+
+        document.addEventListener('keydown', function (event) {
+            if (visualInsightModal && visualInsightModal.classList.contains('show')) {
+                if (event.key === 'Escape') {
+                    event.preventDefault();
+                    closeVisualInsightModal();
+                    return;
+                }
+                trapModalFocus(visualInsightModal, event);
+                return;
+            }
+            if (presetModal && presetModal.classList.contains('show')) {
+                if (event.key === 'Escape') {
+                    event.preventDefault();
+                    togglePresetSaveModal(false);
+                    return;
+                }
+                trapModalFocus(presetModal, event);
             }
         });
 
@@ -1469,14 +1582,22 @@
                 visual_context: null
             };
 
+            activeConsultController = typeof AbortController !== 'undefined' ? new AbortController() : null;
             showConsultLoading();
             if (elements.consultResult && elements.consultResult.classList) {
                 elements.consultResult.classList.remove('show');
             }
 
             try {
-                payload.visual_context = await resolveVisualContextForConsult();
-                var response = await requestConsultation(payload);
+                updateConsultLoading(18, '正在整理本次问事条件...');
+                payload.visual_context = await resolveVisualContextForConsult(activeConsultController && activeConsultController.signal, function (completed, total) {
+                    updateConsultLoading(18 + Math.round(completed / total * 26), '已完成 ' + completed + ' / ' + total + ' 类图片观察，正在汇总...');
+                });
+                updateConsultLoading(46, '正在汇总术数模块结果...');
+                var response = await requestConsultation(payload, {
+                    signal: activeConsultController && activeConsultController.signal,
+                    timeoutMs: 110000
+                });
                 await finishConsultLoading();
                 saveLatestConsultation(response.data);
                 if (response.data && response.data.account_history && response.data.account_history.saved && window.authClient) {
@@ -1484,13 +1605,27 @@
                         // Ignore history refresh failures after a successful consult.
                     });
                 }
-                window.location.href = buildConsultResultUrl();
+                var historyId = response.data && response.data.account_history ? response.data.account_history.history_id : '';
+                window.location.href = buildConsultResultUrl(historyId);
             } catch (error) {
-                showToast('系统分析失败：' + error.message, 'error');
+                if (!error || error.code !== 'request_aborted') {
+                    showToast('系统分析失败：' + error.message, 'error');
+                }
             } finally {
+                activeConsultController = null;
                 hideConsultLoading();
             }
         });
+
+        var cancelConsultBtn = document.getElementById('cancelConsultBtn');
+        if (cancelConsultBtn) {
+            cancelConsultBtn.addEventListener('click', function () {
+                if (activeConsultController) {
+                    activeConsultController.abort();
+                    showToast('已取消本次分析。', 'info');
+                }
+            });
+        }
 
         document.getElementById('fillDemoBtn').addEventListener('click', function () {
             fillPersonalProfile();

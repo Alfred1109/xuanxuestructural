@@ -1,58 +1,30 @@
 /* Shared top header */
 
-@font-face {
-    font-family: "HermesWildCalligraphy";
-    src: url("assets/fonts/long-cang.ttf") format("truetype");
-    font-weight: 400;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: "HermesBrushCalligraphy";
-    src: url("assets/fonts/zhi-mang-xing.ttf") format("truetype");
-    font-weight: 400;
-    font-style: normal;
-    font-display: swap;
-}
-
 .unified-header {
     position: relative;
-    overflow: hidden;
-    background:
-        radial-gradient(circle at 14% 0%, rgba(212, 173, 112, 0.22) 0%, transparent 24%),
-        radial-gradient(circle at 86% 18%, rgba(119, 153, 132, 0.16) 0%, transparent 28%),
-        linear-gradient(135deg, #132925 0%, #1d3d37 48%, #294841 100%);
-    padding: 34px 0 28px;
+    overflow: visible;
+    z-index: 20;
+    background: #18332d;
+    padding: 12px 0;
     margin: 0 0 0 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.09);
-    box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.06), 0 12px 34px rgba(24, 31, 26, 0.12);
+    box-shadow: 0 2px 10px rgba(24, 45, 37, 0.12);
 }
 
 .unified-header::before {
-    content: "";
-    position: absolute;
-    top: -140px;
-    right: -60px;
-    width: 360px;
-    height: 360px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(255, 248, 236, 0.12) 0%, transparent 70%);
-    opacity: 0.9;
+    display: none;
 }
 
 .unified-header::after {
-    content: "";
-    position: absolute;
-    inset: auto 0 0 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.26) 50%, transparent 100%);
+    display: none;
 }
 
 .unified-header .container {
     position: relative;
     display: grid;
-    gap: 18px;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 20px;
 }
 
 .unified-header .site-title {
@@ -64,121 +36,109 @@
 .unified-header .site-title h1 {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 8px;
     width: fit-content;
-    font-family: "HermesWildCalligraphy", "HermesBrushCalligraphy", "STXingkai", "KaiTi", serif;
-    font-size: 4rem;
+    font-family: "STXingkai", "KaiTi", var(--font-display);
+    font-size: 1.85rem;
     font-weight: 400;
     line-height: 0.96;
-    margin-bottom: 12px;
-    letter-spacing: 0.015em;
+    margin: 0;
+    letter-spacing: 0;
     color: #f8dfaa;
     text-shadow:
         0 1px 0 rgba(101, 59, 27, 0.16),
-        0 8px 20px rgba(5, 13, 11, 0.28),
-        0 0 18px rgba(241, 197, 117, 0.1);
+        0 2px 8px rgba(5, 13, 11, 0.22);
 }
 
 .unified-header .brand-mark {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 42px;
-    height: 42px;
+    width: 30px;
+    height: 30px;
     flex: 0 0 auto;
-    border-radius: 13px;
+    border-radius: 6px;
     border: 1px solid rgba(230, 190, 116, 0.38);
     background:
         radial-gradient(circle at 30% 24%, rgba(255, 250, 232, 0.22) 0%, transparent 34%),
         linear-gradient(145deg, rgba(137, 53, 38, 0.9) 0%, rgba(95, 35, 29, 0.9) 100%);
-    box-shadow:
-        inset 0 1px 0 rgba(255, 238, 205, 0.18),
-        0 8px 18px rgba(8, 18, 15, 0.2);
+    box-shadow: none;
     color: rgba(255, 231, 181, 0.9);
     font-family: "Iowan Old Style", "Palatino Linotype", serif;
-    font-size: 1.15rem;
+    font-size: 0.9rem;
     letter-spacing: 0;
-    transform: rotate(-7deg);
+    transform: none;
 }
 
 .unified-header .brand-calligraphy {
     position: relative;
     display: inline-block;
-    padding: 2px 2px 8px 0;
-    transform: rotate(-0.8deg);
-    transform-origin: left center;
-    filter: contrast(1.02);
+    padding: 0;
+    transform: none;
 }
 
 .unified-header .brand-calligraphy::after {
-    content: "";
-    position: absolute;
-    left: 4%;
-    right: 18%;
-    bottom: 0;
-    height: 2px;
-    border-radius: 999px;
-    background: linear-gradient(90deg, transparent 0%, rgba(230, 181, 102, 0.48) 28%, rgba(230, 181, 102, 0.16) 76%, transparent 100%);
-    transform: rotate(-1.2deg);
+    display: none;
 }
 
 .unified-header .brand-calligraphy::before {
-    content: "";
-    position: absolute;
-    left: 11%;
-    top: 18%;
-    width: 72%;
-    height: 48%;
-    pointer-events: none;
-    background:
-        radial-gradient(ellipse at 18% 36%, rgba(255, 247, 224, 0.16) 0 2%, transparent 6%),
-        radial-gradient(ellipse at 44% 56%, rgba(255, 247, 224, 0.12) 0 2%, transparent 5%),
-        radial-gradient(ellipse at 70% 34%, rgba(255, 247, 224, 0.14) 0 2%, transparent 6%);
-    mix-blend-mode: screen;
-    opacity: 0.42;
+    display: none;
 }
 
 .unified-header .site-title p {
-    display: inline-flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: var(--spacing-sm);
-    padding: 9px 15px;
-    border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(255, 248, 236, 0.08);
-    font-size: 0.78rem;
-    font-weight: var(--font-weight-normal);
-    line-height: var(--line-height-normal);
-    color: rgba(255, 243, 226, 0.84);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    backdrop-filter: blur(10px);
+    display: none;
+}
+
+.unified-header .header-account {
+    margin: 0;
+}
+
+.unified-header .header-account .header-account-card {
+    width: auto;
+    min-height: 32px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    overflow: visible;
+}
+
+.unified-header .header-account .header-account-card::after,
+.unified-header .header-account .header-account-copy {
+    display: none;
+}
+
+.unified-header .header-account .header-account-actions {
+    flex-wrap: nowrap;
+    gap: 6px;
+}
+
+.unified-header .header-account .header-ghost-btn {
+    min-height: 32px;
+    padding: 6px 9px;
+    border-radius: 4px;
 }
 
 .product-nav {
     display: flex;
-    align-items: flex-start;
-    gap: 4px;
-    width: fit-content;
+    justify-content: center;
+    gap: 2px;
+    width: 100%;
     max-width: 100%;
-    padding: 4px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 8px;
-    background: rgba(8, 29, 25, 0.22);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    padding: 0;
 }
 
 .product-nav-link,
 .product-nav-tools > summary {
     display: inline-flex;
     align-items: center;
-    min-height: 34px;
-    padding: 7px 10px;
+    min-height: 32px;
+    padding: 6px 9px;
     border: 0;
-    border-radius: 5px;
+    border-radius: 4px;
     background: transparent;
-    color: rgba(255, 244, 226, 0.76);
+    color: rgba(255, 244, 226, 0.74);
     font-family: var(--font-sans);
     font-size: 0.82rem;
     font-weight: 600;
@@ -204,9 +164,9 @@
 
 .product-nav-link.is-active,
 .product-nav-tools.is-active > summary {
-    background: rgba(235, 204, 145, 0.18);
+    background: rgba(255, 255, 255, 0.12);
     color: #ffe5ae;
-    box-shadow: inset 0 0 0 1px rgba(247, 218, 159, 0.16);
+    box-shadow: none;
 }
 
 .product-nav-tools {
@@ -214,11 +174,15 @@
 }
 
 .product-nav-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    z-index: 40;
     display: grid;
     grid-template-columns: repeat(2, minmax(112px, 1fr));
     gap: 3px;
     width: max-content;
-    margin-top: 8px;
+    margin-top: 0;
     padding: 8px;
     border: 1px solid rgba(226, 206, 170, 0.22);
     border-radius: 8px;
@@ -244,20 +208,20 @@
 
 @media (max-width: 768px) {
     .unified-header {
-        padding: 24px 0 20px;
+        padding: 10px 0;
     }
 
     .unified-header .site-title h1 {
-        gap: 9px;
-        font-size: 2.65rem;
+        gap: 7px;
+        font-size: 1.55rem;
         letter-spacing: 0;
     }
 
     .unified-header .brand-mark {
-        width: 34px;
-        height: 34px;
-        border-radius: 11px;
-        font-size: 0.95rem;
+        width: 27px;
+        height: 27px;
+        border-radius: 5px;
+        font-size: 0.8rem;
     }
 
     .unified-header .site-title p {
@@ -266,7 +230,8 @@
     }
 
     .product-nav {
-        width: 100%;
+        grid-column: 1 / -1;
+        justify-content: flex-start;
         overflow-x: auto;
         scrollbar-width: none;
     }
@@ -283,5 +248,29 @@
 
     .product-nav-menu {
         grid-template-columns: repeat(2, minmax(104px, 1fr));
+        left: 0;
+    }
+
+    .unified-header .container {
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 10px;
+    }
+
+    .unified-header .header-account {
+        display: block;
+    }
+
+    .unified-header .header-account-copy,
+    .unified-header .header-account .header-account-copy {
+        display: none;
+    }
+
+    .unified-header .header-account .header-account-actions {
+        gap: 4px;
+    }
+
+    .unified-header .header-account .header-ghost-btn {
+        min-width: 32px;
+        padding: 6px 8px;
     }
 }

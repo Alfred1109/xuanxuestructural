@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hermes 玄学系统 - 统一问事结果</title>
-    <link rel="stylesheet" href="common-header.css?v=20260804-app-nav">
-    <link rel="stylesheet" href="common-theme.css?v=20260523-visual-refresh">
+    <link rel="stylesheet" href="common-header.css?v=20260805-perf">
+    <link rel="stylesheet" href="common-theme.css?v=20260805-workbench">
     <style>
         .workspace-shell {
             max-width: 1280px;
@@ -22,13 +22,13 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 18px;
-            padding: 18px 20px;
-            border-radius: 24px;
-            background: linear-gradient(180deg, rgba(255, 248, 238, 0.12) 0%, rgba(255, 251, 244, 0.07) 100%);
+            gap: 12px;
+            padding: 8px 10px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.06);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 18px 34px rgba(8, 18, 15, 0.14);
-            backdrop-filter: blur(16px);
+            box-shadow: none;
+            backdrop-filter: none;
             position: relative;
             overflow: hidden;
         }
@@ -52,7 +52,7 @@
             font-family: var(--font-display);
             font-size: 1.08rem;
             font-weight: 600;
-            letter-spacing: -0.02em;
+            letter-spacing: 0;
             color: #ffffff;
         }
 
@@ -71,13 +71,13 @@
         }
 
         .workspace-shell > .card {
-            background: rgba(255, 255, 255, 0.7);
-            border: 1px solid rgba(217, 226, 220, 0.45);
-            border-radius: 24px;
-            padding: 28px;
-            margin-bottom: 22px;
-            box-shadow: 0 14px 30px rgba(23, 45, 62, 0.04);
-            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.88);
+            border: 1px solid var(--color-line);
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 14px;
+            box-shadow: var(--shadow-sm);
+            backdrop-filter: none;
         }
 
         .result-hero {
@@ -85,10 +85,7 @@
             grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.72fr);
             gap: 22px;
             align-items: start;
-            background:
-                radial-gradient(circle at 14% 18%, rgba(168, 116, 60, 0.12) 0%, transparent 26%),
-                radial-gradient(circle at 86% 0%, rgba(44, 91, 79, 0.14) 0%, transparent 28%),
-                linear-gradient(145deg, rgba(255, 255, 255, 0.96) 0%, rgba(247, 248, 244, 0.96) 100%);
+            border-top: 3px solid var(--color-primary);
         }
 
         .result-hero-copy {
@@ -113,7 +110,7 @@
             margin: 18px 0 12px;
             font-size: clamp(1.8rem, 3vw, 2.5rem);
             line-height: 1.16;
-            letter-spacing: -0.025em;
+            letter-spacing: 0;
         }
 
         .result-hero-summary {
@@ -137,9 +134,9 @@
 
         .result-side-card {
             padding: 18px 18px 16px;
-            border-radius: 18px;
-            background: rgba(255, 255, 255, 0.92);
-            border: 1px solid rgba(44, 91, 79, 0.1);
+            border-radius: 6px;
+            background: rgba(24, 51, 45, 0.04);
+            border: 1px solid var(--color-line);
         }
 
         .result-side-label {
@@ -170,7 +167,7 @@
             justify-content: center;
             min-height: 42px;
             padding: 10px 16px;
-            border-radius: 999px;
+            border-radius: 6px;
             border: 1px solid rgba(44, 91, 79, 0.14);
             background: #fff;
             color: var(--color-primary-dark);
@@ -199,9 +196,9 @@
             align-items: center;
             justify-content: space-between;
             gap: 14px;
-            padding-top: 18px;
-            padding-bottom: 18px;
-            backdrop-filter: blur(14px);
+            padding-top: 12px;
+            padding-bottom: 12px;
+            backdrop-filter: none;
         }
 
         .result-tabs {
@@ -732,7 +729,7 @@
 
             .workspace-shell > .card {
                 padding: 22px 18px;
-                border-radius: 18px;
+                border-radius: 8px;
             }
 
             .header-account-card {
@@ -887,7 +884,7 @@
         </section>
     </div>
 
-    <div id="authModal" class="auth-modal">
+    <div id="authModal" class="auth-modal" role="dialog" aria-modal="true" aria-labelledby="authModalTitle" aria-hidden="true">
         <div class="auth-dialog">
             <aside class="auth-aside">
                 <span class="kicker">Hermes Account</span>
@@ -901,7 +898,7 @@
             </aside>
             <div class="auth-main">
                 <div class="auth-main-head">
-                    <h3>登录与注册</h3>
+                    <h3 id="authModalTitle">登录与注册</h3>
                     <button type="button" class="auth-close" id="authModalClose">×</button>
                 </div>
                 <div class="auth-tabs">
@@ -972,13 +969,13 @@
     <script src="markdown-it.min.js"></script>
     <script src="markdown.js?v=20260519-result-workspace"></script>
     <script src="api-client.js?v=20260804-mounted-api-route"></script>
-    <script src="auth-client.js?v=20260804-mounted-api-route"></script>
+    <script src="auth-client.js?v=20260805-lazy-account-data"></script>
     <script src="ai-status.js?v=20260519-result-workspace"></script>
     <script src="common-renderers.js?v=20260519-result-workspace-2"></script>
     <script src="decision-panel.js?v=20260519-result-workspace-2"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script src="trace-panel.js?v=20260519-result-workspace"></script>
-    <script src="consult-panel.js?v=20260804-ai-result-fix"></script>
+    <script src="consult-panel.js?v=20260805-lazy-visual-frame"></script>
     <script>
         if (window.applyCommonLinks) {
             window.applyCommonLinks();

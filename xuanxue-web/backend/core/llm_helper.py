@@ -26,6 +26,7 @@ class LLMHelper:
         self.provider = (os.getenv('LLM_PROVIDER') or 'ark').strip().lower()
         self.base_url = os.getenv('LLM_BASE_URL') or 'https://ark.cn-beijing.volces.com/api/v3'
         self.api_key = os.getenv('LLM_API_KEY') or os.getenv('ARK_API_KEY')
+        self.chat_timeout = float(os.getenv('ARK_CHAT_TIMEOUT') or '90')
         
         if not OPENAI_AVAILABLE:
             print("警告：openai 包未安装，AI增强功能将不可用")
@@ -36,12 +37,13 @@ class LLMHelper:
         else:
             self.client = OpenAI(
                 base_url=self.base_url,
-                api_key=self.api_key
+                api_key=self.api_key,
+                timeout=self.chat_timeout,
+                max_retries=0,
             )
 
         self.model = os.getenv('LLM_TEXT_MODEL') or os.getenv('ARK_TEXT_MODEL') or "deepseek-v3-2-251201"
         self.vision_model = os.getenv('LLM_VISION_MODEL') or os.getenv('ARK_VISION_MODEL') or "doubao-seed-2-0-lite-260428"
-        self.chat_timeout = float(os.getenv('ARK_CHAT_TIMEOUT') or '90')
     
     def is_available(self) -> bool:
         """检查LLM是否可用"""

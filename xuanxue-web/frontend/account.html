@@ -4,16 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>账号中心 - Hermes 玄学系统</title>
-    <link rel="stylesheet" href="common-header.css?v=20260804-app-nav">
-    <link rel="stylesheet" href="common-theme.css?v=20260523-visual-refresh">
+    <link rel="stylesheet" href="common-header.css?v=20260805-perf">
+    <link rel="stylesheet" href="common-theme.css?v=20260805-workbench">
     <style>
         .page-shell {
             padding: 28px 0 44px;
         }
 
         .page-shell .card {
-            border-radius: 22px;
-            box-shadow: 0 12px 28px rgba(23, 45, 62, 0.05);
+            border-radius: 8px;
+            box-shadow: var(--shadow-sm);
         }
 
         .header-account {
@@ -26,13 +26,13 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 18px;
-            padding: 18px 20px;
-            border-radius: 24px;
-            background: linear-gradient(180deg, rgba(255, 248, 238, 0.12) 0%, rgba(255, 251, 244, 0.07) 100%);
+            gap: 12px;
+            padding: 8px 10px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.06);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 18px 34px rgba(8, 18, 15, 0.14);
-            backdrop-filter: blur(16px);
+            box-shadow: none;
+            backdrop-filter: none;
             position: relative;
             overflow: hidden;
         }
@@ -56,7 +56,7 @@
             font-family: var(--font-display);
             font-size: 1.08rem;
             font-weight: 600;
-            letter-spacing: -0.02em;
+            letter-spacing: 0;
             color: #ffffff;
         }
 
@@ -208,9 +208,9 @@
             display: grid;
             gap: 14px;
             padding: 20px;
-            border-radius: 18px;
-            background: linear-gradient(135deg, rgba(245, 247, 245, 0.95) 0%, rgba(247, 242, 231, 0.95) 100%);
-            border: 1px solid rgba(44, 91, 79, 0.08);
+            border-radius: 6px;
+            background: rgba(24, 51, 45, 0.04);
+            border: 1px solid var(--color-line);
         }
 
         .account-gate-actions {
@@ -248,7 +248,7 @@
         .account-panel-card {
             background: #ffffff;
             border: 1px solid var(--color-line);
-            border-radius: 18px;
+            border-radius: 6px;
             padding: 16px 18px 18px;
         }
 
@@ -386,9 +386,9 @@
         .history-list,
         .history-detail {
             min-height: 560px;
-            border-radius: 18px;
+            border-radius: var(--radius-md);
             border: 1px solid rgba(44, 91, 79, 0.08);
-            background: linear-gradient(180deg, rgba(247, 248, 246, 0.82) 0%, rgba(252, 252, 250, 0.96) 100%);
+            background: rgba(247, 248, 246, 0.72);
             padding: 14px;
         }
 
@@ -404,25 +404,24 @@
             width: 100%;
             text-align: left;
             border: 1px solid rgba(44, 91, 79, 0.08);
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(250, 251, 249, 0.98) 100%);
-            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: var(--radius-md);
             padding: 14px;
             cursor: pointer;
-            transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+            transition: border-color 0.18s ease, background-color 0.18s ease;
             position: relative;
             overflow: hidden;
         }
 
         .history-item:hover {
             border-color: rgba(44, 91, 79, 0.24);
-            box-shadow: 0 8px 16px rgba(23, 45, 62, 0.04);
-            transform: translateY(-1px);
+            background: #ffffff;
         }
 
         .history-item.active {
             border-color: rgba(44, 91, 79, 0.3);
-            background: linear-gradient(180deg, rgba(245, 249, 247, 0.98) 0%, rgba(255, 252, 247, 0.98) 100%);
-            box-shadow: 0 12px 22px rgba(23, 45, 62, 0.06);
+            background: rgba(238, 246, 241, 0.98);
+            box-shadow: none;
         }
 
         .history-item.active::before {
@@ -430,7 +429,7 @@
             position: absolute;
             inset: 0 auto 0 0;
             width: 4px;
-            background: linear-gradient(180deg, #2c5b4f 0%, #a8743c 100%);
+            background: var(--color-primary);
         }
 
         .history-item-head {
@@ -518,7 +517,7 @@
 
         .history-detail-answer {
             padding: 18px 20px;
-            border-radius: 16px;
+            border-radius: var(--radius-md);
             background: #ffffff;
             border: 1px solid rgba(44, 91, 79, 0.08);
             color: var(--color-text);
@@ -544,7 +543,7 @@
         }
 
         .history-summary-card {
-            border-radius: 14px;
+            border-radius: var(--radius-md);
             background: #ffffff;
             border: 1px solid rgba(44, 91, 79, 0.08);
             padding: 14px;
@@ -986,7 +985,7 @@
         </section>
     </div>
 
-    <div id="authModal" class="auth-modal">
+    <div id="authModal" class="auth-modal" role="dialog" aria-modal="true" aria-labelledby="authModalTitle" aria-hidden="true">
         <div class="auth-dialog">
             <aside class="auth-aside">
                 <span class="kicker">Hermes Account</span>
@@ -1000,7 +999,7 @@
             </aside>
             <div class="auth-main">
                 <div class="auth-main-head">
-                    <h3>登录与注册</h3>
+                    <h3 id="authModalTitle">登录与注册</h3>
                     <button type="button" class="auth-close" id="authModalClose">×</button>
                 </div>
                 <div class="auth-tabs">
@@ -1071,7 +1070,7 @@
     <script src="markdown-it.min.js"></script>
     <script src="markdown.js?v=20260512-auth-fix"></script>
     <script src="api-client.js?v=20260804-mounted-api-route"></script>
-    <script src="auth-client.js?v=20260804-mounted-api-route"></script>
+    <script src="auth-client.js?v=20260805-lazy-account-data"></script>
     <script>
         if (window.applyCommonLinks) {
             window.applyCommonLinks();

@@ -1,4 +1,5 @@
 import base64
+from asyncio import to_thread
 from datetime import datetime
 from typing import Optional
 
@@ -96,14 +97,16 @@ async def ai_visual_insight(
             ))
             image_names.append(uploaded.filename or "uploaded-image")
 
-        structure = llm_helper.extract_visual_structure(
+        structure = await to_thread(
+            llm_helper.extract_visual_structure,
             image_data_urls=image_data_urls,
             mode=normalized_mode,
             question=question,
             location=location,
             scene_type=scene_type,
         )
-        analysis = llm_helper.analyze_visual_insight(
+        analysis = await to_thread(
+            llm_helper.analyze_visual_insight,
             image_data_urls=image_data_urls,
             mode=normalized_mode,
             question=question,
@@ -294,7 +297,7 @@ async def ai_chat(
                 },
             )
 
-        response = llm_helper.chat(final_question, final_context if final_context else None)
+        response = await to_thread(llm_helper.chat, final_question, final_context if final_context else None)
         if not response:
             mark_ai_failure("chat_empty_response")
             raise HTTPException(

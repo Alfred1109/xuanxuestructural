@@ -4,83 +4,53 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>奇门遁甲 - 玄学预测系统</title>
-    <link rel="stylesheet" href="common-header.css?v=20260804-app-nav">
-    <link rel="stylesheet" href="common-theme.css?v=20260523-visual-refresh">
+    <link rel="stylesheet" href="common-header.css?v=20260805-perf">
+    <link rel="stylesheet" href="common-theme.css?v=20260805-workbench">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html {
-            font-size: 16px;
-        }
-
         body {
-            font-family: var(--font-sans);
-            background:
-                radial-gradient(circle at 12% 0%, rgba(255, 250, 244, 0.94) 0%, transparent 32%),
-                radial-gradient(circle at 84% 8%, rgba(168, 116, 60, 0.12) 0%, transparent 26%),
-                linear-gradient(180deg, #f7f1e5 0%, #eef3ee 48%, #e6edf0 100%);
-            min-height: 100vh;
-            padding: 18px 18px 32px;
-            position: relative;
-            overflow-x: hidden;
+            background: var(--color-bg);
+            padding: 0;
         }
 
         body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                radial-gradient(circle at 20% 50%, rgba(255,255,255,0.4) 0%, transparent 48%),
-                radial-gradient(circle at 80% 80%, rgba(44,91,79,0.08) 0%, transparent 55%);
-            pointer-events: none;
-            z-index: 0;
+            display: none;
         }
 
         .container {
-            max-width: 1280px;
-            margin: 0 auto;
-            position: relative;
-            z-index: 1;
-            padding: 0 16px;
+            max-width: 1180px;
+        }
+
+        body.tool-page > .container {
+            padding-top: 0;
+            padding-bottom: 12px;
         }
 
         .page-shell {
             display: grid;
-            gap: 18px;
-            padding-top: 18px;
+            gap: 14px;
+            padding: 28px 0 12px;
         }
 
         .qimen-hero {
             display: grid;
             grid-template-columns: minmax(0, 1.16fr) minmax(260px, 0.84fr);
-            gap: 18px;
+            gap: 14px;
         }
 
         .hero-panel,
         .hero-side {
-            border-radius: 26px;
+            border-radius: var(--radius-md);
             border: 1px solid rgba(44, 91, 79, 0.1);
-            box-shadow: 0 18px 40px rgba(23, 45, 62, 0.06);
+            box-shadow: var(--shadow-sm);
             padding: 24px;
-            background:
-                radial-gradient(circle at top left, rgba(168, 116, 60, 0.12) 0%, transparent 28%),
-                linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(247, 249, 246, 0.98) 100%);
+            background: rgba(255, 255, 255, 0.9);
         }
 
         .hero-side {
             display: grid;
             gap: 14px;
             align-content: start;
-            background:
-                radial-gradient(circle at 100% 0%, rgba(44, 91, 79, 0.12) 0%, transparent 28%),
-                linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(247, 249, 246, 0.98) 100%);
+            background: rgba(44, 91, 79, 0.045);
         }
 
         .hero-kicker {
@@ -102,7 +72,7 @@
             margin: 14px 0 10px;
             font-size: clamp(1.7rem, 2.8vw, 2.35rem);
             line-height: 1.15;
-            letter-spacing: -0.02em;
+            letter-spacing: 0;
             color: var(--color-primary-strong);
         }
 
@@ -119,24 +89,13 @@
 
         .card {
             background: rgba(255, 255, 255, 0.88);
-            border-radius: 24px;
-            padding: clamp(1.25rem, 4vw, 2rem);
-            box-shadow: 0 10px 32px rgba(23, 45, 62, 0.08);
+            border-radius: var(--radius-md);
+            padding: 28px;
+            box-shadow: var(--shadow-sm);
             margin-bottom: 0;
-            animation: fadeInUp 0.6s ease-out 0.4s both;
-            backdrop-filter: blur(12px);
+            animation: none;
+            backdrop-filter: none;
             border: 1px solid rgba(217, 226, 220, 0.92);
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
         }
 
         .form-group {
@@ -156,9 +115,9 @@
             min-height: 46px;
             padding: 12px 15px;
             border: 1px solid #d9e2dc;
-            border-radius: 14px;
+            border-radius: 6px;
             font-size: 16px;
-            transition: all 0.3s ease;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
             background: rgba(255, 255, 255, 0.9);
         }
 
@@ -174,7 +133,6 @@
             border-color: var(--color-primary);
             background: #ffffff;
             box-shadow: 0 0 0 3px rgba(44, 91, 79, 0.12);
-            transform: translateY(-1px);
         }
 
         .form-row {
@@ -184,44 +142,40 @@
         }
 
         .btn {
-            background: linear-gradient(135deg, var(--color-primary) 0%, #3f7263 100%);
+            background: var(--color-primary);
             color: white;
             border: 1px solid transparent;
-            padding: 15px 40px;
-            font-size: 17px;
+            min-height: 46px;
+            padding: 12px 20px;
+            font-size: 16px;
             font-weight: 600;
-            border-radius: 16px;
+            border-radius: 6px;
             cursor: pointer;
             width: 100%;
-            transition: transform 0.25s ease, box-shadow 0.25s ease, opacity 0.2s ease;
+            transition: background-color 0.2s ease, opacity 0.2s ease;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 14px 28px rgba(36, 59, 52, 0.16);
+            box-shadow: none;
         }
 
         .btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            transition: left 0.5s;
-        }
-
-        .btn:hover::before {
-            left: 100%;
+            display: none;
         }
 
         .btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 18px 32px rgba(36, 59, 52, 0.2);
+            background: var(--color-primary-dark);
         }
 
         .btn:active {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 10px rgba(36, 59, 52, 0.18);
+            transform: none;
+        }
+
+        .btn.btn-accent {
+            background: var(--color-accent);
+        }
+
+        .btn.btn-accent:hover {
+            background: #873b2c;
         }
 
         .result {
@@ -243,15 +197,15 @@
         }
 
         .palace {
-            background: linear-gradient(135deg, var(--color-primary-strong) 0%, var(--color-primary) 58%, #4f7b6f 100%);
+            background: var(--color-primary);
             padding: 20px;
-            border-radius: 16px;
+            border-radius: var(--radius-md);
             color: white;
             min-height: 200px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            box-shadow: 0 12px 24px rgba(23, 45, 62, 0.18);
+            box-shadow: none;
         }
 
         .palace-title {
@@ -305,7 +259,7 @@
             margin: 20px 0;
             padding: 20px;
             background: rgba(255, 255, 255, 0.82);
-            border-radius: 18px;
+            border-radius: var(--radius-md);
             border: 1px solid rgba(217, 226, 220, 0.92);
         }
 
@@ -316,11 +270,11 @@
         }
 
         .prediction-box {
-            background: linear-gradient(135deg, #fff7eb 0%, #f8ecd9 100%);
+            background: rgba(247, 241, 228, 0.88);
             border-left: 4px solid #b5802f;
             padding: 20px;
             margin: 15px 0;
-            border-radius: 12px;
+            border-radius: var(--radius-md);
             border: 1px solid rgba(168, 116, 60, 0.14);
         }
 
@@ -339,7 +293,7 @@
         .direction-item {
             background: rgba(255, 255, 255, 0.88);
             padding: 15px;
-            border-radius: 16px;
+            border-radius: var(--radius-md);
             border: 1px solid rgba(217, 226, 220, 0.92);
         }
 
@@ -377,7 +331,7 @@
         .time-info {
             background: rgba(236, 243, 238, 0.92);
             padding: 15px;
-            border-radius: 16px;
+            border-radius: var(--radius-md);
             margin-bottom: 15px;
             border: 1px solid rgba(217, 226, 220, 0.92);
         }
@@ -390,7 +344,7 @@
             border-radius: 10px;
             margin-bottom: 16px;
             border-left: 4px solid #b5802f;
-            background: linear-gradient(180deg, #fff7eb 0%, #fffdf7 100%);
+            background: rgba(255, 247, 235, 0.92);
             color: #6d552f;
             border: 1px solid rgba(180, 128, 47, 0.16);
         }
@@ -421,7 +375,7 @@
         .dun-info {
             background: rgba(238, 243, 238, 0.92);
             padding: 15px;
-            border-radius: 16px;
+            border-radius: var(--radius-md);
             margin-bottom: 15px;
             text-align: center;
             border: 1px solid rgba(217, 226, 220, 0.92);
@@ -443,12 +397,12 @@
         /* 响应式设计 - 移动端优化 */
         @media (max-width: 768px) {
             body {
-                padding: 10px 10px 22px;
+                padding: 0;
             }
 
             .page-shell {
-                gap: 14px;
-                padding-top: 14px;
+                gap: 12px;
+                padding: 18px 0 12px;
             }
 
             .qimen-hero {
@@ -476,6 +430,10 @@
             .btn {
                 font-size: 1rem;
                 padding: 14px 18px;
+            }
+
+            .card {
+                padding: 20px 18px;
             }
         }
 
@@ -529,7 +487,7 @@
         }
     </style>
 </head>
-<body>
+<body class="tool-page">
     <!-- 统一的顶部通栏 -->
     <div class="unified-header">
         <div class="container">
@@ -604,9 +562,9 @@
                 </div>
 
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button type="submit" class="btn" style="flex: 1; min-width: 200px;">🔍 开始排盘</button>
-                    <button type="button" class="btn" onclick="divineWithAI()" style="flex: 1; min-width: 200px; background: linear-gradient(135deg, var(--color-primary) 0%, #3f7263 100%);">🤖 AI深度解读</button>
-                    <button type="button" class="btn" onclick="useCurrentTime()" style="flex: 1; min-width: 200px; background: linear-gradient(135deg, #a8743c 0%, #c99a4d 100%);">⏱️ 使用当前时间</button>
+                    <button type="submit" class="btn" style="flex: 1; min-width: 200px;">开始排盘</button>
+                    <button type="button" class="btn" onclick="divineWithAI()" style="flex: 1; min-width: 200px;">AI 深度解读</button>
+                    <button type="button" class="btn btn-accent" onclick="useCurrentTime()" style="flex: 1; min-width: 200px;">使用当前时间</button>
                 </div>
             </form>
         </div>
@@ -618,7 +576,7 @@
 
         <div class="result" id="result">
             <div class="card">
-                <h2 style="margin-bottom: 20px; color: var(--color-primary-strong);">📊 奇门遁甲盘</h2>
+                <h2 style="margin-bottom: 20px; color: var(--color-primary-strong);">奇门遁甲盘</h2>
                 
                 <div class="time-info" id="timeInfo"></div>
                 <div class="dun-info" id="dunInfo"></div>
@@ -627,17 +585,17 @@
                 <div class="jiugong-grid" id="jiugongGrid"></div>
 
                 <div class="info-section">
-                    <h3>🎯 最佳方位</h3>
+                    <h3>最佳方位</h3>
                     <div id="bestDirection"></div>
                 </div>
 
                 <div class="info-section">
-                    <h3>☯ 事项预测</h3>
+                    <h3>事项预测</h3>
                     <div id="matterPrediction"></div>
                 </div>
 
                 <div class="info-section">
-                    <h3>🗺️ 方位策略总览（传统解读）</h3>
+                    <h3>方位策略总览（传统解读）</h3>
                     <div id="strategyOverview"></div>
                 </div>
 
@@ -935,7 +893,7 @@
             if (hasAI && safeData.ai_interpretation) {
                 predictionHTML += `
                     <div class="analysis-box ai">
-                        <h4>🤖 AI深度解读</h4>
+                        <h4>AI 深度解读</h4>
                         <div>${renderMarkdown(safeData.ai_interpretation)}</div>
                     </div>
                 `;

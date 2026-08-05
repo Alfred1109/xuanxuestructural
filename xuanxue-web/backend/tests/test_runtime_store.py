@@ -8,6 +8,7 @@ sys.path.append('/home/alfred/multiproject/xuanxue/xuanxue-web/backend')
 
 from core.runtime.store import (
     append_jsonl,
+    iter_jsonl_reverse,
     read_json_file,
     read_jsonl,
     read_recent_jsonl,
@@ -65,6 +66,25 @@ class TestRuntimeStore(unittest.TestCase):
             items = read_jsonl(path)
 
         self.assertEqual(items, [{"id": 1}, {"id": 2}])
+
+    def test_iter_jsonl_reverse_skips_broken_lines_and_keeps_order(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "items.jsonl"
+            path.write_text(
+                "\n".join(
+                    [
+                        json.dumps({"id": 1}, ensure_ascii=False),
+                        "{broken json}",
+                        json.dumps({"id": 2, "text": "x" * 70000}, ensure_ascii=False),
+                        json.dumps({"id": 3}, ensure_ascii=False),
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            items = list(iter_jsonl_reverse(path))
+
+        self.assertEqual([item["id"] for item in items], [3, 2, 1])
 
     def test_write_json_file_and_read_json_file_round_trip(self):
         with tempfile.TemporaryDirectory() as temp_dir:

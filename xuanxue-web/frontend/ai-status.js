@@ -69,6 +69,9 @@
         }
 
         async function refresh() {
+            if (document.visibilityState === 'hidden') {
+                return;
+            }
             try {
                 var result = await window.apiClient.get("/api/ai/status");
                 var data = result && result.data ? result.data : {};
@@ -79,10 +82,19 @@
         }
 
         function start() {
+            if (timer) {
+                return;
+            }
             refresh();
             var interval = opts.intervalMs || 30000;
             timer = setInterval(refresh, interval);
         }
+
+        document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState === 'visible' && timer) {
+                refresh();
+            }
+        });
 
         function stop() {
             if (timer) {

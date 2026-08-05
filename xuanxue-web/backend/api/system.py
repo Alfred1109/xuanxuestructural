@@ -1,3 +1,4 @@
+from asyncio import to_thread
 from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, HTTPException, Query, Request
@@ -68,8 +69,10 @@ async def system_consult(payload: UnifiedConsultRequest, request: Request):
     """统一玄学问事接口。"""
     try:
         user = resolve_authenticated_user(request, required=True)
-        consultation = consultation_engine.consult(payload)
-        consultation["account_history"] = append_consult_history(str(user.get("user_id")), consultation)
+        consultation = await to_thread(consultation_engine.consult, payload)
+        consultation["account_history"] = await to_thread(
+            append_consult_history, str(user.get("user_id")), consultation
+        )
         return success_response(consultation, request=request)
     except HTTPException:
         raise

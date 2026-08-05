@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>拍照辅助 - 玄学预测系统</title>
-    <link rel="stylesheet" href="common-header.css?v=20260804-app-nav">
-    <link rel="stylesheet" href="common-theme.css?v=20260523-visual-refresh">
+    <link rel="stylesheet" href="common-header.css?v=20260805-perf">
+    <link rel="stylesheet" href="common-theme.css?v=20260805-workbench">
     <style>
         body {
             background:
@@ -49,13 +49,10 @@
 
         .visual-grid > .card {
             margin-bottom: 0;
-            border-radius: 24px;
-            border: 1px solid rgba(30, 58, 52, 0.12);
-            background:
-                linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 247, 0.98) 100%);
-            box-shadow:
-                0 18px 34px rgba(20, 33, 28, 0.08),
-                inset 0 1px 0 rgba(255, 255, 255, 0.75);
+            border-radius: 8px;
+            border: 1px solid var(--color-line);
+            background: rgba(255, 255, 255, 0.92);
+            box-shadow: var(--shadow-sm);
             overflow: hidden;
         }
 
@@ -71,7 +68,7 @@
             margin-bottom: 10px;
             color: var(--color-primary-dark);
             font-size: 1.18rem;
-            letter-spacing: -0.01em;
+            letter-spacing: 0;
         }
 
         .panel-kicker {
@@ -107,10 +104,9 @@
 
         .capture-card {
             border: 1px solid rgba(44, 91, 79, 0.12);
-            background:
-                linear-gradient(180deg, rgba(249, 250, 248, 0.96) 0%, rgba(241, 244, 240, 0.96) 100%);
+            background: rgba(24, 51, 45, 0.03);
             color: var(--color-text);
-            border-radius: 20px;
+            border-radius: 6px;
             padding: 12px;
             min-height: 100%;
             display: grid;
@@ -130,7 +126,7 @@
             position: absolute;
             inset: 0 auto 0 0;
             width: 4px;
-            border-radius: 20px 0 0 20px;
+            border-radius: 6px 0 0 6px;
             background: transparent;
         }
 
@@ -247,7 +243,7 @@
         .form-group input,
         .form-group select,
         .form-group textarea {
-            border-radius: 14px;
+            border-radius: 6px;
             padding: 10px 12px;
             background:
                 linear-gradient(180deg, rgba(253, 253, 251, 0.98) 0%, rgba(246, 248, 245, 0.98) 100%);
@@ -690,8 +686,6 @@
     <script src="config.js?v=20260804-xuanxue-api-route"></script>
     <script src="common-links.js?v=20260804-app-nav"></script>
     <script src="common-ui.js?v=20260513-visual-insight"></script>
-    <script src="markdown-it.min.js"></script>
-    <script src="markdown.js?v=20260513-visual-insight"></script>
     <script src="api-client.js?v=20260804-mounted-api-route"></script>
     <script src="visual-context-store.js?v=20260513-visual-draft"></script>
     <script>
@@ -709,6 +703,62 @@
             palm: null,
             face: null
         };
+        const previewUrls = {
+            space: [],
+            palm: [],
+            face: []
+        };
+        const esc = (value) => window.escapeHtml ? window.escapeHtml(value) : String(value || '');
+
+        function revokePreviewUrls(mode) {
+            (previewUrls[mode] || []).forEach((url) => URL.revokeObjectURL(url));
+            previewUrls[mode] = [];
+        }
+
+        async function optimizeImage(file) {
+            if (!file || file.size <= 1600 * 1024 || !String(file.type || '').startsWith('image/')) {
+                return file;
+            }
+            return new Promise((resolve) => {
+                const sourceUrl = URL.createObjectURL(file);
+                const image = new Image();
+                image.onload = function () {
+                    const maxEdge = 1920;
+                    const ratio = Math.min(1, maxEdge / Math.max(image.naturalWidth || image.width, image.naturalHeight || image.height));
+                    const canvas = document.createElement('canvas');
+                    canvas.width = Math.max(1, Math.round((image.naturalWidth || image.width) * ratio));
+                    canvas.height = Math.max(1, Math.round((image.naturalHeight || image.height) * ratio));
+                    const context = canvas.getContext('2d');
+                    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+                    canvas.toBlob((blob) => {
+                        URL.revokeObjectURL(sourceUrl);
+                        if (!blob || blob.size >= file.size) {
+                            resolve(file);
+                            return;
+                        }
+                        const baseName = (file.name || 'image').replace(/\.[^.]+$/, '');
+                        resolve(new File([blob], baseName + '.jpg', { type: 'image/jpeg', lastModified: Date.now() }));
+                    }, 'image/jpeg', 0.84);
+                };
+                image.onerror = function () {
+                    URL.revokeObjectURL(sourceUrl);
+                    resolve(file);
+                };
+                image.src = sourceUrl;
+            });
+        }
+
+        async function optimizeSelectedFiles(mode, files) {
+            const optimized = await Promise.all(files.map(optimizeImage));
+            if (optimized.some((file) => file && file.size > 8 * 1024 * 1024)) {
+                throw new Error('图片压缩后仍超过 8MB，请换一张更小的图片');
+            }
+            if (mode === 'space') {
+                selectedFiles.space = optimized.slice(0, 4);
+            } else {
+                selectedFiles[mode] = optimized[0] || null;
+            }
+        }
 
         const captureGrid = document.getElementById('captureGrid');
         const consentCheck = document.getElementById('consentCheck');
@@ -783,6 +833,7 @@
             const frame = previewFrameFor(mode);
             const files = selectedFiles[mode];
             if (!frame) return;
+            revokePreviewUrls(mode);
 
             if (mode === 'space') {
                 if (!Array.isArray(files) || !files.length) {
@@ -791,9 +842,10 @@
                 }
                 frame.innerHTML = '<div class="preview-grid">' + files.map((file) => {
                     const url = URL.createObjectURL(file);
+                    previewUrls[mode].push(url);
                     return [
                         '<div class="preview-tile">',
-                        '  <div class="preview-tile-label">' + file.name + '</div>',
+                        '  <div class="preview-tile-label">' + esc(file.name) + '</div>',
                         '  <div><img src="' + url + '" alt="图片预览" style="width:100%; max-height:180px; object-fit:contain; display:block;"></div>',
                         '</div>'
                     ].join('');
@@ -809,6 +861,7 @@
             }
 
             const url = URL.createObjectURL(files);
+            previewUrls[mode].push(url);
             frame.innerHTML = '<img src="' + url + '" alt="图片预览">';
         }
 
@@ -895,13 +948,13 @@
                     window.parent.postMessage({
                         type: 'visual-context-updated',
                         context: storedContext
-                    }, '*');
+                    }, window.location.origin);
                 }
                 disclaimerCard.textContent = storedContext.disclaimer;
                 window.showToast('拍照条件已保存，统一问事时才会调用视觉识别。', 'success');
                 if (document.body.classList.contains('embed-page') && window.parent && window.parent !== window) {
                     window.setTimeout(() => {
-                        window.parent.postMessage({ type: 'visual-context-close' }, '*');
+                        window.parent.postMessage({ type: 'visual-context-close' }, window.location.origin);
                     }, 400);
                 }
             } catch (error) {
@@ -939,16 +992,21 @@
         ['space', 'palm', 'face'].forEach((mode) => {
             const input = imageInputFor(mode);
             if (!input) return;
-            input.addEventListener('change', function (event) {
+            input.addEventListener('change', async function (event) {
                 const files = event.target.files ? Array.from(event.target.files) : [];
-                if (mode === 'space') {
-                    selectedFiles.space = files.slice(0, 4);
-                } else {
-                    selectedFiles[mode] = files[0] || null;
+                try {
+                    await optimizeSelectedFiles(mode, mode === 'space' ? files.slice(0, 4) : files.slice(0, 1));
+                    renderPreview(mode);
+                    updateCardHighlight();
+                } catch (error) {
+                    input.value = '';
+                    window.showToast(error.message || '图片处理失败，请重试', 'error');
                 }
-                renderPreview(mode);
-                updateCardHighlight();
             });
+        });
+
+        window.addEventListener('pagehide', function () {
+            ['space', 'palm', 'face'].forEach(revokePreviewUrls);
         });
 
         document.getElementById('saveVisualBundleBtn').addEventListener('click', saveBundleContext);

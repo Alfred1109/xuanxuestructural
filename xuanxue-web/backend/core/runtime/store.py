@@ -84,6 +84,43 @@ def read_recent_jsonl(path: Path, limit: int = 20) -> List[Dict[str, Any]]:
     return read_jsonl(path)[-limit:]
 
 
+def iter_jsonl_reverse(path: Path):
+    """Yield valid JSONL records from newest to oldest without loading the file."""
+    if not path.exists():
+        return
+
+    chunk_size = 64 * 1024
+    with path.open("rb") as file:
+        file.seek(0, 2)
+        position = file.tell()
+        remainder = b""
+
+        while position > 0:
+            read_size = min(chunk_size, position)
+            position -= read_size
+            file.seek(position)
+            chunk = file.read(read_size)
+            lines = (chunk + remainder).split(b"\n")
+            remainder = lines[0]
+            for line in reversed(lines[1:]):
+                if not line.strip():
+                    continue
+                try:
+                    item = json.loads(line.decode("utf-8"))
+                except (UnicodeDecodeError, json.JSONDecodeError):
+                    continue
+                if isinstance(item, dict):
+                    yield item
+
+        if remainder.strip():
+            try:
+                item = json.loads(remainder.decode("utf-8"))
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                item = None
+            if isinstance(item, dict):
+                yield item
+
+
 def read_json_file(path: Path, default: Any) -> Any:
     if not path.exists():
         return default

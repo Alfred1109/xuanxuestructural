@@ -8,7 +8,7 @@ from collections import Counter
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
-from .runtime.store import append_jsonl, read_jsonl, resolve_runtime_path
+from .runtime.store import append_jsonl, iter_jsonl_reverse, read_jsonl, resolve_runtime_path
 
 
 def _history_path():
@@ -53,6 +53,7 @@ def append_consult_history(user_id: str, consultation: Dict[str, Any]) -> Dict[s
         "profile": consultation.get("profile") or {},
         "module_summaries": consultation.get("module_summaries") or {},
         "ai": consultation.get("ai") or {},
+        "workspace": consultation,
     }
     append_jsonl(_history_path(), payload)
     return {
@@ -75,16 +76,18 @@ def _history_list_item(entry: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def list_consult_history(user_id: str, limit: int = 20) -> List[Dict[str, Any]]:
-    entries = [
-        item for item in read_jsonl(_history_path())
-        if item.get("user_id") == user_id
-    ]
-    items = [_history_list_item(item) for item in reversed(entries)]
-    return items[:limit]
+    items: List[Dict[str, Any]] = []
+    for item in iter_jsonl_reverse(_history_path()):
+        if item.get("user_id") != user_id:
+            continue
+        items.append(_history_list_item(item))
+        if len(items) >= limit:
+            break
+    return items
 
 
 def get_consult_history_detail(user_id: str, history_id: str) -> Optional[Dict[str, Any]]:
-    for item in reversed(read_jsonl(_history_path())):
+    for item in iter_jsonl_reverse(_history_path()):
         if item.get("user_id") == user_id and item.get("history_id") == history_id:
             return {
                 "history_id": item.get("history_id"),
@@ -96,13 +99,14 @@ def get_consult_history_detail(user_id: str, history_id: str) -> Optional[Dict[s
                 "profile": item.get("profile") or {},
                 "module_summaries": item.get("module_summaries") or {},
                 "ai": item.get("ai") or {},
+                "workspace": item.get("workspace") or None,
             }
     return None
 
 
 def list_recent_consult_activity(limit: int = 50) -> List[Dict[str, Any]]:
     items: List[Dict[str, Any]] = []
-    for item in reversed(read_jsonl(_history_path())):
+    for item in iter_jsonl_reverse(_history_path()):
         intent = item.get("intent") if isinstance(item.get("intent"), dict) else {}
         items.append({
             "history_id": item.get("history_id"),
