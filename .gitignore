@@ -43,6 +43,7 @@ temp/
 xuanxue-web/backend/runtime/*.json
 xuanxue-web/backend/runtime/*.jsonl
 xuanxue-web/backend/runtime/*.lock
+xuanxue-web/backend/runtime/.consult-idempotency/
 
 # Local browser verification artifacts
 .playwright-cli/
