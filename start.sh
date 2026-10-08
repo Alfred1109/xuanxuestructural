@@ -160,6 +160,7 @@ cleanup_existing_services() {
     echo ""
 }
 
+# 加载 AI 环境变量
 # Explicit service environment and project configuration take precedence over shell defaults.
 if [ -z "${LLM_PROVIDER:-}" ] && [ -z "${LLM_API_KEY:-}" ] && [ ! -f "$SCRIPT_DIR/.env" ]; then
     if [ -f "$HOME/.profile" ]; then
@@ -177,7 +178,7 @@ if [ -z "${LLM_PROVIDER:-}" ] && [ -z "${LLM_API_KEY:-}" ] && [ ! -f "$SCRIPT_DI
             esac
         done < "$HOME/.bashrc"
     fi
-    
+
 fi
 
 # Local frontends use a separate origin; honor an explicit CORS policy when supplied.
