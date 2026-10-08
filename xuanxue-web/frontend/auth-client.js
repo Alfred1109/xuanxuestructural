@@ -117,6 +117,11 @@
         }
     }
 
+    function notifySession(reason) {
+        var detail = { userId: currentUser && currentUser.user_id || null, reason: reason || 'refresh' };
+        queueMicrotask(function () { window.dispatchEvent(new CustomEvent('auth-session-changed', { detail: detail })); });
+    }
+
     function renderHeader() {
         var loginBtn = document.getElementById('openAuthModalBtn');
         var accountBtn = document.getElementById('openAccountCenterBtn');
@@ -416,45 +421,14 @@
 
     function renderHistoryDetail(item) {
         var detailEl = document.getElementById('historyDetail');
-        if (!detailEl) {
-            return;
-        }
-
-        if (!currentUser) {
-            detailEl.innerHTML = '<div class="history-empty">登录后可查看完整问事结论与模块摘要。</div>';
-            return;
-        }
-
+        if (!detailEl) { return; }
         if (!item) {
-            detailEl.innerHTML = '<div class="history-empty">选择左侧一条历史记录，右侧查看详细内容。</div>';
+            detailEl.innerHTML = '<div class="history-empty">选择一条历史记录，在结果工作台查看完整结论并继续追问。</div>';
             return;
         }
-
-        var summaries = item.module_summaries || {};
-        var modules = Array.isArray(item.intent && item.intent.modules) ? item.intent.modules : [];
-        detailEl.innerHTML = [
-            '<div class="history-detail-top">',
-            '  <div class="history-detail-time">' + esc(item.created_at || '') + '</div>',
-            '  <h3>' + esc(item.question || '问事记录') + '</h3>',
-            '  <div class="history-chip-row">' + modules.map(function (moduleName) {
-                return '<span class="history-chip">' + esc(moduleLabel(moduleName)) + '</span>';
-            }).join('') + '</div>',
-            '</div>',
-            '<div class="history-detail-answer">' + (window.renderMarkdownSimple ? window.renderMarkdownSimple(item.answer || '', '#173a34') : esc(item.answer || '')) + '</div>',
-            '<div class="history-summary-block">',
-            '  <div class="history-summary-title">模块摘要</div>',
-            '  <div class="history-summary-grid">' + Object.keys(summaries).map(function (key) {
-                var raw = summaries[key];
-                var body = typeof raw === 'string' ? raw : JSON.stringify(raw, null, 2);
-                return [
-                    '<div class="history-summary-card">',
-                    '  <div class="title">' + esc(moduleLabel(key)) + '</div>',
-                    '  <div class="body">' + esc(body) + '</div>',
-                    '</div>'
-                ].join('');
-            }).join('') + '</div>',
-            '</div>'
-        ].join('');
+        detailEl.innerHTML = '<h3>' + esc(item.question || '问事记录') + '</h3>' +
+            '<p>' + esc(item.brief_answer || '') + '</p>' +
+            '<a class="btn" href="' + esc(window.consultSession.url('consult-result.html', { id: item.history_id })) + '">打开完整结果 / 继续追问</a>';
     }
 
     async function refreshSession() {
@@ -464,21 +438,24 @@
             adminDashboard = null;
             renderHeader();
             renderAccount();
+            notifySession();
             return null;
         }
 
         try {
             var response = await window.apiClient.get('/api/auth/me');
             currentUser = response.data && response.data.user ? response.data.user : null;
-        } catch (_err) {
-            setToken('');
-            currentUser = null;
-            consultPresets = [];
-            adminDashboard = null;
+        } catch (error) {
+            if (error.status === 401 || error.status === 403) {
+                setToken(''); currentUser = null; consultPresets = []; adminDashboard = null;
+            } else if (window.showToast) {
+                window.showToast('暂时无法验证登录状态，请稍后重试。', 'warn');
+            }
         }
 
         renderHeader();
         renderAccount();
+        notifySession();
         return currentUser;
     }
 
@@ -736,6 +713,7 @@
 
             input.value = suggested;
             input.focus();
+            input.dispatchEvent(new Event('input', { bubbles: true }));
             if (window.showToast) {
                 if (suggested.indexOf('定位坐标(') === 0) {
                     window.showToast('已获取定位坐标。若配置逆地理编码服务，可自动转成城市/街区名称。你也可以继续手动补充。', 'success');
@@ -832,6 +810,7 @@
                 renderHistoryList([]);
                 renderHistoryDetail(null);
                 renderConsultPresetGrid();
+                notifySession('logout');
                 if (window.showToast) {
                     window.showToast('已退出登录。', 'success');
                 }
@@ -887,10 +866,8 @@
                     return;
                 }
                 switchAccountTab('history');
-                openHistoryDetail(target.getAttribute('data-history-id')).catch(function (error) {
-                    if (window.showToast) {
-                        window.showToast('读取历史失败：' + error.message, 'error');
-                    }
+                window.location.href = window.consultSession.url('consult-result.html', {
+                    id: target.getAttribute('data-history-id')
                 });
             });
         }
@@ -974,10 +951,10 @@
                     renderHeader();
                     renderAccount();
                     toggleAuthModal(false);
-                    if (document.getElementById('savedPresetGrid')) {
-                        await refreshConsultPresets();
-                    }
-                    openAccountCenter();
+                    notifySession('login');
+                    if (document.getElementById('historyList')) { await refreshHistory(); }
+                    if (document.getElementById('savedPresetGrid')) { await refreshConsultPresets(); }
+                    if (isAccountPage()) { await refreshAdminDashboard(); }
                     if (window.showToast) {
                         window.showToast('登录成功。', 'success');
                     }
@@ -1004,10 +981,10 @@
                     renderHeader();
                     renderAccount();
                     toggleAuthModal(false);
-                    if (document.getElementById('savedPresetGrid')) {
-                        await refreshConsultPresets();
-                    }
-                    openAccountCenter();
+                    notifySession('login');
+                    if (document.getElementById('historyList')) { await refreshHistory(); }
+                    if (document.getElementById('savedPresetGrid')) { await refreshConsultPresets(); }
+                    if (isAccountPage()) { await refreshAdminDashboard(); }
                     if (window.showToast) {
                         window.showToast('注册成功，已自动登录。', 'success');
                     }
@@ -1047,6 +1024,7 @@
                     renderHeader();
                     renderAccount();
                     renderConsultPresetGrid();
+                    if (isAccountPage()) { await refreshAdminDashboard(); }
                     if (window.showToast) {
                         window.showToast('账号资料已保存。', 'success');
                     }
@@ -1065,6 +1043,9 @@
         }
         initialized = true;
         bindEvents();
+        window.addEventListener('storage', function (event) {
+            if (event.key === AUTH_TOKEN_KEY) { refreshSession(); }
+        });
         renderHeader();
         renderAccount();
         renderHistoryList([]);
@@ -1074,9 +1055,9 @@
         switchTab('login');
         await refreshSession();
         if (currentUser) {
-            if (document.getElementById('savedPresetGrid')) {
-                await refreshConsultPresets();
-            }
+            if (document.getElementById('historyList')) { await refreshHistory(); }
+            if (document.getElementById('savedPresetGrid')) { await refreshConsultPresets(); }
+            if (isAccountPage()) { await refreshAdminDashboard(); }
             if (window.consultPanel && window.consultPanel.applyDefaultSavedCondition) {
                 window.consultPanel.applyDefaultSavedCondition();
             }
@@ -1092,6 +1073,7 @@
         saveConsultPreset: saveConsultPreset,
         getConsultPresets: getConsultPresets,
         getDefaultConsultPreset: getDefaultConsultPreset,
+        getCurrentUserId: function () { return currentUser && currentUser.user_id || null; },
         getCurrentUserProfile: function () {
             return currentUser && currentUser.profile ? currentUser.profile : null;
         },

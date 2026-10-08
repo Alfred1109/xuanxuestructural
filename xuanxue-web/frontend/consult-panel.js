@@ -1,5 +1,5 @@
 (function () {
-    // Unified consult entry: submit, fallback, assemble view-model, and hydrate page sections.
+    // Unified consult submission and shared result rendering.
     var renderers = window.commonRenderers || {};
     var esc = renderers.esc || function (value) { return String(value ?? ''); };
     var VISUAL_CONTEXT_STORAGE_KEY = 'xuanxue_visual_context';
@@ -12,22 +12,18 @@
         return window.renderMarkdownSimple(text, '#173a34');
     }
 
-    function buildConsultResultUrl(historyId) {
+    function buildConsultResultUrl(data) {
         try {
-            var url = new URL(CONSULT_RESULT_URL, window.location.href);
-            if (historyId) {
-                url.searchParams.set('history', historyId);
-            }
-            return url.toString();
+            return window.consultSession.url(CONSULT_RESULT_URL, { id: window.consultSession.resultId(data) });
         } catch (_error) {
             return CONSULT_RESULT_URL;
         }
     }
 
-    function saveLatestConsultation(data) {
+    function saveLatestConsultation(data, owner) {
         try {
-            window.sessionStorage.setItem(CONSULT_RESULT_STORAGE_KEY, JSON.stringify(data || {}));
-            window.sessionStorage.setItem(CONSULT_RESULT_TIMESTAMP_KEY, new Date().toISOString());
+            window.sessionStorage.setItem(CONSULT_RESULT_STORAGE_KEY + ':' + (owner || window.consultSession.owner()), JSON.stringify(data || {}));
+            window.sessionStorage.setItem(CONSULT_RESULT_TIMESTAMP_KEY + ':' + (owner || window.consultSession.owner()), new Date().toISOString());
         } catch (_error) {
             // Ignore storage failures and let the result page handle the empty state.
         }
@@ -35,7 +31,7 @@
 
     function readLatestConsultation() {
         try {
-            var raw = window.sessionStorage.getItem(CONSULT_RESULT_STORAGE_KEY);
+            var raw = window.sessionStorage.getItem(CONSULT_RESULT_STORAGE_KEY + ':' + window.consultSession.owner());
             return raw ? JSON.parse(raw) : null;
         } catch (_error) {
             return null;
@@ -44,7 +40,7 @@
 
     function readLatestConsultationTimestamp() {
         try {
-            return window.sessionStorage.getItem(CONSULT_RESULT_TIMESTAMP_KEY) || '';
+            return window.sessionStorage.getItem(CONSULT_RESULT_TIMESTAMP_KEY + ':' + window.consultSession.owner()) || '';
         } catch (_error) {
             return '';
         }
@@ -77,6 +73,12 @@
             throw new Error('本地拍照条件草稿不可用，请重新上传图片后再试');
         }
 
+        var cacheKey = 'xuanxue_visual_resolved:' + window.consultSession.owner();
+        var signature = JSON.stringify(manifest);
+        try {
+            var cached = JSON.parse(window.sessionStorage.getItem(cacheKey) || 'null');
+            if (cached && cached.signature === signature) { return cached.value; }
+        } catch (_error) { /* unavailable storage */ }
         var draft = await window.visualContextStore.loadDraft();
         if (!draft || !Array.isArray(draft.items) || !draft.items.length) {
             throw new Error('未找到可用的拍照条件，请重新上传图片后再试');
@@ -130,7 +132,7 @@
             });
         }));
 
-        return {
+        var resolved = {
             mode: 'bundle',
             mode_label: '多维视觉观察',
             summary: '已纳入 ' + resolvedItems.length + ' 类图片识别结果。',
@@ -155,6 +157,8 @@
                 };
             })
         };
+        try { window.sessionStorage.setItem(cacheKey, JSON.stringify({ signature: signature, value: resolved })); } catch (_error) { /* unavailable storage */ }
+        return resolved;
     }
 
     function buildBriefAnswer(answer) {
@@ -163,12 +167,14 @@
             return '已生成综合结论，请查看上方完整结果。';
         }
 
-        var lines = text.split('\n').map(function (line) {
+        var lines = text.split('\n').filter(function (line) {
+            return !/^\s*#{1,6}\s+/.test(line) && !/^\s*\*\*[^*]{1,20}\*\*[:：]?\s*$/.test(line);
+        }).map(function (line) {
             return line.trim();
         }).filter(Boolean);
 
         for (var i = 0; i < lines.length; i += 1) {
-            var normalized = lines[i].replace(/^[#*\-\d.\s]+/, '').trim();
+            var normalized = lines[i].replace(/^[#*\-\d.\s]+/, '').replace(/\*\*/g, '').trim();
             if (!normalized) {
                 continue;
             }
@@ -189,58 +195,22 @@
 
     var scenarioPresets = {
         career_switch: {
-            question: '我现在适合换工作吗？应该怎么做更稳？',
-            year: '1990',
-            month: '1',
-            day: '1',
-            hour: '12',
-            minute: '0',
-            gender: '男'
+            question: '我现在适合换工作吗？应该怎么做更稳？'
         },
         relationship: {
-            question: '我和现在这段感情还有继续发展的可能吗？接下来应该主动还是先观察？',
-            year: '1994',
-            month: '8',
-            day: '16',
-            hour: '21',
-            minute: '15',
-            gender: '女'
+            question: '我和现在这段感情还有继续发展的可能吗？接下来应该主动还是先观察？'
         },
         startup_date: {
-            question: '我准备在近期启动新项目，现在适合推进吗？如果要开始，应该注意哪些时机和风险？',
-            year: '1988',
-            month: '5',
-            day: '22',
-            hour: '9',
-            minute: '30',
-            gender: '男'
+            question: '我准备在近期启动新项目，现在适合推进吗？如果要开始，应该注意哪些时机和风险？'
         },
         exam: {
-            question: '我这次考试能顺利通过吗？接下来复习重点应该放在哪里？',
-            year: '2001',
-            month: '11',
-            day: '3',
-            hour: '7',
-            minute: '45',
-            gender: '女'
+            question: '我这次考试能顺利通过吗？接下来复习重点应该放在哪里？'
         },
         investment: {
-            question: '我最近这笔投资适合继续加码吗？应该偏稳守还是阶段性获利了结？',
-            year: '1986',
-            month: '3',
-            day: '12',
-            hour: '14',
-            minute: '20',
-            gender: '男'
+            question: '我最近这笔投资适合继续加码吗？应该偏稳守还是阶段性获利了结？'
         },
         relocation: {
-            question: '我最近适合搬家吗？这次搬动对我的生活和运势是提升还是消耗？',
-            year: '1992',
-            month: '6',
-            day: '28',
-            hour: '18',
-            minute: '10',
-            gender: '女'
+            question: '我最近适合搬家吗？这次搬动对我的生活和运势是提升还是消耗？'
         }
     };
 
@@ -250,13 +220,8 @@
             return;
         }
 
-        document.getElementById('consultQuestion').value = preset.question;
-        document.getElementById('consultYear').value = preset.year;
-        document.getElementById('consultMonth').value = preset.month;
-        document.getElementById('consultDay').value = preset.day;
-        document.getElementById('consultHour').value = preset.hour;
-        document.getElementById('consultMinute').value = preset.minute;
-        document.getElementById('consultGender').value = preset.gender;
+        window.consultFormState.selectScenario(preset.question);
+        document.getElementById('consultQuestion').focus();
 
         Array.prototype.forEach.call(document.querySelectorAll('[data-scenario]'), function (button) {
             button.classList.toggle('active', button.getAttribute('data-scenario') === scenarioKey);
@@ -264,28 +229,12 @@
     }
 
     function readConsultFormState() {
-        return {
-            question: document.getElementById('consultQuestion').value.trim(),
-            year: readOptionalInt('consultYear'),
-            month: readOptionalInt('consultMonth'),
-            day: readOptionalInt('consultDay'),
-            hour: readOptionalInt('consultHour'),
-            minute: readOptionalInt('consultMinute'),
-            gender: document.getElementById('consultGender').value || null,
-            location: document.getElementById('consultLocation').value.trim()
-        };
+        return window.consultFormState.read();
     }
 
     function applyConsultCondition(condition) {
-        var payload = condition || {};
-        document.getElementById('consultQuestion').value = payload.question || '';
-        document.getElementById('consultYear').value = payload.year || '';
-        document.getElementById('consultMonth').value = payload.month || '';
-        document.getElementById('consultDay').value = payload.day || '';
-        document.getElementById('consultHour').value = payload.hour || '';
-        document.getElementById('consultMinute').value = payload.minute || '';
-        document.getElementById('consultGender').value = payload.gender || '';
-        document.getElementById('consultLocation').value = payload.location || '';
+        window.consultFormState.apply(condition || {});
+        window.consultFormState.save();
         Array.prototype.forEach.call(document.querySelectorAll('[data-scenario]'), function (button) {
             button.classList.remove('active');
         });
@@ -344,6 +293,7 @@
             button.classList.remove('active');
         });
         showToast('已填入你的个人资料。', 'success');
+        if (window.consultFormState) { window.consultFormState.save(); }
     }
 
     function detectConsultLocation() {
@@ -522,109 +472,6 @@
             ].filter(Boolean).join('\n');
         }
         return JSON.stringify(summary, null, 2);
-    }
-
-    function buildConsultFallbackContext(payload) {
-        var birthParts = [];
-        if (payload.year !== null && payload.year !== undefined) birthParts.push('年：' + payload.year);
-        if (payload.month !== null && payload.month !== undefined) birthParts.push('月：' + payload.month);
-        if (payload.day !== null && payload.day !== undefined) birthParts.push('日：' + payload.day);
-        if (payload.hour !== null && payload.hour !== undefined) birthParts.push('时：' + payload.hour);
-        if (payload.minute !== null && payload.minute !== undefined) birthParts.push('分：' + payload.minute);
-        if (payload.gender) birthParts.push('性别：' + payload.gender);
-
-        return [
-            '你是一个审慎的玄学辅助顾问。',
-            '请只基于用户输入给出简洁、可执行的建议，避免绝对化表述。',
-            '问题：' + payload.question,
-            birthParts.length ? ('出生信息：' + birthParts.join('，')) : '出生信息：未提供',
-            payload.matter_type ? ('事项类型：' + payload.matter_type) : '',
-            payload.purpose ? ('用途：' + payload.purpose) : '',
-            '输出格式：先给总判断，再给建议。'
-        ].filter(Boolean).join('\n');
-    }
-
-    function buildFallbackConsultation(payload, answer) {
-        var hasBirth = payload.year !== null && payload.year !== undefined
-            && payload.month !== null && payload.month !== undefined
-            && payload.day !== null && payload.day !== undefined
-            && payload.hour !== null && payload.hour !== undefined
-            && payload.gender;
-        var briefAnswer = buildBriefAnswer(answer);
-
-        return {
-            question: payload.question,
-            profile: {
-                has_birth: hasBirth,
-                gender: payload.gender || null,
-                birth: hasBirth ? {
-                    year: payload.year,
-                    month: payload.month,
-                    day: payload.day,
-                    hour: payload.hour,
-                    minute: payload.minute
-                } : null,
-                purpose: payload.purpose || '通用',
-                matter_type: payload.matter_type || '通用',
-                location: ''
-            },
-            intent: {
-                modules: hasBirth ? ['bazi', 'liuyao', 'qimen'] : ['liuyao', 'qimen'],
-                matter_type: payload.matter_type || '通用',
-                purpose: payload.purpose || '通用'
-            },
-            modules: {},
-            module_summaries: {},
-            answer: answer,
-            trace: {
-                mermaid: [
-                    'flowchart TD',
-                    '  input["输入问题"] --> ai["AI 对话兼容模式"]',
-                    '  ai --> answer["结果输出"]'
-                ].join('\n'),
-                steps: [
-                    {
-                        id: 'input',
-                        label: '输入问题',
-                        detail: payload.question,
-                        inputs: {
-                            question: payload.question,
-                            birth: hasBirth ? {
-                                year: payload.year,
-                                month: payload.month,
-                                day: payload.day,
-                                hour: payload.hour,
-                                minute: payload.minute
-                            } : null
-                        },
-                        rule: '原始输入进入前端兼容流程',
-                        outputs: { question: payload.question }
-                    },
-                    {
-                        id: 'fallback',
-                        label: '兼容模式',
-                        detail: '当前后端尚未加载统一问事接口，使用 AI 对话完成分析。',
-                        inputs: { ai_enabled: true },
-                        rule: '调用旧版 AI 对话接口进行补位',
-                        outputs: { answer: answer }
-                    },
-                    {
-                        id: 'answer',
-                        label: '结果输出',
-                        detail: briefAnswer,
-                        inputs: { summary: briefAnswer },
-                        rule: '把兼容模式结果呈现给用户',
-                        outputs: { summary: briefAnswer },
-                        evidence: ['完整结论已在上方结果区展示']
-                    }
-                ]
-            },
-            ai: {
-                enabled: true,
-                synthesized: true,
-                fallback: true
-            }
-        };
     }
 
     function buildSyntheticTrace(payload) {
@@ -1004,30 +851,16 @@
         return chips.join('');
     }
 
-    async function requestConsultation(payload, options) {
-        try {
-            return await window.apiClient.postJson('/api/system/consult', payload, options);
-        } catch (error) {
-            if (error && (error.status === 404 || error.message === 'Not Found')) {
-                var context = buildConsultFallbackContext(payload);
-                var legacyResponse = await window.apiClient.postJson('/api/ai/chat', {
-                    question: payload.question,
-                    context: context
-                }, options);
-                return {
-                    data: buildFallbackConsultation(payload, legacyResponse.data && legacyResponse.data.answer ? legacyResponse.data.answer : '系统暂未生成结论。')
-                };
-            }
-            throw error;
-        }
+    async function requestConsultation(payload, signal) {
+        return window.apiClient.postJson('/api/system/consult', payload, { timeoutMs: 180000, signal: signal });
     }
 
     function renderConsultation(data, elements) {
         var payload = data || {};
         var summaries = payload.module_summaries || {};
         var intent = payload.intent || {};
-        var trace = payload.trace && payload.trace.mermaid ? payload.trace : buildSyntheticTrace(payload);
         var aiSynthesized = Boolean(payload.ai && payload.ai.synthesized);
+        var trace = payload.trace && payload.trace.mermaid ? payload.trace : payload.legacy_record ? null : buildSyntheticTrace(payload);
 
         if (!elements || !elements.consultAnswer || !elements.consultMeta || !elements.consultModuleGrid) {
             return;
@@ -1048,8 +881,7 @@
             }))
             .concat(intent.matter_type ? ['<span class="result-chip">事项：' + esc(intent.matter_type) + '</span>'] : [])
             .concat(intent.purpose ? ['<span class="result-chip">用途：' + esc(intent.purpose) + '</span>'] : [])
-            .concat(payload.ai && payload.ai.fallback ? ['<span class="result-chip">兼容模式</span>'] : [])
-            .concat([aiSynthesized ? '<span class="result-chip">AI 已综合</span>' : '<span class="result-chip">基础综合</span>'])
+            .concat([payload.ai && payload.ai.synthesized ? '<span class="result-chip">AI 已综合</span>' : '<span class="result-chip">基础综合</span>'])
             .filter(Boolean)
             .join('');
         if (elements.consultTraceSummary) {
@@ -1068,15 +900,19 @@
             }).join('')
             : [
                 '<div class="module-summary-card">',
-                '  <div class="title">兼容模式</div>',
-                '  <div class="body">' + esc(payload.ai && payload.ai.fallback ? '当前后端尚未加载统一问事接口，已自动切换到 AI 对话兼容模式。' : '暂无模块摘要。') + '</div>',
+                '  <div class="title">模块依据</div>',
+                '  <div class="body">' + esc('这份记录没有保存模块摘要。') + '</div>',
                 '</div>'
             ].join('');
 
         if (window.decisionPanel && elements.consultDecisionGrid) {
             window.decisionPanel.render(payload, elements.consultDecisionGrid);
         }
-        if (window.tracePanel && elements.consultTraceDiagram && elements.consultTraceSteps) {
+        if (!trace && elements.consultTraceDiagram) {
+            elements.consultTraceDiagram.textContent = '这份早期记录未保存计算流程。';
+            elements.consultTraceSteps.textContent = '';
+        }
+        if (trace && window.tracePanel && elements.consultTraceDiagram && elements.consultTraceSteps) {
             window.tracePanel.renderDiagram(trace, elements.consultTraceDiagram);
             window.tracePanel.renderSteps(trace, elements.consultTraceSteps);
         }
@@ -1115,18 +951,18 @@
                 .concat(intent.matter_type ? ['<span class="result-chip">事项：' + esc(intent.matter_type) + '</span>'] : [])
                 .concat(intent.purpose ? ['<span class="result-chip">用途：' + esc(intent.purpose) + '</span>'] : [])
                 .concat(profile.location ? ['<span class="result-chip">地点：' + esc(profile.location) + '</span>'] : [])
-                .concat(birth.year ? ['<span class="result-chip">生辰：' + esc([birth.year, birth.month, birth.day, birth.hour].filter(Boolean).join('-')) + '</span>'] : [])
+                .concat(birth.year ? ['<span class="result-chip">生辰：' + esc([birth.year, birth.month, birth.day, birth.hour].filter(function (value) { return value != null; }).join('-')) + '</span>'] : [])
                 .filter(Boolean)
                 .join('');
         }
 
         if (timestampNode) {
-            var timestamp = readLatestConsultationTimestamp();
-            timestampNode.textContent = timestamp ? ('最近生成：' + timestamp.replace('T', ' ').slice(0, 16)) : '本次结果已暂存到当前浏览器会话';
+            var timestamp = payload.created_at || readLatestConsultationTimestamp();
+            timestampNode.textContent = timestamp ? ('生成时间：' + new Date(timestamp).toLocaleString()) : '';
         }
 
         if (backLink) {
-            backLink.setAttribute('href', 'index.html');
+            backLink.setAttribute('href', window.consultSession.url('index.html', { new: 1 }));
         }
     }
 
@@ -1135,58 +971,33 @@
             return;
         }
 
+        tabsRoot.setAttribute('role', 'tablist');
         Array.prototype.forEach.call(tabsRoot.querySelectorAll('[data-result-tab]'), function (button) {
+            button.id = 'result-tab-' + button.getAttribute('data-result-tab');
+            button.setAttribute('role', 'tab');
             var isActive = button.getAttribute('data-result-tab') === tabId;
             button.classList.toggle('active', isActive);
             button.setAttribute('aria-selected', isActive ? 'true' : 'false');
             button.tabIndex = isActive ? 0 : -1;
+            button.setAttribute('aria-controls', 'result-panel-' + button.getAttribute('data-result-tab'));
         });
 
         Array.prototype.forEach.call(panelsRoot.querySelectorAll('[data-result-panel]'), function (panel) {
             var isActive = panel.getAttribute('data-result-panel') === tabId;
+            panel.id = 'result-panel-' + panel.getAttribute('data-result-panel');
+            panel.setAttribute('role', 'tabpanel');
+            panel.setAttribute('aria-labelledby', 'result-tab-' + panel.getAttribute('data-result-panel'));
             panel.classList.toggle('active', isActive);
             panel.hidden = !isActive;
         });
     }
 
-    function bindResultTabKeyboardNavigation(tabsRoot, panelsRoot) {
-        tabsRoot.addEventListener('keydown', function (event) {
-            var keys = ['ArrowLeft', 'ArrowRight', 'Home', 'End'];
-            if (keys.indexOf(event.key) === -1) {
-                return;
-            }
-
-            var tabs = Array.prototype.slice.call(tabsRoot.querySelectorAll('[data-result-tab]'));
-            var currentIndex = tabs.indexOf(document.activeElement);
-            if (currentIndex === -1) {
-                return;
-            }
-
-            event.preventDefault();
-            var nextIndex = currentIndex;
-            if (event.key === 'ArrowLeft') {
-                nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
-            } else if (event.key === 'ArrowRight') {
-                nextIndex = (currentIndex + 1) % tabs.length;
-            } else if (event.key === 'Home') {
-                nextIndex = 0;
-            } else if (event.key === 'End') {
-                nextIndex = tabs.length - 1;
-            }
-
-            var nextTab = tabs[nextIndex];
-            activateResultTab(nextTab.getAttribute('data-result-tab'), tabsRoot, panelsRoot);
-            nextTab.focus();
-        });
-    }
-
-    async function initializeResultWorkspace() {
+    function renderWorkspaceResult(data) {
         var workspace = document.getElementById('consultResultWorkspace');
         if (!workspace) {
             return;
         }
 
-        var data = readLatestConsultation();
         var emptyState = document.getElementById('consultResultEmpty');
         var tabsRoot = document.getElementById('resultTabs');
         var panelsRoot = document.getElementById('resultPanels');
@@ -1209,25 +1020,6 @@
         };
 
         if (!data) {
-            var historyId = '';
-            try {
-                historyId = new URLSearchParams(window.location.search).get('history') || '';
-            } catch (_error) {}
-            if (historyId && window.apiClient) {
-                try {
-                    var response = await window.apiClient.get('/api/auth/history/' + encodeURIComponent(historyId));
-                    var item = response && response.data ? response.data.item : null;
-                    data = item && item.workspace ? item.workspace : null;
-                    if (data) {
-                        saveLatestConsultation(data);
-                    }
-                } catch (_error) {
-                    data = null;
-                }
-            }
-        }
-
-        if (!data) {
             workspace.style.display = 'none';
             if (emptyState) {
                 emptyState.style.display = '';
@@ -1244,13 +1036,29 @@
 
         if (tabsRoot && panelsRoot) {
             Array.prototype.forEach.call(tabsRoot.querySelectorAll('[data-result-tab]'), function (button) {
-                button.addEventListener('click', function () {
-                    activateResultTab(button.getAttribute('data-result-tab'), tabsRoot, panelsRoot);
-                });
+                button.onclick = function () {
+                    var tab = button.getAttribute('data-result-tab');
+                    activateResultTab(tab, tabsRoot, panelsRoot);
+                    var url = new URL(window.location.href); url.searchParams.set('tab', tab);
+                    window.history.replaceState(null, '', url);
+                };
+                button.onkeydown = function (event) {
+                    var buttons = Array.from(tabsRoot.querySelectorAll('[data-result-tab]'));
+                    var index = buttons.indexOf(button), target;
+                    if (event.key === 'ArrowRight') { target = buttons[(index + 1) % buttons.length]; }
+                    if (event.key === 'ArrowLeft') { target = buttons[(index + buttons.length - 1) % buttons.length]; }
+                    if (event.key === 'Home') { target = buttons[0]; }
+                    if (event.key === 'End') { target = buttons[buttons.length - 1]; }
+                    if (target) { event.preventDefault(); target.click(); target.focus(); }
+                };
             });
-            bindResultTabKeyboardNavigation(tabsRoot, panelsRoot);
-            activateResultTab('summary', tabsRoot, panelsRoot);
+            var selected = new URLSearchParams(window.location.search).get('tab');
+            activateResultTab(['summary', 'decision', 'modules', 'trace'].includes(selected) ? selected : 'summary', tabsRoot, panelsRoot);
         }
+    }
+
+    function initializeResultWorkspace() {
+        window.consultWorkspace.initialize();
     }
 
     function initializeConsultPanel() {
@@ -1258,6 +1066,32 @@
         if (!consultForm) {
             return;
         }
+
+        window.consultFormState.initialize();
+        var submitting = false;
+        var submitButton = consultForm.querySelector('button[type=submit]');
+        function refreshSubmitHint() {
+            var hint = document.getElementById('consultSubmitHint');
+            if (hint && !submitting) { hint.textContent = window.authClient.isAuthenticated() ? '' : '登录后即可分析，已填写的内容会保留。'; }
+        }
+        window.addEventListener('auth-session-changed', refreshSubmitHint);
+        refreshSubmitHint();
+        function keepFocusedFieldVisible() {
+            var field = document.activeElement;
+            if (window.innerWidth > 768 || !field || !consultForm.contains(field) || !field.matches('input, textarea, select')) { return; }
+            var rect = field.getBoundingClientRect();
+            var footerTop = consultForm.querySelector('.consult-actions').getBoundingClientRect().top;
+            var top = window.visualViewport ? window.visualViewport.offsetTop : 0;
+            var bottom = Math.min(footerTop - 16, top + (window.visualViewport ? window.visualViewport.height : window.innerHeight));
+            if (rect.bottom > bottom || rect.top < top) {
+                window.scrollBy({ top: rect.top - Math.max(top + 12, (top + bottom - rect.height) / 2), behavior: 'smooth' });
+            }
+        }
+        consultForm.addEventListener('focusin', function () { requestAnimationFrame(keepFocusedFieldVisible); });
+        if (window.visualViewport) { window.visualViewport.addEventListener('resize', keepFocusedFieldVisible); }
+        document.getElementById('consultQuestion').addEventListener('keydown', function (event) {
+            if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); consultForm.requestSubmit(); }
+        });
 
         var elements = {
             consultLoading: document.getElementById('consultLoading'),
@@ -1282,103 +1116,26 @@
         visualContextBanner.id = 'visualContextBanner';
         consultForm.insertBefore(visualContextBanner, consultForm.firstChild);
 
-        var consultLoadingTimer = null;
-        var consultLoadingValue = 0;
-        var activeConsultController = null;
-        var consultLoadingSteps = [
-            { threshold: 18, text: '正在整理问题、出生信息与场景条件...' },
-            { threshold: 42, text: '正在生成命理分析所需参数...' },
-            { threshold: 68, text: '正在汇总术数模块结果...' },
-            { threshold: 92, text: '正在收束结论并准备结果页...' }
-        ];
-
-        function updateConsultLoading(progress, text) {
-            if (!elements.consultLoading) {
-                return;
-            }
-            var value = Math.max(0, Math.min(100, Math.round(progress || 0)));
-            consultLoadingValue = value;
-            if (elements.consultLoadingFill) {
-                elements.consultLoadingFill.style.width = value + '%';
-            }
-            if (elements.consultLoadingPercent) {
-                elements.consultLoadingPercent.textContent = value + '%';
-            }
-            if (elements.consultLoadingText) {
-                if (text) {
-                    elements.consultLoadingText.textContent = text;
-                } else {
-                    var fallbackText = consultLoadingSteps[consultLoadingSteps.length - 1].text;
-                    consultLoadingSteps.some(function (step) {
-                        if (value <= step.threshold) {
-                            fallbackText = step.text;
-                            return true;
-                        }
-                        return false;
-                    });
-                    elements.consultLoadingText.textContent = fallbackText;
-                }
-            }
-        }
-
-        function clearConsultLoadingTimer() {
-            if (consultLoadingTimer) {
-                window.clearInterval(consultLoadingTimer);
-                consultLoadingTimer = null;
-            }
-        }
-
+        var consultLoadingTimer = null, activeConsultController = null;
         function showConsultLoading() {
-            if (!elements.consultLoading || !elements.consultLoading.classList) {
-                return;
-            }
-            clearConsultLoadingTimer();
             elements.consultLoading.classList.add('show');
             elements.consultLoading.setAttribute('aria-hidden', 'false');
-            consultForm.setAttribute('aria-busy', 'true');
             var cancelBtn = document.getElementById('cancelConsultBtn');
-            if (cancelBtn) {
-                cancelBtn.hidden = false;
-            }
-            if (elements.consultLoadingLabel) {
-                elements.consultLoadingLabel.textContent = '正在汇总命理信息';
-            }
-            updateConsultLoading(6, consultLoadingSteps[0].text);
-            consultLoadingTimer = window.setInterval(function () {
-                if (consultLoadingValue >= 88) {
-                    clearConsultLoadingTimer();
-                    return;
-                }
-                var nextValue = consultLoadingValue < 42
-                    ? consultLoadingValue + 7
-                    : consultLoadingValue < 68
-                        ? consultLoadingValue + 5
-                        : consultLoadingValue + 2;
-                updateConsultLoading(nextValue);
-            }, 520);
+            if (cancelBtn) { cancelBtn.hidden = false; cancelBtn.disabled = false; cancelBtn.textContent = '停止等待'; }
+            elements.consultLoadingLabel.textContent = '正在分析，请稍候';
+            elements.consultLoadingText.textContent = '正在结合问题和补充条件生成结果，完成后将自动打开工作台。';
+            var started = Date.now();
+            var elapsed = document.getElementById('consultLoadingElapsed');
+            function update() { if (elapsed) { elapsed.textContent = '已等待 ' + Math.floor((Date.now() - started) / 1000) + ' 秒'; } }
+            update();
+            consultLoadingTimer = window.setInterval(update, 1000);
         }
-
         function hideConsultLoading() {
-            clearConsultLoadingTimer();
-            if (!elements.consultLoading || !elements.consultLoading.classList) {
-                return;
-            }
+            window.clearInterval(consultLoadingTimer);
             elements.consultLoading.classList.remove('show');
             elements.consultLoading.setAttribute('aria-hidden', 'true');
-            consultForm.setAttribute('aria-busy', 'false');
             var cancelBtn = document.getElementById('cancelConsultBtn');
-            if (cancelBtn) {
-                cancelBtn.hidden = true;
-            }
-            updateConsultLoading(0, consultLoadingSteps[0].text);
-        }
-
-        async function finishConsultLoading() {
-            clearConsultLoadingTimer();
-            updateConsultLoading(100, '分析完成，正在打开结果工作台...');
-            await new Promise(function (resolve) {
-                window.setTimeout(resolve, 220);
-            });
+            if (cancelBtn) { cancelBtn.hidden = true; }
         }
 
         function renderVisualContextBanner() {
@@ -1557,6 +1314,8 @@
 
         consultForm.addEventListener('submit', async function (event) {
             event.preventDefault();
+            if (submitting) { return; }
+            if (!window.consultFormState.ready()) { showToast('正在恢复条件，请稍候再提交。', 'info'); return; }
             if (!window.authClient || !window.authClient.isAuthenticated || !window.authClient.isAuthenticated()) {
                 showToast('统一问事需要先登录账号。', 'warn');
                 if (window.authClient && window.authClient.openAuthModal) {
@@ -1567,20 +1326,23 @@
             var question = document.getElementById('consultQuestion').value.trim();
             if (!question) {
                 showToast('请先输入你想问的事情。', 'warn');
+                document.getElementById('consultQuestion').focus();
                 return;
             }
 
-            var payload = {
-                question: question,
-                year: readOptionalInt('consultYear'),
-                month: readOptionalInt('consultMonth'),
-                day: readOptionalInt('consultDay'),
-                hour: readOptionalInt('consultHour'),
-                minute: readOptionalInt('consultMinute'),
-                gender: document.getElementById('consultGender').value || null,
-                location: document.getElementById('consultLocation').value.trim() || null,
-                visual_context: null
-            };
+            var payload = window.consultFormState.read();
+            payload.gender = payload.gender || null;
+            payload.location = payload.location || null;
+            window.consultFormState.save();
+            var submissionOwner = window.consultSession.owner();
+            var visualManifest = readVisualContext();
+            payload.request_id = window.consultSession.requestId('consult', JSON.stringify(payload) + '|' + (visualManifest && visualManifest.saved_at || ''));
+            submitting = true; submitButton.disabled = true;
+            var disabledNodes = Array.from(consultForm.querySelectorAll('input, textarea, select, button')).filter(function (node) { return node !== submitButton && !node.disabled; });
+            disabledNodes.forEach(function (node) { node.disabled = true; });
+            consultForm.setAttribute('aria-busy', 'true');
+            var hint = document.getElementById('consultSubmitHint');
+            hint.textContent = '分析进行中，请勿重复提交。';
 
             activeConsultController = typeof AbortController !== 'undefined' ? new AbortController() : null;
             showConsultLoading();
@@ -1589,30 +1351,28 @@
             }
 
             try {
-                updateConsultLoading(18, '正在整理本次问事条件...');
-                payload.visual_context = await resolveVisualContextForConsult(activeConsultController && activeConsultController.signal, function (completed, total) {
-                    updateConsultLoading(18 + Math.round(completed / total * 26), '已完成 ' + completed + ' / ' + total + ' 类图片观察，正在汇总...');
-                });
-                updateConsultLoading(46, '正在汇总术数模块结果...');
-                var response = await requestConsultation(payload, {
-                    signal: activeConsultController && activeConsultController.signal,
-                    timeoutMs: 110000
-                });
-                await finishConsultLoading();
-                saveLatestConsultation(response.data);
+                payload.visual_context = await resolveVisualContextForConsult(activeConsultController && activeConsultController.signal) || payload.visual_context || null;
+                var response = await requestConsultation(payload, activeConsultController && activeConsultController.signal);
+                saveLatestConsultation(response.data, submissionOwner);
+                window.consultSession.clearRequestId('consult', submissionOwner);
                 if (response.data && response.data.account_history && response.data.account_history.saved && window.authClient) {
-                    window.authClient.refreshHistory({ openLatest: true }).catch(function () {
+                    window.authClient.refreshHistory({ preserveDetail: true }).catch(function () {
                         // Ignore history refresh failures after a successful consult.
                     });
                 }
-                var historyId = response.data && response.data.account_history ? response.data.account_history.history_id : '';
-                window.location.href = buildConsultResultUrl(historyId);
+                window.location.href = buildConsultResultUrl(response.data);
             } catch (error) {
-                if (!error || error.code !== 'request_aborted') {
-                    showToast('系统分析失败：' + error.message, 'error');
-                }
+                hint.textContent = error.code === 'REQUEST_TIMEOUT'
+                    ? '等待超时，分析可能仍在继续。请先查看历史；再次提交相同条件会复用本次请求。'
+                    : '分析失败：' + error.message + ' 输入内容已保留，可修改或重试。';
+                if (error.code === 'request_aborted') {
+                    hint.textContent = '已停止等待，分析可能仍在继续。可查看历史，或重试相同条件。';
+                } else { showToast('系统分析失败：' + error.message, 'error'); }
             } finally {
                 activeConsultController = null;
+                submitting = false; submitButton.disabled = false;
+                disabledNodes.forEach(function (node) { node.disabled = false; });
+                consultForm.removeAttribute('aria-busy');
                 hideConsultLoading();
             }
         });
@@ -1622,7 +1382,7 @@
             cancelConsultBtn.addEventListener('click', function () {
                 if (activeConsultController) {
                     activeConsultController.abort();
-                    showToast('已取消本次分析。', 'info');
+                    showToast('已停止等待，分析可能仍在继续。', 'info');
                 }
             });
         }
@@ -1645,7 +1405,7 @@
         });
 
         document.getElementById('clearConsultBtn').addEventListener('click', function () {
-            consultForm.reset();
+            window.consultFormState.clear();
             hideConsultLoading();
             if (elements.consultResult && elements.consultResult.classList) {
                 elements.consultResult.classList.remove('show');
@@ -1725,11 +1485,12 @@
     window.consultPanel = {
         initialize: initializeConsultPanel,
         initializeResultWorkspace: initializeResultWorkspace,
+        renderWorkspaceResult: renderWorkspaceResult,
         buildSyntheticTrace: buildSyntheticTrace,
         moduleNameLabel: moduleNameLabel,
         readLatestConsultation: readLatestConsultation,
         applyDefaultSavedCondition: function () {
-            if (!window.authClient || !window.authClient.getDefaultConsultPreset) {
+            if (!window.consultFormState || !window.consultFormState.canApplyDefault() || !window.authClient || !window.authClient.getDefaultConsultPreset) {
                 return;
             }
             var preset = window.authClient.getDefaultConsultPreset();

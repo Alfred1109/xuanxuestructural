@@ -1,7 +1,7 @@
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query, Request
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from core.auth import (
     build_admin_user_metrics,
@@ -50,6 +50,13 @@ class ProfileUpdateRequest(BaseModel):
     location: Optional[str] = Field("", max_length=80)
     current_password: Optional[str] = Field(None, max_length=120)
     new_password: Optional[str] = Field(None, min_length=8, max_length=120)
+
+    @field_validator("current_password", "new_password", mode="before")
+    @classmethod
+    def normalize_optional_password(cls, value):
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
 
     @model_validator(mode="after")
     def validate_password_change(self):

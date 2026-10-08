@@ -8,6 +8,8 @@ import json
 import base64
 from typing import Any, Dict, Optional
 
+from core.llm_config import load_llm_config
+
 # 尝试导入 OpenAI，如果没有安装则设为 None
 try:
     from openai import OpenAI
@@ -22,17 +24,21 @@ class LLMHelper:
     """大模型助手类"""
     
     def __init__(self):
-        # 从环境变量获取提供方配置
-        self.provider = (os.getenv('LLM_PROVIDER') or 'ark').strip().lower()
-        self.base_url = os.getenv('LLM_BASE_URL') or 'https://ark.cn-beijing.volces.com/api/v3'
-        self.api_key = os.getenv('LLM_API_KEY') or os.getenv('ARK_API_KEY')
+        config = load_llm_config()
+        self.provider = config.provider
+        self.base_url = config.base_url
+        self.api_key = config.api_key
+        self.max_completion_tokens = config.max_completion_tokens
         self.chat_timeout = float(os.getenv('ARK_CHAT_TIMEOUT') or '90')
         
         if not OPENAI_AVAILABLE:
             print("警告：openai 包未安装，AI增强功能将不可用")
             self.client = None
         elif not self.api_key:
-            print("警告：未设置 LLM_API_KEY / ARK_API_KEY 环境变量，AI增强功能将不可用")
+            if self.provider == "minimax":
+                print("警告：未设置 MiniMax 服务端凭证，AI增强功能将不可用")
+            else:
+                print("警告：未设置 LLM_API_KEY / ARK_API_KEY 环境变量，AI增强功能将不可用")
             self.client = None
         else:
             self.client = OpenAI(
@@ -42,8 +48,18 @@ class LLMHelper:
                 max_retries=0,
             )
 
-        self.model = os.getenv('LLM_TEXT_MODEL') or os.getenv('ARK_TEXT_MODEL') or "deepseek-v3-2-251201"
-        self.vision_model = os.getenv('LLM_VISION_MODEL') or os.getenv('ARK_VISION_MODEL') or "doubao-seed-2-0-lite-260428"
+        self.model = config.text_model
+        self.vision_model = config.vision_model
+
+    def _create_completion(self, **parameters):
+        """Create a completion with provider-specific output-budget semantics."""
+        if self.provider == "minimax":
+            # M3 budgets both hidden reasoning and visible output against the
+            # completion limit. Replace legacy max_tokens values so all text
+            # and image methods have the same room without reducing thinking.
+            parameters.pop("max_tokens", None)
+            parameters["max_completion_tokens"] = self.max_completion_tokens
+        return self.client.chat.completions.create(**parameters)
     
     def is_available(self) -> bool:
         """检查LLM是否可用"""
@@ -113,7 +129,7 @@ class LLMHelper:
 - 字数控制在500字左右
 """
             
-            response = self.client.chat.completions.create(
+            response = self._create_completion(
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.7,
@@ -169,7 +185,7 @@ class LLMHelper:
 - 字数控制在400字左右
 """
             
-            response = self.client.chat.completions.create(
+            response = self._create_completion(
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.7,
@@ -236,7 +252,7 @@ class LLMHelper:
 - 字数控制在500字左右
 """
             
-            response = self.client.chat.completions.create(
+            response = self._create_completion(
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.7,
@@ -292,7 +308,7 @@ class LLMHelper:
 - 字数控制在300字左右
 """
             
-            response = self.client.chat.completions.create(
+            response = self._create_completion(
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.7,
@@ -337,7 +353,7 @@ class LLMHelper:
             
             messages.append({"role": "user", "content": question})
             
-            response = self.client.chat.completions.create(
+            response = self._create_completion(
                 model=self.model,
                 messages=messages,
                 temperature=0.7,
@@ -362,7 +378,7 @@ class LLMHelper:
                 "content": "你上一条回答在中途结束了。请从刚才中断的位置继续，不要重复前文，也不要另起开场。"
             })
 
-            continuation = self.client.chat.completions.create(
+            continuation = self._create_completion(
                 model=self.model,
                 messages=continuation_messages,
                 temperature=0.7,
@@ -440,7 +456,7 @@ class LLMHelper:
             for image_data_url in image_data_urls:
                 content_items.append({"type": "image_url", "image_url": {"url": image_data_url}})
 
-            response = self.client.chat.completions.create(
+            response = self._create_completion(
                 model=self.vision_model,
                 messages=[
                     {
@@ -548,7 +564,7 @@ class LLMHelper:
             for image_data_url in image_data_urls:
                 content_items.append({"type": "image_url", "image_url": {"url": image_data_url}})
 
-            response = self.client.chat.completions.create(
+            response = self._create_completion(
                 model=self.vision_model,
                 messages=[
                     {

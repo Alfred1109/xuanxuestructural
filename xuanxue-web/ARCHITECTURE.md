@@ -197,7 +197,13 @@ xuanxue-web/
 - `trace-panel.js`
   Mermaid 与步骤展开区
 - `auth-client.js`
-  登录态、账号中心、问事历史与账号资料维护
+  登录态、账号中心、问事历史与账号资料维护；发布登录状态变更事件
+- `consult-session.js`
+  账号范围的标签页草稿存储、结果 ID 和统一导航地址
+- `consult-form-state.js`
+  表单草稿恢复、条件编辑、清空撤销；自动恢复不能覆盖用户刚编辑的内容
+- `consult-workspace.js`
+  按历史 ID 读取完整结果、鉴权状态切换与本次结果追问
 
 ### 5.2 前端职责边界
 
@@ -229,6 +235,26 @@ frontend/index.html
   -> 返回统一结果
   -> decision-panel.js + trace-panel.js 渲染
 ```
+
+### 6.2 结果恢复与持续追问
+
+统一问事成功后，通过 `account_history.history_id` 打开 `consult-result.html?id=...`。
+工作台始终从 `GET /api/auth/history/{id}` 读取归属于当前账号的完整结果，
+浏览器的 latest-result 存储只帮助定位最近一份记录，不作为鉴权或结果数据来源。
+新历史同时保存完整 `consultation` 和 `request_payload`；旧历史保留原结论及摘要，
+不补造当时未保存的计算流程。历史列表也打开这一工作台，不维护第二套详情渲染。
+
+`index.html?edit={id}` 读取原始请求到可编辑草稿，随后移除 edit 参数，
+防止刷新时覆盖刚编辑的条件。`index.html?new=1` 开始新草稿。
+草稿保存在当前标签页的 sessionStorage 中，按账号区分；访客登录时保留本页输入。
+场景模板仅提供问题，不改动出生资料。实际提交时锁定表单，显示真实等待耗时，
+客户端超时不表示服务端已取消计算，因此不自动重试。
+
+`POST /api/system/consult/{id}/followups` 接收 `{question, request_id?}`；
+`GET` 同一路径读取此前追问。服务端校验归属，再由 `core/consult/followups.py`
+从首轮问事及此前追问构造上下文并调用 AI；AI 不可用时返回 503，保留用户输入，
+不保存伪答。追问记录独立保存到 `CONSULT_FOLLOWUPS_PATH` 对应 JSONL。
+首轮计算和追问 AI 调用在线程池执行，避免阻塞鉴权、历史读取等请求。
 
 ## 7. 测试策略
 
@@ -296,3 +322,5 @@ frontend/index.html
   说明它更可能是兼容入口
 - 如果文件位于 `consult/` 或 `decision/`
   通常就是当前主实现
+
+问事和追问的可选 `request_id` 由账号范围的前端会话生成，等待超时后相同条件重用。服务层在线程池中对同用户、同请求 ID 加跨进程锁，完整覆盖计算和持久化；相同内容重放原结果，内容不同返回 409。图片识别成功后在当前账号会话按图片草稿签名缓存解析结果，使重试的实际条件保持一致。

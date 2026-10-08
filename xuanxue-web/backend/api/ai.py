@@ -392,6 +392,7 @@ async def ai_status(request: Request):
         {
             "status": status,
             "available": available,
+            "provider": llm_helper.provider,
             "model": llm_helper.model if available else None,
             "message": message,
             "last_error": AI_RUNTIME_STATE["last_error"],

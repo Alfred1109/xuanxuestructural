@@ -573,6 +573,8 @@ class TestApiValidation(unittest.TestCase):
         payload = self.assert_success_envelope(resp).get("data", {})
         self.assertEqual(payload.get("status"), "available")
         self.assertTrue(payload.get("available"))
+        self.assertEqual(payload.get("provider"), main.llm_helper.provider)
+        self.assertEqual(payload.get("model"), main.llm_helper.model)
 
     def test_ai_status_unconfigured_enum(self):
         with patch("main.llm_helper.is_available", return_value=False):
@@ -581,6 +583,7 @@ class TestApiValidation(unittest.TestCase):
         payload = self.assert_success_envelope(resp).get("data", {})
         self.assertEqual(payload.get("status"), "unconfigured")
         self.assertFalse(payload.get("available"))
+        self.assertEqual(payload.get("provider"), main.llm_helper.provider)
 
     def test_ai_status_degraded_enum(self):
         main.AI_RUNTIME_STATE["last_error"] = "chat_empty_response"
@@ -711,6 +714,57 @@ class TestApiValidation(unittest.TestCase):
         self.assertTrue(hasattr(main, "app"))
         self.assertTrue(hasattr(main, "llm_helper"))
         self.assertTrue(hasattr(main, "AI_RUNTIME_STATE"))
+
+    def test_profile_optional_password_blanks_and_real_password_change(self):
+        register = self.request(
+            "POST",
+            "/api/auth/register",
+            json={"email": "profile-password@example.com", "password": "password123"},
+        )
+        self.assertEqual(register.status_code, 200)
+        token = register.json()["data"]["token"]
+        headers = {"Authorization": "Bearer " + token}
+
+        blank_passwords = self.request(
+            "PATCH",
+            "/api/auth/profile",
+            headers=headers,
+            json={"display_name": "资料已更新", "current_password": "  ", "new_password": "  "},
+        )
+        self.assertEqual(blank_passwords.status_code, 200, blank_passwords.text)
+        self.assertEqual(blank_passwords.json()["data"]["user"]["display_name"], "资料已更新")
+
+        short_password = self.request(
+            "PATCH",
+            "/api/auth/profile",
+            headers=headers,
+            json={"current_password": "password123", "new_password": "short"},
+        )
+        self.assertEqual(short_password.status_code, 422)
+
+        missing_current_password = self.request(
+            "PATCH",
+            "/api/auth/profile",
+            headers=headers,
+            json={"new_password": "newpassword123"},
+        )
+        self.assertEqual(missing_current_password.status_code, 422)
+
+        changed = self.request(
+            "PATCH",
+            "/api/auth/profile",
+            headers=headers,
+            json={"current_password": "password123", "new_password": "newpassword123"},
+        )
+        self.assertEqual(changed.status_code, 200, changed.text)
+        old_password_login = self.request(
+            "POST", "/api/auth/login", json={"email": "profile-password@example.com", "password": "password123"}
+        )
+        self.assertEqual(old_password_login.status_code, 401)
+        new_password_login = self.request(
+            "POST", "/api/auth/login", json={"email": "profile-password@example.com", "password": "newpassword123"}
+        )
+        self.assertEqual(new_password_login.status_code, 200, new_password_login.text)
 
 
 if __name__ == "__main__":

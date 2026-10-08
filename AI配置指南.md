@@ -1,5 +1,22 @@
 # AI增强功能配置指南
 
+## 本机 MiniMax Flash 配置
+
+当前项目支持在根目录 `.env` 指定 `LLM_PROVIDER=minimax` 与
+`LLM_CONFIG_FILE=/home/alfred/.claude/settings.json`，由后端读取该文件中的模型、地址及凭证。
+密钥不会写入网页、结果或仓库；不要把真实配置文件加入版本控制。
+可参考根目录 `.env.example`；有效非空的进程环境变量优先于项目 `.env`。
+
+本机选择 `MiniMax-M3.1-Flash-Preview`，文本分析、持续追问和图片分析均使用这一模型。
+配置文件中的 Anthropic 地址由服务端转为同站点的 OpenAI 兼容入口。
+Flash 的思考 token 计入生成预算，因此统一请求使用可配置的
+`LLM_MAX_COMPLETION_TOKENS`（默认 32768），避免小预算导致无正文或结果截断，
+不关闭思考或切换替代模型。
+
+配置后使用项目 `start.sh` / `stop.sh` 重启，通过 `/api/ai/status` 检查实际模型与提供方，
+并发起一次真实问事及追问确认可用。仅存在凭证不代表模型调用已经成功。
+接口参数依据：[MiniMax 官方 OpenAI 兼容文档](https://platform.minimax.cn/docs/api-reference/text-openai-api)。
+
 ## 📖 概述
 
 玄学预测系统支持AI增强功能，可以提供更深入、更个性化的分析和建议。AI功能基于火山引擎的豆包大模型（DeepSeek-V3）。

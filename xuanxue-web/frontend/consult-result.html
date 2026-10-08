@@ -693,6 +693,56 @@
             margin: 0 auto 18px;
         }
 
+        .result-load-status {
+            margin: 0 0 18px;
+            padding: 14px 18px;
+            border: 1px solid rgba(44, 91, 79, 0.14);
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.82);
+            color: var(--color-text-secondary);
+        }
+
+        .result-followup {
+            display: grid;
+            gap: 16px;
+        }
+
+        .result-followup h2 {
+            margin: 0;
+            color: var(--color-primary-dark);
+            font-size: 1.2rem;
+        }
+
+        .followup-form {
+            display: grid;
+            gap: 12px;
+        }
+
+        .followup-form textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .followup-form button {
+            justify-self: start;
+            min-width: 150px;
+        }
+
+        .followup-status {
+            min-height: 1.4em;
+            margin: 0;
+            color: var(--color-text-secondary);
+            font-size: 0.84rem;
+        }
+
+        .followup-messages {
+            display: grid;
+            gap: 12px;
+        }
+
+        .followup-messages:empty {
+            display: none;
+        }
         @media (max-width: 960px) {
             .result-hero,
             .result-panel-grid {
@@ -819,13 +869,14 @@
                 <div class="result-hero-side">
                     <div class="result-side-card">
                         <div class="result-side-label">工作台说明</div>
-                        <div class="result-side-text">下方用 tab 把综合结论、决策内核、模块依据和计算流程拆开展示。你可以先看结论，再按需下钻到依据和推演链。</div>
+                        <div class="result-side-text">先看综合结论，再按需查看决策、模块依据和计算流程。</div>
                     </div>
                     <div class="result-side-card">
                         <div class="result-side-label">最近结果</div>
                         <div id="resultHeroTimestamp" class="result-side-text">本次结果已暂存到当前浏览器会话</div>
                         <div class="result-side-actions">
-                            <a id="resultBackLink" class="result-link-btn primary" href="index.html">继续发起问事</a>
+                            <a id="resultEditLink" class="result-link-btn" href="index.html">修改本次条件</a>
+                            <a id="resultBackLink" class="result-link-btn primary" href="index.html?new=1">新建问题</a>
                             <a class="result-link-btn" href="account.html">查看历史记录</a>
                         </div>
                     </div>
@@ -875,8 +926,20 @@
                     <div id="consultTraceSteps" class="trace-steps"></div>
                 </section>
             </div>
+
+            <section class="card result-followup" aria-labelledby="followupHeading">
+                <h2 id="followupHeading">基于本次结果追问</h2>
+                <form id="followupForm" class="followup-form">
+                    <label for="followupQuestion">接下来还想了解什么？</label>
+                    <textarea maxlength="500" id="followupQuestion" placeholder="例如：如果我选择方案 A，接下来三个月需要重点留意什么？"></textarea>
+                    <button type="submit" class="btn" id="followupSubmitBtn">发送追问</button>
+                    <p id="followupStatus" class="followup-status" role="status" aria-live="polite"></p>
+                </form>
+                <div id="followupMessages" class="followup-messages" aria-live="polite"></div>
+            </section>
         </div>
 
+        <div id="resultLoadStatus" class="result-load-status" role="status" aria-live="polite" hidden></div>
         <section id="consultResultEmpty" class="card result-empty">
             <h2>还没有可展示的结果</h2>
             <p>先回到问事页提交一次统一问事，系统会把最新结果带到这个工作台里，方便你分区查看综合结论、模块依据和推演流程。</p>
@@ -964,18 +1027,20 @@
     </footer>
 
     <script src="config.js?v=20260804-xuanxue-api-route"></script>
-    <script src="common-links.js?v=20260804-app-nav"></script>
+    <script src="common-links.js?v=20261008"></script>
     <script src="common-ui.js?v=20260519-result-workspace"></script>
     <script src="markdown-it.min.js"></script>
     <script src="markdown.js?v=20260519-result-workspace"></script>
-    <script src="api-client.js?v=20260804-mounted-api-route"></script>
-    <script src="auth-client.js?v=20260805-lazy-account-data"></script>
+    <script src="api-client.js?v=20261008"></script>
+    <script src="consult-session.js?v=20261008"></script>
+    <script src="auth-client.js?v=20261008"></script>
     <script src="ai-status.js?v=20260519-result-workspace"></script>
     <script src="common-renderers.js?v=20260519-result-workspace-2"></script>
     <script src="decision-panel.js?v=20260519-result-workspace-2"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script src="trace-panel.js?v=20260519-result-workspace"></script>
-    <script src="consult-panel.js?v=20260805-lazy-visual-frame"></script>
+    <script src="consult-workspace.js?v=20261008"></script>
+    <script src="consult-panel.js?v=20261008"></script>
     <script>
         if (window.applyCommonLinks) {
             window.applyCommonLinks();

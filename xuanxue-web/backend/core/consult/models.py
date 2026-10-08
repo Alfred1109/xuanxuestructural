@@ -31,6 +31,7 @@ class VisualContext(BaseModel):
 
 class UnifiedConsultRequest(BaseModel):
     question: str = Field(..., min_length=1, max_length=500)
+    request_id: Optional[str] = Field(None, min_length=1, max_length=100)
     year: Optional[int] = Field(None, ge=1900, le=2100)
     month: Optional[int] = Field(None, ge=1, le=12)
     day: Optional[int] = Field(None, ge=1, le=31)
@@ -50,6 +51,16 @@ class UnifiedConsultRequest(BaseModel):
         if value not in ("男", "女"):
             raise ValueError("gender must be '男' or '女'")
         return value
+
+    @field_validator("request_id", mode="before")
+    @classmethod
+    def normalize_request_id(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return None
+        if not isinstance(value, str):
+            return value
+        normalized = value.strip()
+        return normalized or None
 
 
 @dataclass

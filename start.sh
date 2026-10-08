@@ -16,7 +16,11 @@ FRONTEND_DIR="$SCRIPT_DIR/xuanxue-web/frontend"
 BACKEND_PORT=8002
 FRONTEND_MODE="${FRONTEND_MODE:-nginx}"
 FRONTEND_PORT="${FRONTEND_PORT:-8003}"
-PUBLIC_ENTRY_URL="${PUBLIC_ENTRY_URL:-http://localhost/}"
+if [ "$FRONTEND_MODE" = "local" ]; then
+    PUBLIC_ENTRY_URL="${PUBLIC_ENTRY_URL:-http://localhost:$FRONTEND_PORT/index.html?apiBase=http://localhost:$BACKEND_PORT}"
+else
+    PUBLIC_ENTRY_URL="${PUBLIC_ENTRY_URL:-http://localhost/}"
+fi
 BACKEND_LOG=/tmp/xuanxue-backend.log
 FRONTEND_LOG=/tmp/xuanxue-frontend.log
 BACKEND_PID_FILE=/tmp/xuanxue-backend.pid
@@ -25,7 +29,7 @@ FRONTEND_PID_FILE=/tmp/xuanxue-frontend.pid
 is_port_in_use() {
     local port="$1"
     if command -v lsof > /dev/null 2>&1; then
-        lsof -ti:"$port" >/dev/null 2>&1
+        lsof -t -sTCP:LISTEN -iTCP:"$port" >/dev/null 2>&1
         return $?
     fi
     if command -v ss > /dev/null 2>&1; then
@@ -38,7 +42,7 @@ is_port_in_use() {
 list_port_pids() {
     local port="$1"
     if command -v lsof > /dev/null 2>&1; then
-        lsof -ti:"$port" 2>/dev/null
+        lsof -t -sTCP:LISTEN -iTCP:"$port" 2>/dev/null
         return 0
     fi
     if command -v ss > /dev/null 2>&1; then
@@ -90,10 +94,15 @@ wait_for_port_release() {
 ensure_process_stopped() {
     local pid="$1"
     local name="$2"
+    local expected_dir="$3"
     if [ -z "$pid" ]; then
         return 0
     fi
     if ps -p "$pid" > /dev/null 2>&1; then
+        if [ "$(readlink -f "/proc/$pid/cwd" 2>/dev/null || true)" != "$expected_dir" ]; then
+            echo "❌ PID $pid 不属于本项目，拒绝停止。请检查PID文件与端口归属。"
+            return 1
+        fi
         echo "🛑 停止$name (PID: $pid)..."
         kill "$pid" >/dev/null 2>&1 || true
         sleep 1
@@ -108,11 +117,11 @@ cleanup_existing_services() {
     echo "🧹 检查旧服务实例..."
 
     if [ -f "$BACKEND_PID_FILE" ]; then
-        ensure_process_stopped "$(cat "$BACKEND_PID_FILE" 2>/dev/null || true)" "后端服务"
+        ensure_process_stopped "$(cat "$BACKEND_PID_FILE" 2>/dev/null || true)" "后端服务" "$BACKEND_DIR" || exit 1
         rm -f "$BACKEND_PID_FILE"
     fi
     if [ -f "$FRONTEND_PID_FILE" ]; then
-        ensure_process_stopped "$(cat "$FRONTEND_PID_FILE" 2>/dev/null || true)" "前端服务"
+        ensure_process_stopped "$(cat "$FRONTEND_PID_FILE" 2>/dev/null || true)" "前端服务" "$FRONTEND_DIR" || exit 1
         rm -f "$FRONTEND_PID_FILE"
     fi
 
@@ -121,7 +130,9 @@ cleanup_existing_services() {
         backend_pids="$(list_port_pids "$BACKEND_PORT" | tr '\n' ' ')"
         if [ -n "$backend_pids" ]; then
             echo "🛑 发现占用 $BACKEND_PORT 的旧进程: $backend_pids"
-            kill $backend_pids >/dev/null 2>&1 || true
+            for pid in $backend_pids; do
+                ensure_process_stopped "$pid" "后端服务" "$BACKEND_DIR" || exit 1
+            done
         fi
     fi
     if [ "$FRONTEND_MODE" = "local" ] && is_port_in_use "$FRONTEND_PORT"; then
@@ -129,7 +140,9 @@ cleanup_existing_services() {
         frontend_pids="$(list_port_pids "$FRONTEND_PORT" | tr '\n' ' ')"
         if [ -n "$frontend_pids" ]; then
             echo "🛑 发现占用 $FRONTEND_PORT 的旧进程: $frontend_pids"
-            kill $frontend_pids >/dev/null 2>&1 || true
+            for pid in $frontend_pids; do
+                ensure_process_stopped "$pid" "前端服务" "$FRONTEND_DIR" || exit 1
+            done
         fi
     fi
 
@@ -164,15 +177,12 @@ if [ -z "${ARK_API_KEY:-}" ] && [ -f "$HOME/.bashrc" ]; then
     done < "$HOME/.bashrc"
 fi
 
-# 检查AI配置
-if [ -n "${ARK_API_KEY:-}" ]; then
-    echo "✓ 检测到AI配置 (ARK_API_KEY)"
-    AI_STATUS="已启用"
-else
-    echo "⚠️  未检测到AI配置"
-    echo "   如需AI功能，请设置: export ARK_API_KEY=your_key"
-    AI_STATUS="未配置"
+# Local frontends use a separate origin; honor an explicit CORS policy when supplied.
+if [ "$FRONTEND_MODE" = "local" ] && [ -z "${CORS_ALLOW_ORIGINS:-}" ]; then
+    export CORS_ALLOW_ORIGINS="http://localhost,http://127.0.0.1,http://localhost:8003,http://127.0.0.1:8003,http://localhost:$FRONTEND_PORT,http://127.0.0.1:$FRONTEND_PORT"
 fi
+
+# AI availability is resolved by the running backend for the selected provider.
 echo ""
 
 # 检查虚拟环境是否存在
@@ -226,7 +236,6 @@ echo "✓ 后端服务器已启动 (PID: $BACKEND_PID)"
 echo "   访问地址: http://localhost:$BACKEND_PORT"
 echo "   API文档: http://localhost:$BACKEND_PORT/docs"
 echo "   日志文件: $BACKEND_LOG"
-echo "   AI状态: $AI_STATUS"
 echo ""
 echo "$BACKEND_PID" > "$BACKEND_PID_FILE"
 
@@ -263,6 +272,10 @@ if [ "$AUTH_ROUTE_STATUS" != "422" ]; then
     exit 1
 fi
 echo "✓ 关键接口已就绪"
+AI_RUNTIME_SUMMARY="$(curl -fsS "http://localhost:$BACKEND_PORT/api/ai/status" | "$BACKEND_DIR/venv/bin/python" -c 'import json,sys; data=json.load(sys.stdin).get("data",{}); print(("已启用" if data.get("available") else "未配置") + " / " + data.get("provider","unknown") + " / " + str(data.get("model") or "未配置"))' 2>/dev/null || true)"
+if [ -n "$AI_RUNTIME_SUMMARY" ]; then
+    echo "   AI运行配置: $AI_RUNTIME_SUMMARY"
+fi
 echo ""
 
 if [ "$FRONTEND_MODE" = "local" ]; then
@@ -338,9 +351,5 @@ if [ "$FRONTEND_MODE" = "local" ]; then
 else
     echo "   - 如需本地静态前端模式，可执行: FRONTEND_MODE=local ./start.sh"
 fi
-if [ -z "${ARK_API_KEY:-}" ]; then
-    echo "   - AI功能: 未启用，设置方法见 AI配置指南.md"
-else
-    echo "   - AI功能: 已启用 ✓"
-fi
+echo "   - AI运行配置: ${AI_RUNTIME_SUMMARY:-请查看后端日志}"
 echo ""

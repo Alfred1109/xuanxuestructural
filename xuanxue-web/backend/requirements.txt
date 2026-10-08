@@ -4,4 +4,5 @@ pydantic==2.5.3
 python-multipart==0.0.6
 httpx==0.26.0
 openai>=2.0.0
+python-dotenv>=1.0,<2
 iztro-py==0.3.4

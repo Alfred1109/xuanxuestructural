@@ -59,54 +59,37 @@
         }
 
         if (controller && opts.signal) {
-            if (opts.signal.aborted) {
-                controller.abort();
-            } else {
+            if (opts.signal.aborted) { controller.abort(); }
+            else {
                 abortRelay = function () { controller.abort(); };
                 opts.signal.addEventListener('abort', abortRelay, { once: true });
             }
         }
         if (controller && timeoutMs > 0) {
-            timeoutId = window.setTimeout(function () {
-                timedOut = true;
-                controller.abort();
-            }, timeoutMs);
+            timeoutId = window.setTimeout(function () { timedOut = true; controller.abort(); }, timeoutMs);
         }
-
-        var response;
+        var response, payload = null;
         try {
             response = await fetch(buildUrl(path, opts.query), {
-                method: method,
-                headers: headers,
-                body: body,
-                signal: controller ? controller.signal : opts.signal
+                method: method, headers: headers, body: body, signal: controller ? controller.signal : opts.signal
             });
+            var text = await response.text();
+            try { payload = JSON.parse(text); } catch (_parseError) { payload = null; }
         } catch (error) {
             if (timedOut) {
-                var timeoutError = new Error('请求超时，请检查网络后重试');
-                timeoutError.code = 'request_timeout';
+                var timeoutError = new Error('请求等待超时。分析可能仍在继续，请先查看历史记录，避免重复提交。');
+                timeoutError.code = 'REQUEST_TIMEOUT';
                 throw timeoutError;
             }
             if (error && error.name === 'AbortError') {
-                var abortError = new Error('请求已取消');
+                var abortError = new Error('已停止等待，分析可能仍在继续。');
                 abortError.code = 'request_aborted';
                 throw abortError;
             }
             throw error;
         } finally {
-            if (timeoutId) {
-                window.clearTimeout(timeoutId);
-            }
-            if (abortRelay && opts.signal) {
-                opts.signal.removeEventListener('abort', abortRelay);
-            }
-        }
-
-        var payload = null;
-        try {
-            payload = await response.json();
-        } catch (_err) {
-            payload = null;
+            if (timeoutId) { window.clearTimeout(timeoutId); }
+            if (abortRelay && opts.signal) { opts.signal.removeEventListener('abort', abortRelay); }
         }
 
         if (!response.ok) {

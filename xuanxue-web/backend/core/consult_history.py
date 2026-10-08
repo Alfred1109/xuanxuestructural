@@ -15,6 +15,10 @@ def _history_path():
     return resolve_runtime_path("CONSULT_HISTORY_PATH", "consult_history.jsonl")
 
 
+def _followups_path():
+    return resolve_runtime_path("CONSULT_FOLLOWUPS_PATH", "consult_followups.jsonl")
+
+
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
@@ -26,7 +30,9 @@ def _build_brief_answer(answer: str) -> str:
 
     lines = [line.strip() for line in text.splitlines() if line.strip()]
     for line in lines:
-        normalized = line.lstrip("#*-0123456789. ").strip()
+        if line.startswith("#") or (line.startswith("**") and line.rstrip(":：").endswith("**") and len(line) <= 24):
+            continue
+        normalized = line.lstrip("#*-0123456789. ").replace("**", "").strip()
         if not normalized:
             continue
         if len(normalized) <= 80:
@@ -35,7 +41,13 @@ def _build_brief_answer(answer: str) -> str:
     return "已生成综合结论，请查看详情。"
 
 
-def append_consult_history(user_id: str, consultation: Dict[str, Any]) -> Dict[str, Any]:
+def append_consult_history(
+    user_id: str,
+    consultation: Dict[str, Any],
+    request_payload: Optional[Dict[str, Any]] = None,
+    request_id: Optional[str] = None,
+    request_fingerprint: Optional[str] = None,
+) -> Dict[str, Any]:
     history_id = str(uuid4())
     intent = consultation.get("intent") if isinstance(consultation.get("intent"), dict) else {}
     payload = {
@@ -53,8 +65,17 @@ def append_consult_history(user_id: str, consultation: Dict[str, Any]) -> Dict[s
         "profile": consultation.get("profile") or {},
         "module_summaries": consultation.get("module_summaries") or {},
         "ai": consultation.get("ai") or {},
+        # Keep the complete engine result and submitted request so a history
+        # item can be reopened without rebuilding it from summary fields.
+        # Keep the established workspace key on disk. Detail/retry helpers
+        # expose the same snapshot under consultation for the newer API.
         "workspace": consultation,
+        "request_payload": request_payload or {},
     }
+    if request_id:
+        payload["request_id"] = request_id
+    if request_fingerprint:
+        payload["request_fingerprint"] = request_fingerprint
     append_jsonl(_history_path(), payload)
     return {
         "saved": True,
@@ -89,6 +110,7 @@ def list_consult_history(user_id: str, limit: int = 20) -> List[Dict[str, Any]]:
 def get_consult_history_detail(user_id: str, history_id: str) -> Optional[Dict[str, Any]]:
     for item in iter_jsonl_reverse(_history_path()):
         if item.get("user_id") == user_id and item.get("history_id") == history_id:
+            workspace = item.get("workspace") or item.get("consultation")
             return {
                 "history_id": item.get("history_id"),
                 "created_at": item.get("created_at"),
@@ -99,8 +121,90 @@ def get_consult_history_detail(user_id: str, history_id: str) -> Optional[Dict[s
                 "profile": item.get("profile") or {},
                 "module_summaries": item.get("module_summaries") or {},
                 "ai": item.get("ai") or {},
-                "workspace": item.get("workspace") or None,
+                "workspace": workspace,
+                "consultation": workspace,
+                "request_payload": item.get("request_payload") or _legacy_request_payload(item),
+                "followups": list_consult_followups(user_id, history_id),
             }
+    return None
+
+
+def _legacy_request_payload(item: Dict[str, Any]) -> Dict[str, Any]:
+    """Derive the recoverable request fields from pre-full-snapshot records."""
+    profile = item.get("profile") if isinstance(item.get("profile"), dict) else {}
+    birth = profile.get("birth") if isinstance(profile.get("birth"), dict) else {}
+    intent = item.get("intent") if isinstance(item.get("intent"), dict) else {}
+    result = {"question": item.get("question") or ""}
+    # Current engine snapshots nest birth fields. Older variants may have
+    # stored them at profile level, so retain that fallback for compatibility.
+    for key in ("year", "month", "day", "hour", "minute"):
+        value = birth.get(key) if birth.get(key) is not None else profile.get(key)
+        if value is not None:
+            result[key] = value
+    for key in ("gender", "location"):
+        if profile.get(key) is not None:
+            result[key] = profile[key]
+    for key in ("purpose", "matter_type"):
+        if intent.get(key):
+            result[key] = intent[key]
+    return result
+
+
+def get_owned_consult_history(user_id: str, history_id: str) -> Optional[Dict[str, Any]]:
+    """Return the stored source record only when it belongs to the caller."""
+    for item in iter_jsonl_reverse(_history_path()):
+        if item.get("user_id") == user_id and item.get("history_id") == history_id:
+            if not item.get("consultation") and item.get("workspace"):
+                item["consultation"] = item["workspace"]
+            return item
+    return None
+
+
+def get_consult_history_by_request_id(user_id: str, request_id: str) -> Optional[Dict[str, Any]]:
+    for item in iter_jsonl_reverse(_history_path()):
+        if item.get("user_id") == user_id and item.get("request_id") == request_id:
+            if not item.get("consultation") and item.get("workspace"):
+                item["consultation"] = item["workspace"]
+            return item
+    return None
+
+
+def list_consult_followups(user_id: str, history_id: str) -> List[Dict[str, Any]]:
+    return [
+        {key: entry.get(key) for key in ("followup_id", "question", "answer", "created_at")}
+        for entry in read_jsonl(_followups_path())
+        if entry.get("user_id") == user_id and entry.get("history_id") == history_id
+    ]
+
+
+def append_consult_followup(
+    user_id: str,
+    history_id: str,
+    question: str,
+    answer: str,
+    request_id: Optional[str] = None,
+    request_fingerprint: Optional[str] = None,
+) -> Dict[str, Any]:
+    item = {
+        "followup_id": str(uuid4()),
+        "user_id": user_id,
+        "history_id": history_id,
+        "question": question,
+        "answer": answer,
+        "created_at": _now_iso(),
+    }
+    if request_id:
+        item["request_id"] = request_id
+    if request_fingerprint:
+        item["request_fingerprint"] = request_fingerprint
+    append_jsonl(_followups_path(), item)
+    return {key: item[key] for key in ("followup_id", "question", "answer", "created_at")}
+
+
+def get_consult_followup_by_request_id(user_id: str, request_id: str) -> Optional[Dict[str, Any]]:
+    for item in iter_jsonl_reverse(_followups_path()):
+        if item.get("user_id") == user_id and item.get("request_id") == request_id:
+            return item
     return None
 
 

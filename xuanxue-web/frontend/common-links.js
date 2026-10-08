@@ -68,5 +68,18 @@
         }
         createProductNavigation();
         applyNavLink('[data-ai-guide-link]', '../../AI配置指南.md');
+        // Preserve local/proxied API configuration through ordinary navigation and embedded tools.
+        document.querySelectorAll('a[href], iframe[src]').forEach(function (node) {
+            var attr = node.tagName === 'IFRAME' ? 'src' : 'href';
+            var raw = node.getAttribute(attr);
+            if (!raw || raw.charAt(0) === '#') { return; }
+            var target = new URL(raw, window.location.href);
+            if (target.origin !== window.location.origin || !target.pathname.endsWith('.html')) { return; }
+            var current = new URLSearchParams(window.location.search);
+            ['apiBase', 'guideUrl'].forEach(function (name) {
+                if (current.has(name)) { target.searchParams.set(name, current.get(name)); }
+            });
+            node.setAttribute(attr, target.toString());
+        });
     };
 })();

@@ -1,11 +1,17 @@
-from asyncio import to_thread
 from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, Field, field_validator
+from starlette.concurrency import run_in_threadpool
 
 from core.auth import resolve_authenticated_user
-from core.consult_history import append_consult_history
+from core.consult.followups import (
+    ConsultHistoryNotFound,
+    FollowupAIUnavailable,
+    create_consultation_followup,
+    get_consultation_followups,
+)
+from core.consult.service import IdempotencyConflict, run_consultation
 from core.decision.weight_tuning import (
     DEFAULT_WEIGHT_PRESETS,
     read_weight_tuning_events,
@@ -45,6 +51,29 @@ class WeightTuningRequest(BaseModel):
         return value
 
 
+class ConsultFollowupRequest(BaseModel):
+    question: str = Field(..., min_length=1, max_length=500)
+    request_id: Optional[str] = Field(None, min_length=1, max_length=100)
+
+    @field_validator("question")
+    @classmethod
+    def validate_question(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("question cannot be blank")
+        return value
+
+    @field_validator("request_id", mode="before")
+    @classmethod
+    def normalize_request_id(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return None
+        if not isinstance(value, str):
+            return value
+        normalized = value.strip()
+        return normalized or None
+
+
 @router.get("/")
 async def root(request: Request):
     """API根路径"""
@@ -69,17 +98,64 @@ async def system_consult(payload: UnifiedConsultRequest, request: Request):
     """统一玄学问事接口。"""
     try:
         user = resolve_authenticated_user(request, required=True)
-        consultation = await to_thread(consultation_engine.consult, payload)
-        consultation["account_history"] = await to_thread(
-            append_consult_history, str(user.get("user_id")), consultation
+        consultation = await run_in_threadpool(
+            run_consultation,
+            str(user.get("user_id")),
+            payload,
+            consultation_engine,
         )
         return success_response(consultation, request=request)
     except HTTPException:
         raise
+    except IdempotencyConflict:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "idempotency_conflict", "message": "request_id 已用于不同的问事请求", "retryable": False},
+        )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=f"请求参数错误: {str(exc)}")
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"系统问事失败: {str(exc)}")
+
+
+@router.get("/api/system/consult/{history_id}/followups")
+async def system_consult_followups_list(history_id: str, request: Request):
+    """Read followups for an owned consultation, preserving the original session."""
+    user = resolve_authenticated_user(request, required=True)
+    user_id = str(user.get("user_id"))
+    try:
+        items = await run_in_threadpool(get_consultation_followups, user_id, history_id)
+    except ConsultHistoryNotFound:
+        raise HTTPException(status_code=404, detail={"code": "not_found", "message": "未找到该历史记录", "retryable": False})
+    return success_response({"history_id": history_id, "items": items, "count": len(items)}, request=request)
+
+
+@router.post("/api/system/consult/{history_id}/followups")
+async def system_consult_followup_add(history_id: str, payload: ConsultFollowupRequest, request: Request):
+    """Ask a contextual followup using the server-owned result and conversation."""
+    user = resolve_authenticated_user(request, required=True)
+    user_id = str(user.get("user_id"))
+    try:
+        followup = await run_in_threadpool(
+            create_consultation_followup,
+            user_id,
+            history_id,
+            payload.question,
+            payload.request_id,
+        )
+    except ConsultHistoryNotFound:
+        raise HTTPException(status_code=404, detail={"code": "not_found", "message": "未找到该历史记录", "retryable": False})
+    except IdempotencyConflict:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "idempotency_conflict", "message": "request_id 已用于不同的追问请求", "retryable": False},
+        )
+    except FollowupAIUnavailable:
+        raise HTTPException(
+            status_code=503,
+            detail={"code": "followup_ai_unavailable", "message": "AI追问服务暂不可用，请稍后重试", "retryable": True},
+        )
+    return success_response({"history_id": history_id, "followup": followup}, request=request)
 
 
 @router.post("/api/system/feedback")
