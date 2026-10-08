@@ -205,3 +205,7 @@ venv/bin/python -m pytest -q
 该地址携带 API 地址，内部页面跳转继续保留配置；本地 CORS 默认随前端端口设置。
 使用 `FRONTEND_MODE=local ./stop.sh` 停止；使用自定义前端端口时，两次命令都传相同的
 `FRONTEND_PORT`。启动与停止只处理项目目录内的服务进程，Nginx 模式不处理其他前端端口。
+
+### 124.221 服务部署
+
+生产入口为 `/xuanxue/`，前端自动使用 `/xuanxue-api`，不占用其他应用的根路径。部署前备份 runtime、项目 `.env` 和当前 Nginx 配置，Git 快进到发布提交，再用目标机虚拟环境安装 requirements。MiniMax 凭证仅放服务器 `.env`（600 权限），不要复制本机配置文件路径。`deploy/systemd/xuanxue.service` 用 start.sh / stop.sh 管理后台并在故障时重启；安装后以 systemctl 启停。项目代理读取超时应为 240 秒，浏览器等待为 180 秒；停止等待或超时后可查看历史，相同条件重试复用请求 ID。部署后检查完整问事、追问保存和其他共享应用仍正常。

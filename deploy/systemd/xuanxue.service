@@ -1,0 +1,23 @@
+[Unit]
+Description=Xuanxue consultation backend
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=forking
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/xuanxue
+Environment=FRONTEND_MODE=nginx
+Environment=PUBLIC_ENTRY_URL=http://124.221.113.244/xuanxue/
+EnvironmentFile=/home/ubuntu/xuanxue/.env
+ExecStart=/bin/bash /home/ubuntu/xuanxue/start.sh
+ExecStop=/bin/bash /home/ubuntu/xuanxue/stop.sh
+PIDFile=/tmp/xuanxue-backend.pid
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=90
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

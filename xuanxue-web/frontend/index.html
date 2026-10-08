@@ -2409,13 +2409,14 @@
                         <div class="consult-loading" id="consultLoading" aria-live="polite" aria-hidden="true">
                         <div class="consult-loading-head">
                             <span class="consult-loading-label" id="consultLoadingLabel">正在汇总命理信息</span>
-                            <span class="consult-loading-percent" id="consultLoadingPercent" aria-hidden="true">0%</span>
+                            <span class="consult-loading-percent" id="consultLoadingPercent" aria-hidden="true" hidden style="display:none">0%</span>
                             <span class="consult-loading-elapsed" id="consultLoadingElapsed">已等待 0 秒</span>
                         </div>
                         <div class="consult-loading-track" aria-hidden="true" hidden>
                             <div class="consult-loading-fill" id="consultLoadingFill"></div>
                         </div>
                         <div class="consult-loading-text" id="consultLoadingText">正在整理问题、出生信息与场景条件...</div>
+                        <button type="button" class="btn btn-accent" id="cancelConsultBtn" hidden>停止等待</button>
                     </div>
                 </form>
 
