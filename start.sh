@@ -160,21 +160,24 @@ cleanup_existing_services() {
     echo ""
 }
 
-# 加载 AI 环境变量
-if [ -f "$HOME/.profile" ]; then
-    source "$HOME/.profile" 2>/dev/null || true
-fi
-if [ -z "${ARK_API_KEY:-}" ] && [ -f "$HOME/.bashrc" ]; then
-    while IFS= read -r line; do
-        case "$line" in
-            export\ ARK_*=*)
-                eval "$line"
-                ;;
-            export\ LLM_*=*)
-                eval "$line"
-                ;;
-        esac
-    done < "$HOME/.bashrc"
+# Explicit service environment and project configuration take precedence over shell defaults.
+if [ -z "${LLM_PROVIDER:-}" ] && [ -z "${LLM_API_KEY:-}" ] && [ ! -f "$SCRIPT_DIR/.env" ]; then
+    if [ -f "$HOME/.profile" ]; then
+        source "$HOME/.profile" 2>/dev/null || true
+    fi
+    if [ -z "${ARK_API_KEY:-}" ] && [ -f "$HOME/.bashrc" ]; then
+        while IFS= read -r line; do
+            case "$line" in
+                export\ ARK_*=*)
+                    eval "$line"
+                    ;;
+                export\ LLM_*=*)
+                    eval "$line"
+                    ;;
+            esac
+        done < "$HOME/.bashrc"
+    fi
+    
 fi
 
 # Local frontends use a separate origin; honor an explicit CORS policy when supplied.
