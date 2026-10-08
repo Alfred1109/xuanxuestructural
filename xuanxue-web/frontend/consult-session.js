@@ -54,15 +54,24 @@
         });
     }
 
+    function newRequestId() {
+        if (typeof window.crypto.randomUUID === 'function') { return window.crypto.randomUUID(); }
+        var bytes = window.crypto.getRandomValues(new Uint8Array(16));
+        bytes[6] = (bytes[6] & 15) | 64;
+        bytes[8] = (bytes[8] & 63) | 128;
+        var hex = Array.from(bytes, function (value) { return value.toString(16).padStart(2, '0'); }).join('');
+        return [hex.slice(0, 8), hex.slice(8, 12), hex.slice(12, 16), hex.slice(16, 20), hex.slice(20)].join('-');
+    }
+
     function requestId(kind, fingerprint) {
         var storageKey = 'xuanxue_request:' + owner() + ':' + kind;
         try {
             var previous = JSON.parse(window.sessionStorage.getItem(storageKey) || 'null');
             if (previous && previous.fingerprint === fingerprint) { return previous.id; }
-            var id = window.crypto.randomUUID();
+            var id = newRequestId();
             window.sessionStorage.setItem(storageKey, JSON.stringify({ id: id, fingerprint: fingerprint }));
             return id;
-        } catch (_error) { return window.crypto.randomUUID(); }
+        } catch (_error) { return newRequestId(); }
     }
     function clearRequestId(kind, scope) {
         try { window.sessionStorage.removeItem('xuanxue_request:' + (scope || owner()) + ':' + kind); } catch (_error) { /* unavailable storage */ }
